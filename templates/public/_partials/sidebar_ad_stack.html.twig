@@ -1,0 +1,7 @@
+{% for placement in placements|default([]) %}
+    {% include 'public/_partials/ad_slot.html.twig' with {
+        placement: placement,
+        categoryId: categoryId|default(null),
+        tagIds: tagIds|default([]),
+    } only %}
+{% endfor %}

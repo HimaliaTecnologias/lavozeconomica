@@ -1,0 +1,59 @@
+security:
+    password_hashers:
+        Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: 'auto'
+
+    providers:
+        app_user_provider:
+            entity:
+                class: App\Entity\Platform\User
+                property: email
+                manager_name: platform
+
+    firewalls:
+        dev:
+            pattern: ^/(_(profiler|wdt)|css|images|js)/
+            security: false
+        admin:
+            pattern: ^/(gestor|admin)
+            lazy: true
+            context: main
+            provider: app_user_provider
+            user_checker: App\Security\VerifiedEmailUserChecker
+            form_login:
+                login_path: admin_login
+                check_path: login_check
+                enable_csrf: true
+            login_throttling:
+                max_attempts: 5
+                interval: '15 minutes'
+            logout:
+                path: logout
+                target: home
+        main:
+            lazy: true
+            provider: app_user_provider
+            user_checker: App\Security\VerifiedEmailUserChecker
+            form_login:
+                login_path: cuenta_login
+                check_path: login_check
+                default_target_path: home
+                enable_csrf: true
+            login_throttling:
+                max_attempts: 5
+                interval: '15 minutes'
+            logout:
+                path: logout
+                target: home
+
+    access_control:
+        - { path: ^/panel/entrar, roles: PUBLIC_ACCESS }
+        - { path: ^/admin/login, roles: PUBLIC_ACCESS }
+        - { path: ^/gestor/login, roles: PUBLIC_ACCESS }
+        - { path: ^/cuenta/entrar, roles: PUBLIC_ACCESS }
+        - { path: ^/cuenta/registro, roles: PUBLIC_ACCESS }
+        - { path: ^/cuenta/registro-pendiente, roles: PUBLIC_ACCESS }
+        - { path: ^/cuenta/reenviar-verificacion, roles: PUBLIC_ACCESS }
+        - { path: ^/cuenta/verificar-email, roles: PUBLIC_ACCESS }
+        - { path: ^/login_check, roles: PUBLIC_ACCESS }
+        - { path: ^/gestor, roles: ROLE_USER }
+        - { path: ^/admin, roles: ROLE_USER }

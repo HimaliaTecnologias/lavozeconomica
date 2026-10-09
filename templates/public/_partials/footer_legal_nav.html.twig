@@ -1,0 +1,7 @@
+{% for item in footerNavLegal|default([]) %}
+    <li>
+        <a href="{{ item.url }}"
+           {% if item.openInNewTab %}target="_blank" rel="noopener noreferrer"{% endif %}
+        >{{ item.label }}</a>
+    </li>
+{% endfor %}

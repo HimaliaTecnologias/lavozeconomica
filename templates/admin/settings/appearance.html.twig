@@ -1,0 +1,640 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}Apariencia{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .appearance-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
+        gap: 1.25rem;
+        align-items: start;
+    }
+    @media (max-width: 1100px) {
+        .appearance-layout { grid-template-columns: 1fr; }
+    }
+
+    .appearance-main {
+        background: #fff;
+        border: 1px solid var(--admin-border);
+        border-radius: var(--admin-radius);
+        padding: 1.1rem 1.2rem 1.25rem;
+    }
+
+    .appearance-tabs {
+        display: flex;
+        gap: .35rem;
+        flex-wrap: wrap;
+        margin: 0 0 1.15rem;
+        padding-bottom: .85rem;
+        border-bottom: 1px solid var(--admin-border);
+    }
+    .appearance-tab {
+        padding: .45rem .9rem;
+        border: 1px solid var(--admin-border);
+        border-radius: 999px;
+        background: #f8fafc;
+        font-size: .84rem;
+        font-weight: 600;
+        cursor: pointer;
+        color: #475569;
+    }
+    .appearance-tab:hover {
+        background: #e2e8f0;
+        color: #0f172a;
+    }
+    .appearance-tab.active {
+        background: var(--admin-accent);
+        border-color: var(--admin-accent);
+        color: #fff;
+    }
+    .appearance-panel { display: none; }
+    .appearance-panel.active { display: block; }
+    .appearance-panel > .hint { margin-top: 0; }
+
+    .color-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+        gap: .9rem;
+    }
+    .color-field {
+        border: 1px solid var(--admin-border);
+        border-radius: 10px;
+        padding: .85rem;
+        background: #fafbfc;
+    }
+    .color-field label {
+        display: block;
+        font-size: .82rem;
+        font-weight: 700;
+        margin-bottom: .55rem;
+    }
+    .color-field-controls {
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+    }
+    .color-field input[type="color"] {
+        width: 44px;
+        height: 38px;
+        padding: 2px;
+        border: 1px solid var(--admin-border);
+        border-radius: 8px;
+        cursor: pointer;
+        background: #fff;
+        flex-shrink: 0;
+    }
+    .color-field input[type="text"] {
+        width: 100%;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: .8rem;
+        margin: 0;
+    }
+    .color-field .hint { font-size: .75rem; margin: .45rem 0 0; }
+
+    .section-title {
+        font-size: .78rem;
+        font-weight: 700;
+        letter-spacing: .05em;
+        text-transform: uppercase;
+        color: var(--admin-muted);
+        margin: 1.2rem 0 .65rem;
+    }
+    .section-title:first-of-type { margin-top: .35rem; }
+
+    .font-row {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 1rem;
+    }
+    @media (max-width: 900px) {
+        .font-row { grid-template-columns: 1fr; }
+    }
+
+    .logo-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+    @media (max-width: 768px) {
+        .logo-grid { grid-template-columns: 1fr; }
+    }
+    .logo-card {
+        border: 1px solid var(--admin-border);
+        border-radius: 12px;
+        padding: 1rem;
+        background: #fafbfc;
+    }
+    .logo-card h3 { margin: 0 0 .35rem; font-size: .95rem; }
+    .logo-preview {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 88px;
+        margin: .75rem 0;
+        padding: .65rem;
+        background: #fff;
+        border: 1px dashed var(--admin-border);
+        border-radius: 10px;
+    }
+    .logo-preview img { max-height: 56px; max-width: 100%; object-fit: contain; }
+    .logo-preview--dark { background: #0f172a; }
+    .logo-preview--mark img { max-height: 40px; }
+    .logo-preview--favicon img { max-height: 32px; }
+    .logo-remove {
+        display: flex;
+        align-items: center;
+        gap: .4rem;
+        margin-top: .65rem;
+        font-size: .8rem;
+        color: var(--admin-muted);
+    }
+    .logo-remove input { width: auto; }
+
+    .preview-card {
+        border: 1px solid var(--admin-border);
+        border-radius: 12px;
+        overflow: hidden;
+        background: #fff;
+        position: sticky;
+        top: 1rem;
+        box-shadow: var(--admin-shadow);
+    }
+    .preview-card > h2 {
+        margin: 0;
+        padding: .8rem 1rem;
+        font-size: .8rem;
+        font-weight: 700;
+        letter-spacing: .04em;
+        text-transform: uppercase;
+        color: var(--admin-muted);
+        background: #f8fafc;
+        border-bottom: 1px solid var(--admin-border);
+    }
+    .live-preview { font-size: 14px; }
+    .live-preview-topbar {
+        padding: .4rem .85rem;
+        font-size: .65rem;
+        color: inherit;
+        display: flex;
+        justify-content: space-between;
+    }
+    .live-preview-masthead {
+        padding: 1.1rem 1rem;
+        text-align: center;
+        border-bottom: 1px solid var(--line, #ddd);
+    }
+    .live-preview-masthead h3 {
+        margin: 0;
+        font-size: 1.45rem;
+        font-weight: 800;
+        line-height: 1.1;
+    }
+    .live-preview-masthead p { margin: .4rem 0 0; font-size: .8rem; }
+    .live-preview-masthead img { max-height: 48px; margin: 0 auto; display: block; }
+    .live-preview-nav {
+        display: flex;
+        gap: .65rem;
+        padding: .55rem .85rem;
+        border-bottom: 3px solid var(--accent, #b91c1c);
+        font-size: .7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: inherit;
+    }
+    .live-preview-nav span.active { color: var(--accent, #b91c1c); }
+    .live-preview-body {
+        padding: 1rem;
+        display: grid;
+        gap: .65rem;
+    }
+    .live-preview-body .story-title {
+        font-size: 1.05rem;
+        font-weight: 700;
+        margin: 0;
+    }
+    .live-preview-body .story-text {
+        font-size: .85rem;
+        line-height: 1.55;
+        margin: 0;
+    }
+    .live-preview-footer {
+        padding: .75rem 1rem;
+        font-size: .65rem;
+        color: inherit;
+    }
+    .appearance-actions {
+        display: flex;
+        gap: .5rem;
+        justify-content: flex-end;
+        margin-top: 1.35rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--admin-border);
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+{% set brandColors = [
+    { field: 'primaryColor', label: 'Primario / acento', hint: 'Enlaces activos, categorías, destacados', default: '#b91c1c', optional: false },
+    { field: 'secondaryColor', label: 'Secundario', hint: 'Hover y variantes del acento', default: '#7f1d1d', optional: false },
+    { field: 'linkColor', label: 'Enlaces (opcional)', hint: 'Vacío = usa el primario', default: null, optional: true },
+    { field: 'navColor', label: 'Navegación activa (opcional)', hint: 'Vacío = usa el primario', default: null, optional: true },
+] %}
+{% set surfaceColors = [
+    { field: 'backgroundColor', label: 'Fondo principal', default: '#ffffff' },
+    { field: 'surfaceColor', label: 'Superficies / bloques', default: '#f4f4f4' },
+] %}
+{% set textColors = [
+    { field: 'textColor', label: 'Texto principal', default: '#111111' },
+    { field: 'textMutedColor', label: 'Texto secundario', default: '#666666' },
+    { field: 'headingColor', label: 'Titulares', default: '#111111' },
+] %}
+{% set chromeColors = [
+    { field: 'borderColor', label: 'Bordes', default: '#d8d8d8' },
+    { field: 'topBarColor', label: 'Barra superior', hint: 'Franja de fecha, tiempo y servicios', default: '#1a1a1a' },
+    { field: 'navBarColor', label: 'Fondo del menú', hint: 'Menú de secciones bajo la cabecera', default: '#ffffff' },
+    { field: 'footerColor', label: 'Pie de página', hint: 'Fondo del pie del sitio', default: '#12151c' },
+] %}
+
+{% include 'admin/_page_header.html.twig' with {
+    title: 'Apariencia',
+    subtitle: 'Colores, tipografías, logos y favicon del sitio público.',
+    breadcrumbs: [
+        { label: 'Panel', path: path('admin_dashboard') },
+        { label: 'Configuración', path: path('admin_settings_index') },
+        { label: 'Apariencia' },
+    ],
+} %}
+
+{% include 'admin/settings/_subnav.html.twig' %}
+
+<form method="post" action="{{ path('admin_settings_appearance') }}" enctype="multipart/form-data" id="appearance-form">
+    <input type="hidden" name="_token" value="{{ csrf_token('settings_appearance') }}">
+
+    <div class="appearance-layout">
+        <div class="appearance-main">
+            <div class="appearance-tabs" role="tablist">
+                <button type="button" class="appearance-tab active" data-tab="identity">Identidad</button>
+                <button type="button" class="appearance-tab" data-tab="colors-brand">Colores marca</button>
+                <button type="button" class="appearance-tab" data-tab="colors-ui">Colores interfaz</button>
+                <button type="button" class="appearance-tab" data-tab="fonts">Tipografías</button>
+                <button type="button" class="appearance-tab" data-tab="logos">Logos y favicon</button>
+            </div>
+
+            <div class="appearance-panel active" data-panel="identity">
+                <div class="field">
+                    <label for="tagline">Eslogan / descripción breve</label>
+                    <input type="text" id="tagline" name="tagline" value="{{ data.tagline|default('') }}" maxlength="500" data-preview="tagline">
+                    <div class="hint">Se muestra en el pie y puede usarse como meta descripción por defecto. El resto del SEO se configura en <a href="{{ path('admin_settings_seo') }}">Configuración → SEO</a>.</div>
+                </div>
+            </div>
+
+            <div class="appearance-panel" data-panel="colors-brand">
+                <p class="hint">Colores principales de marca y acentos editoriales.</p>
+                <div class="color-grid">
+                    {% for item in brandColors %}
+                        {% set current = data[item.field]|default(item.optional ? '' : item.default) %}
+                        {% set picker = current ?: (data.primaryColor|default('#b91c1c')) %}
+                        <div class="color-field">
+                            <label for="{{ item.field }}">{{ item.label }}</label>
+                            <div class="color-field-controls">
+                                <input type="color" id="{{ item.field }}" name="{{ item.field }}" value="{{ picker }}" data-color-sync="{{ item.field }}"{% if item.optional %} data-optional="1"{% endif %}>
+                                <input type="text" value="{{ current }}" data-hex-sync="{{ item.field }}" maxlength="7"{% if item.optional %} placeholder="Vacío = primario"{% endif %}>
+                            </div>
+                            {% if item.hint %}<div class="hint">{{ item.hint }}</div>{% endif %}
+                            {% if errors[item.field] is defined %}<div class="error-msg">{{ errors[item.field] }}</div>{% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="appearance-panel" data-panel="colors-ui">
+                <p class="hint">Fondos, texto y elementos de la interfaz.</p>
+                <div class="section-title">Superficies</div>
+                <div class="color-grid">
+                    {% for item in surfaceColors %}
+                        <div class="color-field">
+                            <label for="{{ item.field }}">{{ item.label }}</label>
+                            <div class="color-field-controls">
+                                <input type="color" id="{{ item.field }}" name="{{ item.field }}" value="{{ data[item.field]|default(item.default) }}" data-color-sync="{{ item.field }}">
+                                <input type="text" value="{{ data[item.field]|default('') }}" data-hex-sync="{{ item.field }}" maxlength="7">
+                            </div>
+                            {% if errors[item.field] is defined %}<div class="error-msg">{{ errors[item.field] }}</div>{% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+                <div class="section-title">Texto</div>
+                <div class="color-grid">
+                    {% for item in textColors %}
+                        <div class="color-field">
+                            <label for="{{ item.field }}">{{ item.label }}</label>
+                            <div class="color-field-controls">
+                                <input type="color" id="{{ item.field }}" name="{{ item.field }}" value="{{ data[item.field]|default(item.default) }}" data-color-sync="{{ item.field }}">
+                                <input type="text" value="{{ data[item.field]|default('') }}" data-hex-sync="{{ item.field }}" maxlength="7">
+                            </div>
+                            {% if errors[item.field] is defined %}<div class="error-msg">{{ errors[item.field] }}</div>{% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+                <div class="section-title">Cabecera y pie</div>
+                <p class="hint">El texto se aclara u oscurece solo para que se lea sobre el color elegido.</p>
+                <div class="color-grid">
+                    {% for item in chromeColors %}
+                        <div class="color-field">
+                            <label for="{{ item.field }}">{{ item.label }}</label>
+                            <div class="color-field-controls">
+                                <input type="color" id="{{ item.field }}" name="{{ item.field }}" value="{{ data[item.field]|default(item.default) }}" data-color-sync="{{ item.field }}">
+                                <input type="text" value="{{ data[item.field]|default('') }}" data-hex-sync="{{ item.field }}" maxlength="7">
+                            </div>
+                            {% if item.hint is defined %}<div class="hint">{{ item.hint }}</div>{% endif %}
+                            {% if errors[item.field] is defined %}<div class="error-msg">{{ errors[item.field] }}</div>{% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="appearance-panel" data-panel="fonts">
+                <p class="hint">Más de 60 tipografías de Google Fonts, agrupadas por estilo. Muchas sirven para titulares, interfaz y artículos.</p>
+                <div class="font-row">
+                    <div class="field">
+                        <label for="headingFont">Titulares / logo</label>
+                        <select id="headingFont" name="headingFont" data-preview-font="heading">
+                            {% for category, options in headingFonts %}
+                                <optgroup label="{{ fontCategories[category]|default(category) }}">
+                                    {% for slug, font in options %}
+                                        <option value="{{ slug }}" {{ data.headingFont|default('inter') == slug ? 'selected' }}>{{ font.label }}</option>
+                                    {% endfor %}
+                                </optgroup>
+                            {% endfor %}
+                        </select>
+                        {% if errors.headingFont is defined %}<div class="error-msg">{{ errors.headingFont }}</div>{% endif %}
+                    </div>
+                    <div class="field">
+                        <label for="bodyFont">Interfaz / navegación</label>
+                        <select id="bodyFont" name="bodyFont" data-preview-font="body">
+                            {% for category, options in bodyFonts %}
+                                <optgroup label="{{ fontCategories[category]|default(category) }}">
+                                    {% for slug, font in options %}
+                                        <option value="{{ slug }}" {{ data.bodyFont|default('inter') == slug ? 'selected' }}>{{ font.label }}</option>
+                                    {% endfor %}
+                                </optgroup>
+                            {% endfor %}
+                        </select>
+                        {% if errors.bodyFont is defined %}<div class="error-msg">{{ errors.bodyFont }}</div>{% endif %}
+                    </div>
+                    <div class="field">
+                        <label for="articleFont">Texto de artículos</label>
+                        <select id="articleFont" name="articleFont" data-preview-font="article">
+                            {% for category, options in articleFonts %}
+                                <optgroup label="{{ fontCategories[category]|default(category) }}">
+                                    {% for slug, font in options %}
+                                        <option value="{{ slug }}" {{ data.articleFont|default('source-sans-3') == slug ? 'selected' }}>{{ font.label }}</option>
+                                    {% endfor %}
+                                </optgroup>
+                            {% endfor %}
+                        </select>
+                        {% if errors.articleFont is defined %}<div class="error-msg">{{ errors.articleFont }}</div>{% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="appearance-panel" data-panel="logos">
+                <p class="hint">PNG, SVG, WebP o JPG para logos. Favicon: ICO, PNG o WebP (recomendado 32×32 o 48×48). Máximo 5 MB.</p>
+                <div class="logo-grid">
+                    <div class="logo-card">
+                        <h3>Logo principal</h3>
+                        <p class="hint">Cabecera del sitio (fondo claro).</p>
+                        <div class="logo-preview" id="preview-logo-main">
+                            {% if data.logoUrl|default('') %}
+                                <img src="{{ data.logoUrl }}" alt="Logo">
+                            {% else %}
+                                <span class="hint">Sin logo</span>
+                            {% endif %}
+                        </div>
+                        <input type="file" name="logoFile" accept="image/*">
+                        {% if errors.logoFile is defined %}<div class="error-msg">{{ errors.logoFile }}</div>{% endif %}
+                        {% if data.logoUrl|default('') %}
+                            <label class="logo-remove"><input type="checkbox" name="removeLogo" value="1"> Eliminar logo actual</label>
+                        {% endif %}
+                    </div>
+                    <div class="logo-card">
+                        <h3>Logo para pie / fondo oscuro</h3>
+                        <p class="hint">Opcional, para fondos oscuros.</p>
+                        <div class="logo-preview logo-preview--dark" id="preview-logo-dark">
+                            {% if data.logoDarkUrl|default('') %}
+                                <img src="{{ data.logoDarkUrl }}" alt="Logo oscuro">
+                            {% else %}
+                                <span class="hint" style="color:#94a3b8">Opcional</span>
+                            {% endif %}
+                        </div>
+                        <input type="file" name="logoDarkFile" accept="image/*">
+                        {% if errors.logoDarkFile is defined %}<div class="error-msg">{{ errors.logoDarkFile }}</div>{% endif %}
+                        {% if data.logoDarkUrl|default('') %}
+                            <label class="logo-remove"><input type="checkbox" name="removeLogoDark" value="1"> Eliminar</label>
+                        {% endif %}
+                    </div>
+                    <div class="logo-card">
+                        <h3>Isotipo / marca reducida</h3>
+                        <p class="hint">Versión compacta para espacios pequeños.</p>
+                        <div class="logo-preview logo-preview--mark" id="preview-logo-mark">
+                            {% if data.logoMarkUrl|default('') %}
+                                <img src="{{ data.logoMarkUrl }}" alt="Isotipo">
+                            {% else %}
+                                <span class="hint">Opcional</span>
+                            {% endif %}
+                        </div>
+                        <input type="file" name="logoMarkFile" accept="image/*">
+                        {% if errors.logoMarkFile is defined %}<div class="error-msg">{{ errors.logoMarkFile }}</div>{% endif %}
+                        {% if data.logoMarkUrl|default('') %}
+                            <label class="logo-remove"><input type="checkbox" name="removeLogoMark" value="1"> Eliminar</label>
+                        {% endif %}
+                    </div>
+                    <div class="logo-card">
+                        <h3>Favicon</h3>
+                        <p class="hint">Icono de pestaña del navegador. 32×32 o 48×48 recomendado (ICO/PNG).</p>
+                        <div class="logo-preview logo-preview--favicon" id="preview-favicon">
+                            {% if data.faviconUrl|default('') %}
+                                <img src="{{ data.faviconUrl }}" alt="Favicon">
+                            {% else %}
+                                <span class="hint">Sin favicon</span>
+                            {% endif %}
+                        </div>
+                        <input type="file" name="faviconFile" accept="image/png,image/x-icon,image/vnd.microsoft.icon,image/webp,image/jpeg">
+                        {% if errors.faviconFile is defined %}<div class="error-msg">{{ errors.faviconFile }}</div>{% endif %}
+                        {% if data.faviconUrl|default('') %}
+                            <label class="logo-remove"><input type="checkbox" name="removeFavicon" value="1"> Eliminar</label>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="appearance-actions">
+                <a href="{{ path('admin_settings_index') }}" class="btn btn-secondary">Volver</a>
+                <button type="submit" class="btn btn-primary">Guardar apariencia</button>
+            </div>
+        </div>
+
+        <aside class="preview-card">
+            <h2>Vista previa en vivo</h2>
+            <div class="live-preview" id="live-preview">
+                <div class="live-preview-topbar" id="pv-topbar">
+                    <span>{{ "now"|date('d/m/Y') }}</span>
+                    <span>Edición digital</span>
+                </div>
+                <div class="live-preview-masthead" id="pv-masthead">
+                    {% if data.logoUrl|default('') %}
+                        <img src="{{ data.logoUrl }}" alt="" id="pv-logo-img">
+                    {% else %}
+                        <h3 id="pv-site-name">{{ site.name }}</h3>
+                    {% endif %}
+                    <p id="pv-tagline">{{ data.tagline|default('Tu eslogan aquí') }}</p>
+                </div>
+                <div class="live-preview-nav" id="pv-nav">
+                    <span class="active">Portada</span>
+                    <span>Política</span>
+                    <span>Deportes</span>
+                </div>
+                <div class="live-preview-body" id="pv-body">
+                    <p class="story-title" id="pv-headline">Titular de ejemplo del periódico</p>
+                    <p class="story-text" id="pv-article">Este párrafo muestra cómo se verá el texto de los artículos con la tipografía seleccionada y los colores de la interfaz.</p>
+                </div>
+                <div class="live-preview-footer" id="pv-footer">© {{ "now"|date('Y') }} {{ site.name }}</div>
+            </div>
+        </aside>
+    </div>
+</form>
+
+<script>
+const fontFamilies = {{ fonts|json_encode|raw }};
+const loadedFontLinks = new Set();
+
+function familyFor(slug) {
+    const f = fontFamilies[slug];
+    return f ? `"${f.family}", ${f.fallback}` : 'system-ui, sans-serif';
+}
+
+function ensureFontLoaded(slug) {
+    const f = fontFamilies[slug];
+    if (!f || loadedFontLinks.has(slug)) {
+        return;
+    }
+    loadedFontLinks.add(slug);
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = 'https://fonts.googleapis.com/css2?family=' + f.googleQuery + '&display=swap';
+    document.head.appendChild(link);
+}
+
+document.querySelectorAll('.appearance-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+        document.querySelectorAll('.appearance-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.appearance-panel').forEach(p => p.classList.remove('active'));
+        tab.classList.add('active');
+        document.querySelector(`[data-panel="${tab.dataset.tab}"]`).classList.add('active');
+    });
+});
+
+document.querySelectorAll('[data-color-sync]').forEach(colorInput => {
+    const field = colorInput.dataset.colorSync;
+    const hexInput = document.querySelector(`[data-hex-sync="${field}"]`);
+    const sync = (fromColor) => {
+        if (hexInput) hexInput.value = fromColor.value;
+        updatePreview();
+    };
+    colorInput.addEventListener('input', () => sync(colorInput));
+    if (hexInput) {
+        hexInput.addEventListener('input', () => {
+            if (/^#[0-9a-fA-F]{6}$/.test(hexInput.value)) {
+                colorInput.value = hexInput.value;
+                updatePreview();
+            }
+        });
+    }
+});
+
+document.querySelector('[data-preview="tagline"]')?.addEventListener('input', e => {
+    document.getElementById('pv-tagline').textContent = e.target.value || 'Tu eslogan aquí';
+});
+
+document.querySelectorAll('[data-preview-font]').forEach(sel => {
+    sel.addEventListener('change', updatePreview);
+});
+
+function val(name, fallback) {
+    const el = document.getElementById(name) || document.querySelector(`[name="${name}"]`);
+    return el ? el.value : fallback;
+}
+
+function contrastFg(hex) {
+    const h = String(hex || '').replace('#', '');
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) {
+        return '#ffffff';
+    }
+    const channel = (part) => {
+        const value = parseInt(part, 16) / 255;
+        return value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+    };
+    const lum = 0.2126 * channel(h.slice(0, 2))
+        + 0.7152 * channel(h.slice(2, 4))
+        + 0.0722 * channel(h.slice(4, 6));
+    return lum < 0.45 ? '#ffffff' : '#111111';
+}
+
+function updatePreview() {
+    const primary = val('primaryColor', '#b91c1c');
+    const bg = val('backgroundColor', '#ffffff');
+    const surface = val('surfaceColor', '#f4f4f4');
+    const text = val('textColor', '#111111');
+    const muted = val('textMutedColor', '#666666');
+    const heading = val('headingColor', '#111111');
+    const topBar = val('topBarColor', '#1a1a1a');
+    const navBar = val('navBarColor', '#ffffff');
+    const footer = val('footerColor', '#12151c');
+    const navActive = val('navColor', '') || primary;
+
+    const pv = document.getElementById('live-preview');
+    pv.style.setProperty('--accent', primary);
+    pv.style.background = bg;
+    pv.style.color = text;
+
+    document.getElementById('pv-topbar').style.background = topBar;
+    document.getElementById('pv-topbar').style.color = contrastFg(topBar);
+    document.getElementById('pv-masthead').style.background = bg;
+    document.getElementById('pv-masthead').style.borderColor = val('borderColor', '#d8d8d8');
+    document.getElementById('pv-nav').style.borderBottomColor = navActive;
+    document.getElementById('pv-nav').style.background = navBar;
+    document.getElementById('pv-nav').style.color = contrastFg(navBar);
+    document.querySelector('#pv-nav .active').style.color = navActive;
+    document.getElementById('pv-body').style.background = surface;
+    document.getElementById('pv-footer').style.background = footer;
+    document.getElementById('pv-footer').style.color = contrastFg(footer);
+
+    const headingSlug = val('headingFont', 'inter');
+    const bodySlug = val('bodyFont', 'inter');
+    const articleSlug = val('articleFont', 'source-sans-3');
+    ensureFontLoaded(headingSlug);
+    ensureFontLoaded(bodySlug);
+    ensureFontLoaded(articleSlug);
+
+    const hFont = familyFor(headingSlug);
+    const bFont = familyFor(bodySlug);
+    const aFont = familyFor(articleSlug);
+
+    const siteName = document.getElementById('pv-site-name');
+    if (siteName) {
+        siteName.style.fontFamily = hFont;
+        siteName.style.color = heading;
+    }
+    document.getElementById('pv-tagline').style.color = muted;
+    document.getElementById('pv-tagline').style.fontFamily = bFont;
+    document.getElementById('pv-nav').style.fontFamily = bFont;
+    document.getElementById('pv-headline').style.fontFamily = hFont;
+    document.getElementById('pv-headline').style.color = heading;
+    document.getElementById('pv-article').style.fontFamily = aFont;
+    document.getElementById('pv-article').style.color = text;
+}
+
+updatePreview();
+</script>
+{% endblock %}

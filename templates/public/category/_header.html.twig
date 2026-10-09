@@ -1,0 +1,46 @@
+<header class="category-page-hero">
+    <nav class="article-breadcrumb category-page-breadcrumb">
+        <a href="{{ path('home') }}">Portada</a>
+        {% if category.parent %}
+            · <a href="{{ path('public_category_show', {slug: category.parent.slug}) }}">{{ category.parent.name }}</a>
+        {% endif %}
+        · {{ category.name }}
+    </nav>
+
+    <div class="category-page-hero-main">
+        <div class="category-page-hero-accent" aria-hidden="true"></div>
+        <div class="category-page-hero-content">
+            <h1 class="category-page-title">
+                {{ category.name }}
+                {% if page is defined and page > 1 %}
+                    <span class="category-page-label">— página {{ page }}</span>
+                {% endif %}
+            </h1>
+            {% if category.description %}
+                <p class="category-page-description">{{ category.description }}</p>
+            {% elseif category.parent %}
+                <p class="category-page-description">Noticias de {{ category.parent.name }} en la sección {{ category.name }}.</p>
+            {% endif %}
+            {% if totalArticles is defined %}
+                <p class="category-page-stats">
+                    <span>{{ totalArticles }} noticia{{ totalArticles != 1 ? 's' : '' }}</span>
+                    {% if page is defined and totalPages is defined and totalPages > 1 %}
+                        <span class="category-page-stats-sep">·</span>
+                        <span>Página {{ page }} de {{ totalPages }}</span>
+                    {% endif %}
+                </p>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if subcategories is not empty %}
+        <nav class="category-subnav category-subnav--nested" aria-label="Subsecciones">
+            {% if category.parent %}
+                <a href="{{ path('public_category_show', {slug: category.parent.slug}) }}" class="category-subnav-item">Todas en {{ category.parent.name }}</a>
+            {% endif %}
+            {% for sub in subcategories %}
+                <a href="{{ path('public_category_show', {slug: sub.slug}) }}" class="category-subnav-item{{ sub.id == category.id ? ' active' : '' }}">{{ sub.name }}</a>
+            {% endfor %}
+        </nav>
+    {% endif %}
+</header>

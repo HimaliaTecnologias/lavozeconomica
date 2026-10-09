@@ -1,0 +1,104 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}Página 404{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .error404-form {
+        max-width: 46rem;
+        display: grid;
+        gap: 1rem;
+    }
+    .error404-card {
+        background: #fff;
+        border: 1px solid var(--admin-border);
+        border-radius: var(--admin-radius-sm);
+        padding: 1.1rem 1.2rem;
+    }
+    .error404-card h2 {
+        margin: 0 0 .85rem;
+        font-size: 1rem;
+    }
+    .checkbox-row {
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+        margin: .55rem 0;
+    }
+    .checkbox-row input { width: auto; }
+    .error404-actions {
+        display: flex;
+        gap: .5rem;
+        flex-wrap: wrap;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+{% set headerActions %}
+    <a href="{{ path('admin_settings_error_404_preview') }}" class="btn btn-secondary btn-sm" target="_blank" rel="noopener">Vista previa</a>
+{% endset %}
+{% include 'admin/_page_header.html.twig' with {
+    title: 'Página 404',
+    subtitle: 'Texto y controles que ven los lectores cuando una URL no existe.',
+    breadcrumbs: [
+        { label: 'Panel', url: path('admin_dashboard') },
+        { label: 'Configuración', url: path('admin_settings_index') },
+        { label: 'Página 404' },
+    ],
+    actions: headerActions
+} only %}
+
+{% include 'admin/settings/_subnav.html.twig' %}
+
+<form class="error404-form" method="post" action="{{ path('admin_settings_error_404') }}">
+    <input type="hidden" name="_token" value="{{ csrf_token('settings_error_404') }}">
+
+    <div class="error404-card">
+        <h2>Mensaje</h2>
+        <div class="field">
+            <label for="title">Título</label>
+            <input type="text" id="title" name="title" value="{{ data.title }}" maxlength="120" required>
+        </div>
+        <div class="field">
+            <label for="message">Texto explicativo</label>
+            <textarea id="message" name="message" rows="3" maxlength="500" required>{{ data.message }}</textarea>
+        </div>
+        <div class="field">
+            <label for="extraHtml">HTML adicional (opcional)</label>
+            <textarea id="extraHtml" name="extraHtml" rows="4" placeholder="<p>Puedes añadir un aviso o enlace extra…</p>">{{ data.extraHtml }}</textarea>
+            <p class="hint">Se muestra debajo de los botones. HTML básico permitido.</p>
+        </div>
+    </div>
+
+    <div class="error404-card">
+        <h2>Controles</h2>
+        <div class="checkbox-row">
+            <input type="checkbox" id="showSearch" name="showSearch" value="1" {{ data.showSearch ? 'checked' : '' }}>
+            <label for="showSearch">Mostrar buscador</label>
+        </div>
+        <div class="field">
+            <label for="searchPlaceholder">Placeholder del buscador</label>
+            <input type="text" id="searchPlaceholder" name="searchPlaceholder" value="{{ data.searchPlaceholder }}" maxlength="80">
+        </div>
+        <div class="checkbox-row">
+            <input type="checkbox" id="showHomeButton" name="showHomeButton" value="1" {{ data.showHomeButton ? 'checked' : '' }}>
+            <label for="showHomeButton">Botón a la portada</label>
+        </div>
+        <div class="field">
+            <label for="homeButtonLabel">Texto del botón</label>
+            <input type="text" id="homeButtonLabel" name="homeButtonLabel" value="{{ data.homeButtonLabel }}" maxlength="60">
+        </div>
+        <div class="checkbox-row">
+            <input type="checkbox" id="showLatestArticles" name="showLatestArticles" value="1" {{ data.showLatestArticles ? 'checked' : '' }}>
+            <label for="showLatestArticles">Mostrar últimas noticias publicadas</label>
+        </div>
+    </div>
+
+    <div class="error404-actions">
+        <a href="{{ path('admin_settings_index') }}" class="btn btn-secondary">Volver</a>
+        <a href="{{ path('admin_settings_error_404_preview') }}" class="btn btn-secondary" target="_blank" rel="noopener">Vista previa</a>
+        <button type="submit" class="btn btn-primary">Guardar</button>
+    </div>
+</form>
+{% endblock %}

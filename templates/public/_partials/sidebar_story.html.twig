@@ -1,0 +1,15 @@
+<article class="sidebar-story">
+    <a href="{{ path('public_article_show', {slug: article.slug}) }}" class="sidebar-story-thumb">
+        {% set img = article_usable_featured(article) %}
+        {% if img %}
+            {{ seo_article_image(img, article.title) }}
+        {% endif %}
+    </a>
+    <div class="sidebar-story-body">
+        <h4><a href="{{ path('public_article_show', {slug: article.slug}) }}">{{ article.title }}</a></h4>
+        <div class="meta-line">
+            {% if article.publishedAt %}{{ article.publishedAt|date('d/m/Y') }}{% endif %}
+            {% if article.viewCount > 0 %} · {{ article.viewCount }} lecturas{% endif %}
+        </div>
+    </div>
+</article>

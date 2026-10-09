@@ -1,0 +1,10 @@
+<form class="newsletter-form newsletter-form--footer" method="post" action="{{ path('public_newsletter_subscribe') }}">
+    <input type="hidden" name="_token" value="{{ csrf_token('newsletter_subscribe') }}">
+    <input type="text" name="website" value="" tabindex="-1" autocomplete="off" class="newsletter-honeypot" aria-hidden="true">
+    <input type="email" name="email" required placeholder="Tu correo" aria-label="Correo electrónico">
+    <select name="frequency" aria-label="Periodicidad">
+        <option value="daily">Diario</option>
+        <option value="weekly" selected>Semanal</option>
+    </select>
+    <button type="submit">Suscribirme</button>
+</form>

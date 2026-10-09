@@ -1,0 +1,61 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}General{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .settings-subnav { display: flex; gap: .5rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
+    .settings-subnav a { padding: .4rem .75rem; border-radius: 6px; background: #edf2f7; text-decoration: none; color: var(--text); font-size: .9rem; font-weight: 600; }
+    .settings-subnav a.active { background: var(--primary); color: #fff; }
+</style>
+{% endblock %}
+
+{% block body %}
+<h1>Datos del periódico</h1>
+{% include 'admin/settings/_subnav.html.twig' %}
+
+<form method="post" action="{{ path('admin_settings_general') }}">
+    <input type="hidden" name="_token" value="{{ csrf_token('settings_general') }}">
+
+    <div class="field">
+        <label>Código interno</label>
+        <input type="text" value="{{ data.code }}" disabled>
+        <div class="hint">No editable. Identifica la base de datos del sitio.</div>
+    </div>
+
+    <div class="field">
+        <label for="name">Nombre del periódico *</label>
+        <input type="text" id="name" name="name" value="{{ data.name }}" required class="{{ errors.name is defined ? 'error' : '' }}">
+        {% if errors.name is defined %}<div class="error-msg">{{ errors.name }}</div>{% endif %}
+    </div>
+
+    <div class="field">
+        <label for="domain">Dominio principal *</label>
+        <input type="text" id="domain" name="domain" value="{{ data.domain }}" required class="{{ errors.domain is defined ? 'error' : '' }}">
+        {% if errors.domain is defined %}<div class="error-msg">{{ errors.domain }}</div>{% endif %}
+    </div>
+
+    <div class="field">
+        <label for="locale">Idioma</label>
+        <select id="locale" name="locale">
+            {% for loc, label in {'es': 'Español', 'ca': 'Catalán', 'gl': 'Gallego', 'eu': 'Euskera'} %}
+                <option value="{{ loc }}" {{ data.locale == loc ? 'selected' : '' }}>{{ label }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="field">
+        <label for="timezone">Zona horaria</label>
+        <select id="timezone" name="timezone">
+            {% for tz in ['Europe/Madrid', 'Europe/Lisbon', 'Atlantic/Canary'] %}
+                <option value="{{ tz }}" {{ data.timezone == tz ? 'selected' : '' }}>{{ tz }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="actions">
+        <a href="{{ path('admin_settings_index') }}" class="btn btn-secondary">Volver</a>
+        <button type="submit" class="btn btn-primary">Guardar</button>
+    </div>
+</form>
+{% endblock %}

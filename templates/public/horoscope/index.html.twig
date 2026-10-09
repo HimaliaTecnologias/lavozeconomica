@@ -1,0 +1,55 @@
+{% extends 'public/layout.html.twig' %}
+
+{% block title %}Horóscopo — {{ site.name }}{% endblock %}
+
+{% block body %}
+<div class="horoscope-layout">
+    <div class="horoscope-main">
+        <div class="horoscope-page">
+            <nav class="article-breadcrumb horoscope-breadcrumb">
+                <a href="{{ path('home') }}">Portada</a>
+                · Horóscopo
+            </nav>
+
+            <header class="horoscope-page-head">
+                <div class="horoscope-page-head-row">
+                    <div>
+                        <h1>Horóscopo de hoy</h1>
+                        {% if board %}
+                            <p class="horoscope-page-lead">{{ board.date|date('d/m/Y') }} — predicciones para cada signo.</p>
+                        {% endif %}
+                    </div>
+                    {% if board %}
+                        <p class="horoscope-updated">Actualizado {{ board.generatedAt|date('d/m/Y H:i') }}</p>
+                    {% endif %}
+                </div>
+            </header>
+
+            {% if board and board.signs is not empty %}
+                <div class="horoscope-grid">
+                    {% for sign in board.signs %}
+                        <article class="horoscope-card">
+                            <header class="horoscope-card-head">
+                                <span class="horoscope-symbol" aria-hidden="true">{{ sign.symbol }}</span>
+                                <div>
+                                    <h2><a href="{{ path('public_horoscope_sign', {slug: sign.slug}) }}">{{ sign.name }}</a></h2>
+                                    <p class="horoscope-dates">{{ sign.dateRange }}</p>
+                                </div>
+                            </header>
+                            <h3 class="horoscope-headline">{{ sign.headline }}</h3>
+                            <p class="horoscope-text">{{ sign.text }}</p>
+                            <a href="{{ path('public_horoscope_sign', {slug: sign.slug}) }}" class="horoscope-more">Leer completo</a>
+                        </article>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="horoscope-empty">No hay horóscopo disponible en este momento.</p>
+            {% endif %}
+
+            <aside class="horoscope-disclaimer">
+                <p>Contenido orientativo y de entretenimiento. No sustituye consejo profesional.</p>
+            </aside>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,300 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}SEO{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .seo-form {
+        display: grid;
+        gap: 1rem;
+        max-width: 52rem;
+    }
+    .seo-card {
+        background: #fff;
+        border: 1px solid var(--admin-border);
+        border-radius: var(--admin-radius-sm);
+        padding: 1.1rem 1.2rem 1.25rem;
+    }
+    .seo-card h2 {
+        margin: 0 0 .35rem;
+        font-size: 1rem;
+    }
+    .seo-card > .hint {
+        margin: 0 0 1rem;
+    }
+    .seo-grid-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+    @media (max-width: 720px) {
+        .seo-grid-2 { grid-template-columns: 1fr; }
+    }
+    .checkbox-row {
+        display: flex;
+        align-items: flex-start;
+        gap: .55rem;
+        margin: .55rem 0;
+    }
+    .checkbox-row input { width: auto; margin-top: .2rem; }
+    .field .error {
+        color: #b91c1c;
+        font-size: .82rem;
+        margin-top: .35rem;
+    }
+    .seo-links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .5rem;
+        margin-top: .75rem;
+    }
+    .code-field textarea {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: .82rem;
+        line-height: 1.45;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+{% include 'admin/_page_header.html.twig' with {
+    title: 'SEO',
+    subtitle: 'Metadatos, verificaciones, redes sociales y datos estructurados del sitio público.',
+    breadcrumbs: [
+        { label: 'Panel', path: path('admin_dashboard') },
+        { label: 'Configuración', path: path('admin_settings_index') },
+        { label: 'SEO' },
+    ],
+} %}
+
+{% include 'admin/settings/_subnav.html.twig' %}
+
+<form method="post" action="{{ path('admin_settings_seo') }}" class="seo-form">
+    <input type="hidden" name="_token" value="{{ csrf_token('settings_seo') }}">
+
+    <section class="seo-card">
+        <h2>Portada y metadatos</h2>
+        <p class="hint">Valores por defecto cuando una página no define los suyos. Las noticias usan su titular, entradilla e imagen destacada.</p>
+
+        <div class="field">
+            <label for="homeTitle">Título de portada</label>
+            <input type="text" id="homeTitle" name="homeTitle" value="{{ data.homeTitle|default('') }}" maxlength="120" placeholder="{{ site.name }}">
+            <div class="hint">Si se deja vacío, se usa el nombre del sitio.</div>
+            {% if errors.homeTitle is defined %}<div class="error">{{ errors.homeTitle }}</div>{% endif %}
+        </div>
+
+        <div class="seo-grid-2">
+            <div class="field">
+                <label for="titleSeparator">Separador de título</label>
+                <input type="text" id="titleSeparator" name="titleSeparator" value="{{ data.titleSeparator|default(' — ') }}" maxlength="10">
+                {% if errors.titleSeparator is defined %}<div class="error">{{ errors.titleSeparator }}</div>{% endif %}
+            </div>
+            <div class="field">
+                <label for="defaultRobots">Robots por defecto</label>
+                <select id="defaultRobots" name="defaultRobots">
+                    {% for value, label in robotsPresets %}
+                        <option value="{{ value }}" {{ data.defaultRobots == value ? 'selected' : '' }}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+                {% if errors.defaultRobots is defined %}<div class="error">{{ errors.defaultRobots }}</div>{% endif %}
+            </div>
+        </div>
+
+        <div class="field">
+            <label for="metaDescription">Meta descripción</label>
+            <textarea id="metaDescription" name="metaDescription" rows="3" maxlength="500">{{ data.metaDescription|default('') }}</textarea>
+            <div class="hint">Recomendado ~150–160 caracteres. Si se deja vacío, se usará el eslogan de apariencia.</div>
+            {% if errors.metaDescription is defined %}<div class="error">{{ errors.metaDescription }}</div>{% endif %}
+        </div>
+
+        <div class="field">
+            <label for="metaKeywords">Palabras clave</label>
+            <textarea id="metaKeywords" name="metaKeywords" rows="2" maxlength="1000" placeholder="noticias, madrid, actualidad…">{{ data.metaKeywords|default('') }}</textarea>
+            <div class="hint">Separadas por comas. Impacto limitado en Google; útiles en otros buscadores y herramientas.</div>
+        </div>
+
+        <div class="seo-grid-2">
+            <div class="field">
+                <label for="defaultAuthor">Autor por defecto</label>
+                <input type="text" id="defaultAuthor" name="defaultAuthor" value="{{ data.defaultAuthor|default('') }}" maxlength="120" placeholder="Redacción">
+                <div class="hint">Se usa en noticias sin autor asignado.</div>
+            </div>
+            <div class="field">
+                <label for="themeColor">Color del tema (navegador)</label>
+                <input type="text" id="themeColor" name="themeColor" value="{{ data.themeColor|default('') }}" maxlength="7" placeholder="#b91c1c">
+                {% if errors.themeColor is defined %}<div class="error">{{ errors.themeColor }}</div>{% endif %}
+            </div>
+        </div>
+
+        <div class="field">
+            <label for="defaultOgImage">Imagen social por defecto</label>
+            <input type="text" id="defaultOgImage" name="defaultOgImage" value="{{ data.defaultOgImage|default('') }}" maxlength="500" placeholder="/media/… o https://…">
+            <div class="hint">Open Graph / Twitter cuando la página no tiene imagen propia. Ideal 1200×630 px.</div>
+            {% if errors.defaultOgImage is defined %}<div class="error">{{ errors.defaultOgImage }}</div>{% endif %}
+        </div>
+    </section>
+
+    <section class="seo-card">
+        <h2>Redes sociales</h2>
+        <p class="hint">Facebook e Instagram usan Open Graph; X/Twitter usa Twitter Cards.</p>
+
+        <div class="seo-grid-2">
+            <div class="field">
+                <label for="ogSiteName">Nombre en Open Graph</label>
+                <input type="text" id="ogSiteName" name="ogSiteName" value="{{ data.ogSiteName|default('') }}" maxlength="120" placeholder="{{ site.name }}">
+            </div>
+            <div class="field">
+                <label for="ogLocale">Locale Open Graph</label>
+                <input type="text" id="ogLocale" name="ogLocale" value="{{ data.ogLocale|default('es_ES') }}" maxlength="10">
+            </div>
+        </div>
+
+        <div class="seo-grid-2">
+            <div class="field">
+                <label for="twitterSite">Usuario de X / Twitter</label>
+                <input type="text" id="twitterSite" name="twitterSite" value="{{ data.twitterSite|default('') }}" maxlength="20" placeholder="@medio">
+                <div class="hint">Si se deja vacío, se intenta obtener del pie de página.</div>
+            </div>
+            <div class="field">
+                <label for="facebookAppId">Facebook App ID</label>
+                <input type="text" id="facebookAppId" name="facebookAppId" value="{{ data.facebookAppId|default('') }}" maxlength="64">
+            </div>
+        </div>
+
+        <div class="field">
+            <label for="facebookAdmins">Facebook Admins (IDs)</label>
+            <input type="text" id="facebookAdmins" name="facebookAdmins" value="{{ data.facebookAdmins|default('') }}" maxlength="200" placeholder="123456789,987654321">
+            <div class="hint">IDs de usuario separados por comas (<code>fb:admins</code>).</div>
+        </div>
+    </section>
+
+    <section class="seo-card">
+        <h2>Verificación de propiedad</h2>
+        <p class="hint">Códigos meta de Search Console, Bing, Facebook, Pinterest o Yandex. Solo el token, no la etiqueta completa.</p>
+
+        <div class="seo-grid-2">
+            <div class="field">
+                <label for="googleSiteVerification">Google Search Console</label>
+                <input type="text" id="googleSiteVerification" name="googleSiteVerification" value="{{ data.googleSiteVerification|default('') }}" maxlength="120">
+            </div>
+            <div class="field">
+                <label for="bingSiteVerification">Bing Webmaster</label>
+                <input type="text" id="bingSiteVerification" name="bingSiteVerification" value="{{ data.bingSiteVerification|default('') }}" maxlength="120">
+            </div>
+            <div class="field">
+                <label for="facebookDomainVerification">Facebook Domain Verification</label>
+                <input type="text" id="facebookDomainVerification" name="facebookDomainVerification" value="{{ data.facebookDomainVerification|default('') }}" maxlength="120">
+            </div>
+            <div class="field">
+                <label for="pinterestSiteVerification">Pinterest</label>
+                <input type="text" id="pinterestSiteVerification" name="pinterestSiteVerification" value="{{ data.pinterestSiteVerification|default('') }}" maxlength="120">
+            </div>
+        </div>
+        <div class="field">
+            <label for="yandexVerification">Yandex</label>
+            <input type="text" id="yandexVerification" name="yandexVerification" value="{{ data.yandexVerification|default('') }}" maxlength="120">
+        </div>
+    </section>
+
+    <section class="seo-card">
+        <h2>Organización (JSON-LD)</h2>
+        <p class="hint">Datos del medio para Google Knowledge Graph y rich results.</p>
+
+        <div class="seo-grid-2">
+            <div class="field">
+                <label for="organizationName">Nombre público</label>
+                <input type="text" id="organizationName" name="organizationName" value="{{ data.organizationName|default('') }}" maxlength="160" placeholder="{{ site.name }}">
+            </div>
+            <div class="field">
+                <label for="organizationLegalName">Nombre legal</label>
+                <input type="text" id="organizationLegalName" name="organizationLegalName" value="{{ data.organizationLegalName|default('') }}" maxlength="200">
+            </div>
+        </div>
+
+        <div class="seo-grid-2">
+            <div class="field">
+                <label for="organizationType">Tipo Schema.org</label>
+                <select id="organizationType" name="organizationType">
+                    {% for value, label in organizationTypes %}
+                        <option value="{{ value }}" {{ data.organizationType == value ? 'selected' : '' }}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+                {% if errors.organizationType is defined %}<div class="error">{{ errors.organizationType }}</div>{% endif %}
+            </div>
+            <div class="field">
+                <label for="foundingDate">Fecha de fundación</label>
+                <input type="text" id="foundingDate" name="foundingDate" value="{{ data.foundingDate|default('') }}" maxlength="10" placeholder="1998 o 1998-03-15">
+                {% if errors.foundingDate is defined %}<div class="error">{{ errors.foundingDate }}</div>{% endif %}
+            </div>
+        </div>
+
+        <div class="field">
+            <label for="organizationLogoUrl">Logo de la organización</label>
+            <input type="text" id="organizationLogoUrl" name="organizationLogoUrl" value="{{ data.organizationLogoUrl|default('') }}" maxlength="500" placeholder="Vacío = logo de apariencia">
+            {% if errors.organizationLogoUrl is defined %}<div class="error">{{ errors.organizationLogoUrl }}</div>{% endif %}
+        </div>
+
+        <div class="seo-grid-2">
+            <div class="field">
+                <label for="organizationEmail">Email</label>
+                <input type="email" id="organizationEmail" name="organizationEmail" value="{{ data.organizationEmail|default('') }}" maxlength="180">
+                {% if errors.organizationEmail is defined %}<div class="error">{{ errors.organizationEmail }}</div>{% endif %}
+            </div>
+            <div class="field">
+                <label for="organizationPhone">Teléfono</label>
+                <input type="text" id="organizationPhone" name="organizationPhone" value="{{ data.organizationPhone|default('') }}" maxlength="60">
+            </div>
+        </div>
+
+        <div class="field">
+            <label for="organizationAddress">Dirección</label>
+            <textarea id="organizationAddress" name="organizationAddress" rows="2" maxlength="300">{{ data.organizationAddress|default('') }}</textarea>
+        </div>
+    </section>
+
+    <section class="seo-card">
+        <h2>Datos estructurados y feeds</h2>
+        <label class="checkbox-row">
+            <input type="checkbox" name="enableOrganizationSchema" value="1" {{ data.enableOrganizationSchema ? 'checked' : '' }}>
+            <span>Publicar schema de organización en todas las páginas</span>
+        </label>
+        <label class="checkbox-row">
+            <input type="checkbox" name="enableWebsiteSchema" value="1" {{ data.enableWebsiteSchema ? 'checked' : '' }}>
+            <span>Publicar schema WebSite (con SearchAction) en portada</span>
+        </label>
+        <label class="checkbox-row">
+            <input type="checkbox" name="enableNewsArticleSchema" value="1" {{ data.enableNewsArticleSchema ? 'checked' : '' }}>
+            <span>Publicar schema NewsArticle en noticias</span>
+        </label>
+        <label class="checkbox-row">
+            <input type="checkbox" name="enableRssLinks" value="1" {{ data.enableRssLinks ? 'checked' : '' }}>
+            <span>Incluir enlaces <code>rel="alternate"</code> al RSS en el head</span>
+        </label>
+        <div class="seo-links">
+            <a class="btn btn-secondary btn-sm" href="{{ rssUrl }}" target="_blank" rel="noopener">Abrir RSS</a>
+            <a class="btn btn-secondary btn-sm" href="{{ path('public_sitemap') }}" target="_blank" rel="noopener">Abrir sitemap</a>
+            <a class="btn btn-secondary btn-sm" href="{{ path('public_robots') }}" target="_blank" rel="noopener">Abrir robots.txt</a>
+        </div>
+    </section>
+
+    <section class="seo-card">
+        <h2>robots.txt y head extra</h2>
+        <div class="field code-field">
+            <label for="robotsExtra">Líneas extra de robots.txt</label>
+            <textarea id="robotsExtra" name="robotsExtra" rows="4" maxlength="4000" placeholder="Disallow: /borrador/&#10;Crawl-delay: 10">{{ data.robotsExtra|default('') }}</textarea>
+            <div class="hint">Se añaden tras las reglas por defecto. No hace falta repetir <code>User-agent</code> ni <code>Sitemap</code>.</div>
+            {% if errors.robotsExtra is defined %}<div class="error">{{ errors.robotsExtra }}</div>{% endif %}
+        </div>
+        <div class="field code-field">
+            <label for="extraHeadHtml">HTML extra en &lt;head&gt;</label>
+            <textarea id="extraHeadHtml" name="extraHeadHtml" rows="6" maxlength="20000" placeholder="&lt;meta name=&quot;custom&quot; content=&quot;…&quot;&gt;">{{ data.extraHeadHtml|default('') }}</textarea>
+            <div class="hint">Para meta tags o scripts de terceros no cubiertos arriba. El código de analítica sigue en Estadísticas.</div>
+            {% if errors.extraHeadHtml is defined %}<div class="error">{{ errors.extraHeadHtml }}</div>{% endif %}
+        </div>
+    </section>
+
+    <div>
+        <button type="submit" class="btn btn-primary">Guardar SEO</button>
+    </div>
+</form>
+{% endblock %}

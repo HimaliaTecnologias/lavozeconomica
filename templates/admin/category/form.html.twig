@@ -1,0 +1,133 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}{{ category ? 'Editar categoría' : 'Nueva categoría' }}{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .cat-form {
+        max-width: 44rem;
+        display: grid;
+        gap: 1rem;
+    }
+    .cat-form-card {
+        background: #fff;
+        border: 1px solid var(--admin-border);
+        border-radius: var(--admin-radius-sm);
+        padding: 1.15rem 1.2rem;
+    }
+    .cat-form-card h2 {
+        margin: 0 0 .85rem;
+        font-size: 1rem;
+    }
+    .cat-form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+    .cat-form-actions {
+        display: flex;
+        gap: .5rem;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
+    @media (max-width: 700px) {
+        .cat-form-grid { grid-template-columns: 1fr; }
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+{% set formData = formData|default({}) %}
+{% set nameValue = formData.name|default(category ? category.name : '') %}
+{% set slugValue = formData.slug|default(category ? category.slug : '') %}
+{% set descriptionValue = formData.description|default(category ? category.description : '') %}
+{% set sortOrderValue = formData.sortOrder|default(category ? category.sortOrder : 0) %}
+{% set showInNavChecked = formData.showInNav is defined ? formData.showInNav : (category ? category.showInNav : true) %}
+{% set selectedParent = formData.parentId|default(defaultParentId|default(category and category.parent ? category.parent.id : '')) %}
+
+{% set headerActions %}
+    <a href="{{ path('admin_categories_index') }}" class="btn btn-secondary btn-sm">Volver</a>
+{% endset %}
+
+{% include 'admin/_page_header.html.twig' with {
+    title: category ? 'Editar categoría' : 'Nueva categoría',
+    subtitle: defaultParentId and not category
+        ? 'Creando una subcategoría. Puedes cambiar la categoría padre abajo.'
+        : 'Nombre, URL, jerarquía y visibilidad en el menú.',
+    breadcrumbs: [
+        { label: 'Panel', url: path('admin_dashboard') },
+        { label: 'Categorías', url: path('admin_categories_index') },
+        { label: category ? 'Editar' : 'Nueva' },
+    ],
+    actions: headerActions
+} only %}
+
+<form class="cat-form" method="post" action="{{ category ? path('admin_categories_edit', {id: category.id}) : path('admin_categories_new') }}" novalidate>
+    <input type="hidden" name="_token" value="{{ csrf_token('category_form') }}">
+
+    <div class="cat-form-card">
+        <h2>Datos básicos</h2>
+        <div class="field">
+            <label for="name">Nombre *</label>
+            <input type="text" id="name" name="name" required
+                   value="{{ nameValue }}"
+                   class="{{ errors.name is defined ? 'error' : '' }}">
+            {% if errors.name is defined %}<div class="error-msg">{{ errors.name }}</div>{% endif %}
+        </div>
+
+        <div class="field">
+            <label for="slug">Slug</label>
+            <input type="text" id="slug" name="slug"
+                   value="{{ slugValue }}"
+                   placeholder="Se genera del nombre"
+                   class="{{ errors.slug is defined ? 'error' : '' }}">
+            {% if errors.slug is defined %}<div class="error-msg">{{ errors.slug }}</div>{% endif %}
+            <p class="hint">URL pública: <code>/categoria/{{ slugValue|default('slug') }}</code></p>
+        </div>
+
+        <div class="field">
+            <label for="description">Descripción</label>
+            <textarea id="description" name="description" rows="3">{{ descriptionValue }}</textarea>
+            <p class="hint">Texto introductorio en la página pública de la sección.</p>
+        </div>
+    </div>
+
+    <div class="cat-form-card">
+        <h2>Organización</h2>
+        <div class="field">
+            <label for="parentId">Categoría padre</label>
+            <select id="parentId" name="parentId">
+                <option value="">— Sección principal (sin padre) —</option>
+                {% for parent in parentOptions %}
+                    {% if parent.isRoot %}
+                        <option value="{{ parent.id }}" {{ selectedParent == parent.id ? 'selected' : '' }}>{{ parent.name }}</option>
+                    {% else %}
+                        <option value="{{ parent.id }}" {{ selectedParent == parent.id ? 'selected' : '' }}>— {{ parent.getBreadcrumbLabel() }}</option>
+                    {% endif %}
+                {% endfor %}
+            </select>
+            {% if errors.parentId is defined %}<div class="error-msg">{{ errors.parentId }}</div>{% endif %}
+            <p class="hint">Máximo 3 niveles: sección › subcategoría › sub-subcategoría.</p>
+        </div>
+
+        <div class="cat-form-grid">
+            <div class="field">
+                <label for="sortOrder">Orden</label>
+                <input type="number" id="sortOrder" name="sortOrder" value="{{ sortOrderValue }}" min="0" step="1">
+                <p class="hint">Menor número = más arriba en listas y menú.</p>
+            </div>
+            <div class="field">
+                <label class="checkbox-row" style="margin-top:1.75rem">
+                    <input type="checkbox" name="showInNav" value="1" {{ showInNavChecked ? 'checked' : '' }}>
+                    Mostrar en menú de navegación
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <div class="cat-form-actions">
+        <a href="{{ path('admin_categories_index') }}" class="btn btn-secondary">Cancelar</a>
+        <button type="submit" class="btn btn-primary">Guardar</button>
+    </div>
+</form>
+{% endblock %}

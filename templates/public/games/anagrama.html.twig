@@ -1,0 +1,57 @@
+{% extends 'public/layout.html.twig' %}
+
+{% block title %}Anagrama del día — {{ site.name }}{% endblock %}
+
+{% block body %}
+<div class="games-layout">
+    <div class="games-main">
+        <div class="games-page">
+            {% include 'public/_partials/breadcrumb.html.twig' with {
+                crumbs: [
+                    { label: 'Pasatiempos', url: path('public_games') },
+                    { label: 'Anagrama' },
+                ]
+            } %}
+
+            <header class="games-page-head">
+                <h1>Anagrama del día</h1>
+                {% if puzzle %}
+                    <p class="games-page-meta">
+                        <span>Reto diario</span>
+                        <span class="games-page-meta-sep">·</span>
+                        <span>{{ puzzle.dateKey|date('d/m/Y') }}</span>
+                    </p>
+                {% endif %}
+                <p class="games-page-lead">Ordena las letras para descubrir la palabra escondida.</p>
+            </header>
+
+            {% if puzzle %}
+                <div class="anagrama-wrap" id="anagrama-app"
+                     data-word="{{ puzzle.word|e('html_attr') }}"
+                     data-scrambled="{{ puzzle.scrambled|e('html_attr') }}">
+                    <p class="anagrama-scrambled" id="anagrama-scrambled">{{ puzzle.scrambled }}</p>
+                    <p class="anagrama-hint">Pista: {{ puzzle.hint }}</p>
+                    <div class="anagrama-form">
+                        <input type="text" id="anagrama-input" class="anagrama-input" maxlength="20" autocomplete="off" placeholder="Tu respuesta" aria-label="Tu respuesta">
+                        <button type="button" class="btn-game" id="anagrama-check">Comprobar</button>
+                    </div>
+                    <p class="anagrama-status" id="anagrama-status" aria-live="polite"></p>
+                    {% if config.sudokuEnabled %}
+                        <p class="anagrama-more">
+                            <a href="{{ path('public_games_sudoku') }}">También hoy: Sudoku del día →</a>
+                        </p>
+                    {% endif %}
+                </div>
+            {% else %}
+                <p class="games-empty">No hay anagrama disponible en este momento.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    {% include 'public/games/_sidebar.html.twig' %}
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+    <script src="/js/anagrama.js" defer></script>
+{% endblock %}

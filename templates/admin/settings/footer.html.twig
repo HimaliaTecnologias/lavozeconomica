@@ -1,0 +1,152 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}Pie de página{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .form-section { margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--admin-border, #e2e8f0); }
+    .form-section:first-of-type { margin-top: 0; padding-top: 0; border-top: none; }
+    .form-section h2 { font-size: 1rem; margin: 0 0 .5rem; }
+    .form-section .hint-block { margin: 0 0 1rem; color: var(--admin-muted, #64748b); font-size: .9rem; }
+    .social-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .social-preview {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .5rem;
+        margin-top: 1rem;
+        padding: .85rem 1rem;
+        background: #1a1a1a;
+        border-radius: 8px;
+    }
+    .social-preview-label {
+        font-size: .75rem;
+        color: rgba(255,255,255,.55);
+        margin-bottom: .35rem;
+    }
+    .footer-links-callout {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+        padding: 1rem 1.1rem;
+        border: 1px solid var(--admin-border, #e2e8f0);
+        border-radius: 10px;
+        background: #f8fafc;
+    }
+    .footer-links-callout p { margin: 0; color: var(--admin-muted, #64748b); font-size: .9rem; }
+    .footer-links-callout strong { color: var(--admin-text, #0f172a); }
+    @media (max-width: 640px) { .social-row { grid-template-columns: 1fr; } }
+</style>
+{% endblock %}
+
+{% block body %}
+{% include 'admin/_page_header.html.twig' with {
+    title: 'Pie de página',
+    subtitle: 'Redes sociales y datos internos. La columna pública «Otros medios» se gestiona en Enlaces.',
+    breadcrumbs: [
+        { label: 'Panel', path: path('admin_dashboard') },
+        { label: 'Configuración', path: path('admin_settings_index') },
+        { label: 'Pie' },
+    ],
+} %}
+
+{% include 'admin/settings/_subnav.html.twig' %}
+
+<div class="form-section" style="margin-bottom:1.25rem">
+    <div class="footer-links-callout">
+        <div>
+            <strong>Otros medios</strong>
+            <p>Lista de enlaces a otras webs en la columna del pie. Añade, ordena o quita ítems desde Enlaces.</p>
+        </div>
+        <a href="{{ path('admin_links_index') }}" class="btn btn-secondary btn-sm">Gestionar otros medios</a>
+    </div>
+</div>
+
+<form method="post" action="{{ path('admin_settings_footer') }}">
+    <input type="hidden" name="_token" value="{{ csrf_token('settings_footer') }}">
+
+    <div class="form-section">
+        <h2>Datos internos de contacto</h2>
+        <p class="hint-block">No se muestran como columna en el pie (el enlace «Contacto» está en «El periódico»). Sirven para el formulario y el correo del sitio.</p>
+        <div class="field">
+            <label for="contactEmail">Email</label>
+            <input type="email" id="contactEmail" name="contactEmail" value="{{ data.contactEmail|default('') }}"
+                   class="{{ errors.contactEmail is defined ? 'error' : '' }}">
+            {% if errors.contactEmail is defined %}<div class="error-msg">{{ errors.contactEmail }}</div>{% endif %}
+        </div>
+        <div class="field">
+            <label for="contactPhone">Teléfono</label>
+            <input type="text" id="contactPhone" name="contactPhone" value="{{ data.contactPhone|default('') }}">
+        </div>
+        <div class="field">
+            <label for="contactAddress">Dirección</label>
+            <textarea id="contactAddress" name="contactAddress" rows="2">{{ data.contactAddress|default('') }}</textarea>
+        </div>
+    </div>
+
+    <div class="form-section" id="redes-sociales">
+        <h2>Redes sociales</h2>
+        <p class="hint-block">Pega la URL completa de cada perfil. Solo se mostrarán en el pie las redes que tengan enlace.</p>
+        <div class="social-row">
+            {% for network in socialNetworks %}
+                {% set field = network.key ~ 'Url' %}
+                <div class="field">
+                    <label for="{{ field }}">{{ network.label }}</label>
+                    <input type="url" id="{{ field }}" name="{{ field }}" value="{{ data[field]|default('') }}"
+                           placeholder="{{ network.placeholder }}"
+                           class="{{ errors[field] is defined ? 'error' : '' }}">
+                    {% if errors[field] is defined %}<div class="error-msg">{{ errors[field] }}</div>{% endif %}
+                </div>
+            {% endfor %}
+        </div>
+        <div class="social-preview-wrap">
+            <p class="social-preview-label">Vista previa en el pie (iconos)</p>
+            <div class="social-preview" id="social-preview" aria-hidden="true"></div>
+        </div>
+    </div>
+
+    <div class="actions">
+        <a href="{{ path('admin_settings_index') }}" class="btn btn-secondary">Volver</a>
+        <button type="submit" class="btn btn-primary">Guardar pie de página</button>
+    </div>
+</form>
+
+<script>
+(function () {
+    const fields = document.querySelectorAll('[id$="Url"]');
+    const preview = document.getElementById('social-preview');
+    if (!preview || fields.length === 0) return;
+
+    const labels = {
+        facebookUrl: 'Facebook',
+        twitterUrl: 'X',
+        instagramUrl: 'Instagram',
+        youtubeUrl: 'YouTube',
+        linkedinUrl: 'LinkedIn',
+        whatsappUrl: 'WhatsApp',
+        tiktokUrl: 'TikTok',
+        telegramUrl: 'Telegram',
+    };
+
+    function updatePreview() {
+        preview.innerHTML = '';
+        fields.forEach(function (input) {
+            if (!input.value.trim()) return;
+            const span = document.createElement('span');
+            span.style.cssText = 'display:inline-block;padding:.35rem .7rem;border:1px solid rgba(255,255,255,.25);border-radius:999px;font-size:.72rem;color:#fff;font-weight:700';
+            span.textContent = labels[input.id] || input.id;
+            preview.appendChild(span);
+        });
+        if (!preview.children.length) {
+            preview.innerHTML = '<span style="color:rgba(255,255,255,.45);font-size:.85rem">Sin redes configuradas</span>';
+        }
+    }
+
+    fields.forEach(function (input) {
+        input.addEventListener('input', updatePreview);
+    });
+    updatePreview();
+})();
+</script>
+{% endblock %}

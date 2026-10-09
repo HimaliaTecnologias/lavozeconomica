@@ -1,0 +1,20 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "https://mymedia.local/schemas/himtecmedia/v1.json",
+    "title": "HimtecMedia Story v1",
+    "type": "object",
+    "required": ["id", "title", "format_version"],
+    "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "external_id": { "type": "string" },
+        "format_version": { "type": "string", "pattern": "^1\\." },
+        "title": { "type": "string", "minLength": 1 },
+        "subtitle": { "type": "string" },
+        "body": { "type": "string" },
+        "body_html": { "type": "string" },
+        "geo": { "type": "object" },
+        "classification": { "type": "object" },
+        "tags": { "type": "array", "items": { "type": "string" } }
+    },
+    "additionalProperties": true
+}

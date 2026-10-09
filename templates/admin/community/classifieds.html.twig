@@ -1,0 +1,76 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}Anuncios clasificados{% endblock %}
+
+{% block admin_breadcrumbs %}
+{% import 'admin/_breadcrumbs.html.twig' as breadcrumb %}
+{{ breadcrumb.breadcrumbs([
+    { label: 'Panel', url: path('admin_dashboard') },
+    { label: 'Avisos' },
+]) }}
+{% endblock %}
+
+{% block body %}
+{% include 'admin/_page_header.html.twig' with {
+    title: 'Anuncios de lectores',
+    subtitle: 'Modera avisos y compra-venta publicados por usuarios registrados.',
+    breadcrumbs: [
+        { label: 'Panel', url: path('admin_dashboard') },
+        { label: 'Avisos' },
+    ],
+    actions: '<a href="' ~ path('admin_community_classified_categories') ~ '" class="btn btn-secondary btn-sm">Categorías</a>'
+} only %}
+
+{% include 'admin/community/_subnav.html.twig' %}
+
+{% if ads is empty %}
+    <div class="empty-panel">No hay anuncios todavía.</div>
+{% else %}
+<div class="table-responsive">
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>Categoría</th>
+            <th>Título</th>
+            <th>Usuario</th>
+            <th>Fecha</th>
+            <th>Estado</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for ad in ads %}
+        <tr class="{{ ad.isHidden ? 'row-muted' : '' }}">
+            <td data-label="Categoría">{{ ad.category ? ad.category.name : '—' }}</td>
+            <td data-label="Título">
+                <a href="{{ path('public_classifieds_show', {slug: ad.slug}) }}" target="_blank" rel="noopener">{{ ad.title|slice(0, 50) }}</a>
+            </td>
+            <td data-label="Usuario">{{ ad.userName }}</td>
+            <td data-label="Fecha">{{ ad.createdAt|date('d/m/Y H:i') }}</td>
+            <td data-label="Estado">
+                {% if ad.isHidden %}
+                    <span class="status-badge status-badge--archived">Oculto</span>
+                {% else %}
+                    <span class="status-badge status-badge--published">Visible</span>
+                {% endif %}
+            </td>
+            <td>
+                {% if ad.isHidden %}
+                <form class="inline-form" method="post" action="{{ path('admin_community_classified_restore', {id: ad.id}) }}">
+                    <input type="hidden" name="_token" value="{{ csrf_token('restore_classified' ~ ad.id) }}">
+                    <button type="submit" class="btn btn-secondary btn-sm">Restaurar</button>
+                </form>
+                {% else %}
+                <form class="inline-form" method="post" action="{{ path('admin_community_classified_hide', {id: ad.id}) }}">
+                    <input type="hidden" name="_token" value="{{ csrf_token('hide_classified' ~ ad.id) }}">
+                    <button type="submit" class="btn btn-secondary btn-sm">Ocultar</button>
+                </form>
+                {% endif %}
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+</div>
+{% endif %}
+{% endblock %}

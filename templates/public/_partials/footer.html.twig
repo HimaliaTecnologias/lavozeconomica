@@ -1,0 +1,113 @@
+<footer class="site-footer" data-tone="{{ theme.footerTone|default('dark') }}">
+    <div class="site-footer-top">
+        <div class="site-footer-inner site-footer-grid">
+            <div class="footer-brand-col">
+                <p class="footer-brand">
+                    <a href="{{ path('home') }}">
+                        {% set footerUseLightLogo = theme.footerTone|default('dark') == 'light' %}
+                        {% if footerUseLightLogo and theme.logoUrl|default('') %}
+                            {{ seo_img(theme.logoUrl, site.name, {class: 'footer-logo-img'}) }}
+                        {% elseif theme.logoDarkUrl|default('') %}
+                            {{ seo_img(theme.logoDarkUrl, site.name, {class: 'footer-logo-img'}) }}
+                        {% elseif theme.logoUrl|default('') %}
+                            {{ seo_img(theme.logoUrl, site.name, {class: 'footer-logo-img'}) }}
+                        {% else %}
+                            {{ site ? site.name : 'MyMediaCMS' }}
+                        {% endif %}
+                    </a>
+                </p>
+                {% if theme and theme.tagline %}
+                    <p class="footer-tagline">{{ theme.tagline }}</p>
+                {% elseif appearance is defined and appearance.metaDescription %}
+                    <p class="footer-tagline">{{ appearance.metaDescription|slice(0, 160) }}</p>
+                {% endif %}
+                {% if footer.hasSocialLinks %}
+                    <p class="footer-col-title footer-social-title">Síguenos</p>
+                    {% include 'public/_partials/footer_social.html.twig' with {
+                        footer: footer,
+                        show_labels: true,
+                        aria_label: 'Redes sociales del periódico',
+                    } only %}
+                {% endif %}
+            </div>
+
+            <div class="footer-col">
+                <p class="footer-col-title">Secciones</p>
+                <ul class="footer-links-list">
+                    {% include 'public/_partials/footer_sections_nav.html.twig' %}
+                </ul>
+            </div>
+
+            <div class="footer-col">
+                <p class="footer-col-title">El periódico</p>
+                <ul class="footer-links-list">
+                    {% include 'public/_partials/footer_legal_nav.html.twig' %}
+                </ul>
+            </div>
+
+            <div class="footer-col footer-col--newsletter">
+                <p class="footer-col-title">Boletín</p>
+                <p class="footer-newsletter-text">Recibe las principales noticias en tu correo.</p>
+                {% include 'public/newsletter/_form_footer.html.twig' %}
+                <p class="footer-newsletter-more"><a href="{{ path('public_newsletter_index') }}">Personalizar secciones →</a></p>
+            </div>
+        </div>
+
+        {% if siteLinks.footerInterest is not empty %}
+        <div class="site-footer-links-row">
+            <div class="footer-links-group footer-links-group--interest">
+                <p class="footer-col-title">Enlaces de interés</p>
+                <ul class="footer-links-list">
+                    {% for link in siteLinks.footerInterest %}
+                        <li><a href="{{ link.url }}" target="_blank" rel="noopener noreferrer">{{ link.title }}</a></li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if siteLinks.footerOtherMedia is not empty %}
+    <div class="site-footer-network" aria-label="Otros medios del grupo">
+        <div class="site-footer-inner site-footer-network-inner">
+            <p class="site-footer-network-label">Otros medios</p>
+            <ul class="footer-media-list">
+                {% for link in siteLinks.footerOtherMedia %}
+                    <li>
+                        <a href="{{ link.url }}" target="_blank" rel="noopener noreferrer" class="footer-media-link" title="{{ link.title }}">
+                            {% if link.logoUrl %}
+                                {{ seo_img(link.logoUrl, link.title, {class: 'footer-media-logo'}) }}
+                            {% else %}
+                                <span class="footer-media-name">{{ link.title }}</span>
+                            {% endif %}
+                        </a>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="site-footer-bottom">
+        <div class="site-footer-inner site-footer-bottom-inner">
+            <p class="footer-copy">
+                © {{ "now"|date('Y') }} {{ site ? site.name : 'MyMediaCMS' }}. Todos los derechos reservados.
+                <span class="footer-cms-version">CMS v1.0.0 — HimtecMedia</span>
+            </p>
+            <div class="footer-bottom-end">
+                {% include 'public/_partials/footer_social.html.twig' with {
+                    footer: footer,
+                    class: ' footer-social--bottom',
+                    aria_label: 'Síguenos en redes sociales',
+                } only %}
+                <nav class="footer-legal-nav" aria-label="Legal">
+                {% for item in footerNavLegal|default([]) %}
+                    <a href="{{ item.url }}"
+                       {% if item.openInNewTab %}target="_blank" rel="noopener noreferrer"{% endif %}
+                    >{{ item.label }}</a>
+                {% endfor %}
+                </nav>
+            </div>
+        </div>
+    </div>
+</footer>

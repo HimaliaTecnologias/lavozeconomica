@@ -1,0 +1,67 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}Galerías{% endblock %}
+
+{% block body %}
+{% set headerActions %}
+    <a href="{{ path('admin_galleries_new') }}" class="btn btn-primary btn-sm">Nueva galería</a>
+{% endset %}
+{% include 'admin/_page_header.html.twig' with {
+    title: 'Galerías',
+    subtitle: 'Crea galerías aquí o al editar una noticia. Puedes reutilizar la misma galería en varias noticias.',
+    breadcrumbs: [
+        { label: 'Panel', url: path('admin_dashboard') },
+        { label: 'Galerías' },
+    ],
+    actions: headerActions
+} only %}
+
+{% if galleries is empty %}
+    <div class="empty-panel">
+        <p>No hay galerías todavía.</p>
+        <a href="{{ path('admin_galleries_new') }}" class="btn btn-primary btn-sm">Crear la primera</a>
+    </div>
+{% else %}
+<div class="table-responsive">
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>Título</th>
+            <th>Imágenes</th>
+            <th>Noticias</th>
+            <th>Actualizada</th>
+            <th class="col-actions"></th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for gallery in galleries %}
+        <tr>
+            <td data-label="Título">
+                <strong>{{ gallery.title }}</strong>
+                {% if gallery.images is not empty %}
+                    <div style="display:flex;gap:.35rem;margin-top:.4rem;flex-wrap:wrap">
+                        {% for img in gallery.images|slice(0, 4) %}
+                            <img src="{{ img.url }}" alt="" width="40" height="40" style="width:40px;height:40px;object-fit:cover;border-radius:4px;border:1px solid var(--admin-border, #ddd)">
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </td>
+            <td data-label="Imágenes">{{ gallery.images|length }}</td>
+            <td data-label="Noticias">{{ articleCounts[gallery.id]|default(0) }}</td>
+            <td class="col-date" data-label="Actualizada">{{ gallery.updatedAt|date('d/m/Y H:i') }}</td>
+            <td class="col-actions">
+                <div class="table-actions">
+                    <a href="{{ path('admin_galleries_edit', {id: gallery.id}) }}" class="btn btn-secondary btn-sm">Editar</a>
+                    <form class="inline-form" method="post" action="{{ path('admin_galleries_delete', {id: gallery.id}) }}" onsubmit="return confirm('¿Eliminar esta galería? Las noticias enlazadas perderán la galería.');">
+                        <input type="hidden" name="_token" value="{{ csrf_token('delete_gallery' ~ gallery.id) }}">
+                        <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
+                    </form>
+                </div>
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+</div>
+{% endif %}
+{% endblock %}

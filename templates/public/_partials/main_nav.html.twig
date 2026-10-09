@@ -1,0 +1,23 @@
+{% for item in mainNav|default([]) %}
+    {% set isActive = nav_item_active(item) %}
+    {% if item.children is not empty %}
+        <div class="nav-item nav-item--dropdown" data-nav-dropdown>
+            <a href="{{ item.url }}" class="nav-item-link {{ isActive ? 'active' : '' }} {{ item.cssClass }}"
+               aria-haspopup="true" aria-expanded="false" data-nav-dropdown-trigger
+               {% if item.url starts with '#' %}onclick="return false"{% endif %}
+            >{{ item.label }}</a>
+            <div class="nav-submenu" role="menu">
+                {% for child in item.children %}
+                    <a href="{{ child.url }}" class="{{ nav_item_active(child) ? 'active' : '' }}" role="menuitem"
+                       {% if child.openInNewTab %}target="_blank" rel="noopener noreferrer"{% endif %}
+                    >{{ child.label }}</a>
+                {% endfor %}
+            </div>
+        </div>
+    {% else %}
+        <a href="{{ item.url }}"
+           class="{{ item.cssClass }}{{ isActive ? ' active' : '' }}"
+           {% if item.openInNewTab %}target="_blank" rel="noopener noreferrer"{% endif %}
+        >{{ item.label }}</a>
+    {% endif %}
+{% endfor %}

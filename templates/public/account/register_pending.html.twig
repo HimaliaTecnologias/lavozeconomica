@@ -1,0 +1,54 @@
+{% extends 'public/layout.html.twig' %}
+
+{% block title %}Verifica tu correo — {{ site.name }}{% endblock %}
+
+{% block body %}
+<div class="account-page account-page--auth">
+    {% include 'public/account/_breadcrumb.html.twig' with {
+        showAccountRoot: false,
+        breadcrumbCurrent: 'Verificar correo',
+    } only %}
+    <div class="account-card">
+        <h1>Revisa tu correo</h1>
+        <p class="account-intro">
+            Hemos enviado un enlace de verificación
+            {% if pendingEmail %}a <strong>{{ pendingEmail }}</strong>{% endif %}.
+            Ábrelo para activar tu cuenta y poder iniciar sesión.
+        </p>
+
+        <p class="account-hint">Si no lo ves, revisa la carpeta de spam o solicita un nuevo enlace.</p>
+
+        <form method="post" action="{{ path('cuenta_resend_verification') }}" class="account-form account-form--resend">
+            <input type="hidden" name="_token" value="{{ csrf_token('resend_verification') }}">
+            <input type="text" name="website" value="" class="account-honeypot" tabindex="-1" autocomplete="off" aria-hidden="true">
+
+            <div class="account-field">
+                <label for="resend-email">Correo</label>
+                <input type="email" id="resend-email" name="email" required value="{{ pendingEmail }}">
+            </div>
+
+            {% if usesRecaptcha %}
+                <div class="account-field account-captcha">
+                    <div class="g-recaptcha" data-sitekey="{{ recaptchaSiteKey }}"></div>
+                </div>
+            {% elseif captchaChallenge %}
+                <div class="account-field account-captcha">
+                    <label for="resend-captcha">Verificación anti-spam *</label>
+                    <p class="captcha-question">¿Cuánto es {{ captchaChallenge.question }}?</p>
+                    <input type="text" id="resend-captcha" name="captcha_answer" required inputmode="numeric" autocomplete="off">
+                </div>
+            {% endif %}
+
+            <button type="submit" class="account-submit account-submit--inline">Reenviar enlace</button>
+        </form>
+
+        <p class="account-footer-link"><a href="{{ path('cuenta_login') }}">Volver a iniciar sesión</a></p>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+{% if usesRecaptcha %}
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+{% endif %}
+{% endblock %}

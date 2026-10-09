@@ -1,0 +1,47 @@
+{% extends 'public/layout.html.twig' %}
+
+{% block title %}Horóscopo {{ sign.name }} — {{ site.name }}{% endblock %}
+
+{% block body %}
+<div class="horoscope-layout">
+    <div class="horoscope-main">
+        <div class="horoscope-page">
+            <nav class="article-breadcrumb horoscope-breadcrumb">
+                <a href="{{ path('home') }}">Portada</a>
+                · <a href="{{ path('public_horoscope') }}">Horóscopo</a>
+                · {{ sign.name }}
+            </nav>
+
+            <article class="horoscope-detail">
+                <header class="horoscope-detail-head">
+                    <span class="horoscope-symbol horoscope-symbol--lg" aria-hidden="true">{{ sign.symbol }}</span>
+                    <div>
+                        <h1>Horóscopo de {{ sign.name }}</h1>
+                        <p class="horoscope-dates">{{ sign.dateRange }}</p>
+                        {% if board %}
+                            <p class="horoscope-page-lead">{{ board.date|date('d/m/Y') }}</p>
+                        {% endif %}
+                    </div>
+                </header>
+                <h2 class="horoscope-detail-headline">{{ sign.headline }}</h2>
+                <div class="horoscope-detail-body">
+                    <p>{{ sign.text }}</p>
+                </div>
+            </article>
+
+            {% if board and board.signs is not empty %}
+                <section class="horoscope-other">
+                    <h2 class="section-label">Otros signos</h2>
+                    <div class="horoscope-other-links">
+                        {% for other in board.signs %}
+                            {% if other.slug != sign.slug %}
+                                <a href="{{ path('public_horoscope_sign', {slug: other.slug}) }}">{{ other.symbol }} {{ other.name }}</a>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </section>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

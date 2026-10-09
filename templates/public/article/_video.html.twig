@@ -1,0 +1,14 @@
+{% if video %}
+    <figure class="article-video article-video--{{ variant|default('inline') }}">
+        <video controls preload="metadata" playsinline
+               {% if video.width %}width="{{ video.width }}"{% endif %}
+               {% if video.height %}height="{{ video.height }}"{% endif %}>
+            <source src="{{ video.publicPath }}" type="{{ video.mimeType }}">
+        </video>
+        {% if video.caption %}
+            <figcaption>{{ video.caption }}</figcaption>
+        {% elseif video.title %}
+            <figcaption>{{ video.title }}</figcaption>
+        {% endif %}
+    </figure>
+{% endif %}

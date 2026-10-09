@@ -1,0 +1,33 @@
+<article class="portada-hero{{ hero_modifier|default('') }}">
+    <div class="portada-hero-media-wrap">
+        <a href="{{ path('public_article_show', {slug: hero.slug}) }}" class="portada-hero-media{{ hero_media_modifier|default('') }}">
+            {% set heroImg = article_usable_featured(hero) %}
+            {% if heroImg %}
+                {{ seo_article_image(heroImg, hero.title, {loading: 'eager', fetchpriority: 'high'}) }}
+            {% else %}
+                <div class="portada-hero-media-placeholder">{{ site.name }}</div>
+            {% endif %}
+            <div class="portada-hero-overlay"></div>
+        </a>
+        <div class="portada-hero-footer">
+            <div class="portada-hero-content">
+                {% if hero.category %}
+                    <a href="{{ path('public_category_show', {slug: hero.category.slug}) }}" class="cat-pill portada-hero-cat">{{ hero.category.name }}</a>
+                {% endif %}
+                <h2 class="portada-hero-title"><a href="{{ path('public_article_show', {slug: hero.slug}) }}">{{ hero.title }}</a></h2>
+                {% set heroLead = hero.lead ?: hero.subtitle %}
+                {% if heroLead %}
+                    <p class="portada-hero-lead">{{ heroLead|length > 220 ? heroLead|slice(0, 217) ~ '…' : heroLead }}</p>
+                {% endif %}
+                {% if hero.publishedAt %}
+                    <div class="meta-line portada-hero-meta">{{ hero.publishedAt|date('d/m/Y H:i') }}</div>
+                {% endif %}
+            </div>
+            {% include 'public/_partials/home_related_links.html.twig' with {
+                article: hero,
+                modifier: ' home-related-links--hero',
+                limit: 3,
+            } %}
+        </div>
+    </div>
+</article>

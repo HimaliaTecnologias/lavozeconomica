@@ -1,0 +1,282 @@
+{% set seo = siteSeo|default(null) %}
+{% set siteName = site ? site.name : 'La Voz Económica' %}
+{% set brandName = seo ? seo.resolvedSiteName(siteName) : siteName %}
+{% set defaultDesc = seo and seo.metaDescription ? seo.metaDescription : (appearance.metaDescription|default(appearance.tagline|default(siteName))) %}
+{% set pageTitle = seoTitle|default(seo ? seo.resolvedHomeTitle(siteName) : siteName) %}
+{% set pageDescription = (seoDescription|default(defaultDesc))|striptags|slice(0, 200) %}
+{% set pageUrl = seo_canonical_url(seoCanonical|default(null)) %}
+{% set pageType = seoType|default('website') %}
+{% set pageRobots = seo ? seo.resolvedRobots(seoRobots|default(null)) : (seoRobots|default('index, follow')) %}
+{% set metaKeywords = seoKeywords|default(seo ? seo.metaKeywords : appearance.metaKeywords|default('')) %}
+{% set authorName = seoAuthor|default(seo ? seo.defaultAuthor : '') %}
+{% if authorName is empty and seo and seo.defaultAuthor %}
+    {% set authorName = seo.defaultAuthor %}
+{% endif %}
+
+{% set fallbackLogo = '' %}
+{% if theme is defined and theme %}
+    {% set fallbackLogo = theme.logoUrl|default(theme.logoMarkUrl|default('')) %}
+{% endif %}
+{% set rawImage = seoImage|default('') %}
+{% if rawImage == '' and seo %}
+    {% set rawImage = seo.resolvedDefaultImage(fallbackLogo) %}
+{% elseif rawImage == '' %}
+    {% set rawImage = fallbackLogo %}
+{% endif %}
+{% set pageImage = '' %}
+{% if rawImage %}
+    {% if rawImage starts with 'http://' or rawImage starts with 'https://' %}
+        {% set pageImage = rawImage %}
+    {% elseif rawImage starts with '//' %}
+        {% set pageImage = app.request.scheme ~ ':' ~ rawImage %}
+    {% else %}
+        {% set pageImage = absolute_url(rawImage) %}
+    {% endif %}
+{% endif %}
+{% set pageImageAlt = seoImageAlt|default(pageTitle) %}
+{% set twitterSite = seoTwitterSite|default(null) %}
+{% if twitterSite is empty and seo %}
+    {% set twitterSite = seo.resolvedTwitterHandle(footer.twitterHandle|default(null)) %}
+{% elseif twitterSite is empty and footer is defined %}
+    {% set twitterSite = footer.twitterHandle %}
+{% endif %}
+{% set orgLogoRaw = seo ? seo.resolvedOrganizationLogo(fallbackLogo) : fallbackLogo %}
+{% set orgLogo = '' %}
+{% if orgLogoRaw %}
+    {% if orgLogoRaw starts with 'http://' or orgLogoRaw starts with 'https://' %}
+        {% set orgLogo = orgLogoRaw %}
+    {% else %}
+        {% set orgLogo = absolute_url(orgLogoRaw) %}
+    {% endif %}
+{% endif %}
+{% set orgName = seo ? seo.resolvedOrganizationName(siteName) : siteName %}
+
+{# Metadatos básicos #}
+<meta name="description" content="{{ pageDescription|slice(0, 160) }}">
+{% if metaKeywords %}
+<meta name="keywords" content="{{ metaKeywords }}">
+{% endif %}
+{% if authorName %}
+<meta name="author" content="{{ authorName }}">
+{% endif %}
+<meta name="robots" content="{{ pageRobots }}">
+<meta name="googlebot" content="{{ pageRobots }}">
+{% if pageType == 'article' and pageRobots starts with 'index' %}
+<meta name="googlebot-news" content="index, follow">
+{% endif %}
+{% if pageUrl %}
+<link rel="canonical" href="{{ pageUrl }}">
+{% endif %}
+<link rel="sitemap" type="application/xml" title="Sitemap" href="{{ absolute_url(path('public_sitemap')) }}">
+<link rel="sitemap" type="application/xml" title="News Sitemap" href="{{ absolute_url(path('public_sitemap_news')) }}">
+{% if seo and seo.themeColor %}
+<meta name="theme-color" content="{{ seo.themeColor }}">
+<meta name="msapplication-TileColor" content="{{ seo.themeColor }}">
+{% endif %}
+
+{# Verificaciones #}
+{% if seo and seo.googleSiteVerification %}
+<meta name="google-site-verification" content="{{ seo.googleSiteVerification }}">
+{% endif %}
+{% if seo and seo.bingSiteVerification %}
+<meta name="msvalidate.01" content="{{ seo.bingSiteVerification }}">
+{% endif %}
+{% if seo and seo.facebookDomainVerification %}
+<meta name="facebook-domain-verification" content="{{ seo.facebookDomainVerification }}">
+{% endif %}
+{% if seo and seo.pinterestSiteVerification %}
+<meta name="pinterest-site-verification" content="{{ seo.pinterestSiteVerification }}">
+{% endif %}
+{% if seo and seo.yandexVerification %}
+<meta name="yandex-verification" content="{{ seo.yandexVerification }}">
+{% endif %}
+
+{# Open Graph — Facebook e Instagram #}
+<meta property="og:site_name" content="{{ brandName }}">
+<meta property="og:locale" content="{{ seo ? seo.ogLocale : 'es_ES' }}">
+<meta property="og:title" content="{{ pageTitle }}">
+<meta property="og:description" content="{{ pageDescription }}">
+<meta property="og:url" content="{{ pageUrl }}">
+<meta property="og:type" content="{{ pageType }}">
+{% if pageImage %}
+<meta property="og:image" content="{{ pageImage }}">
+<meta property="og:image:alt" content="{{ pageImageAlt }}">
+<meta property="og:image:secure_url" content="{{ pageImage }}">
+{% endif %}
+{% if seo and seo.facebookAppId %}
+<meta property="fb:app_id" content="{{ seo.facebookAppId }}">
+{% endif %}
+{% if seo and seo.facebookAdmins %}
+    {% for adminId in seo.facebookAdmins|split(',') %}
+        {% set adminId = adminId|trim %}
+        {% if adminId %}
+<meta property="fb:admins" content="{{ adminId }}">
+        {% endif %}
+    {% endfor %}
+{% endif %}
+{% if pageType == 'article' %}
+    {% if footer is defined and footer.facebookUrl %}
+<meta property="article:publisher" content="{{ footer.facebookUrl }}">
+    {% endif %}
+    {% if seoPublishedTime is defined and seoPublishedTime %}
+<meta property="article:published_time" content="{{ seoPublishedTime }}">
+    {% endif %}
+    {% if seoModifiedTime is defined and seoModifiedTime %}
+<meta property="article:modified_time" content="{{ seoModifiedTime }}">
+    {% endif %}
+    {% if authorName %}
+<meta property="article:author" content="{{ authorName }}">
+    {% endif %}
+    {% if seoSection is defined and seoSection %}
+<meta property="article:section" content="{{ seoSection }}">
+    {% endif %}
+    {% for tag in seoTags|default([]) %}
+<meta property="article:tag" content="{{ tag }}">
+    {% endfor %}
+{% endif %}
+{% if footer is defined and footer.facebookUrl %}
+<meta property="og:see_also" content="{{ footer.facebookUrl }}">
+{% endif %}
+{% if footer is defined and footer.instagramUrl %}
+<meta property="og:see_also" content="{{ footer.instagramUrl }}">
+{% endif %}
+{% if footer is defined and footer.twitterUrl %}
+<meta property="og:see_also" content="{{ footer.twitterUrl }}">
+{% endif %}
+
+{# Twitter / X Cards #}
+<meta name="twitter:card" content="{{ pageImage ? 'summary_large_image' : 'summary' }}">
+<meta name="twitter:title" content="{{ pageTitle }}">
+<meta name="twitter:description" content="{{ pageDescription }}">
+{% if pageImage %}
+<meta name="twitter:image" content="{{ pageImage }}">
+<meta name="twitter:image:alt" content="{{ pageImageAlt }}">
+{% endif %}
+{% if twitterSite %}
+<meta name="twitter:site" content="{{ twitterSite }}">
+{% endif %}
+{% if seoTwitterCreator is defined and seoTwitterCreator %}
+<meta name="twitter:creator" content="{{ seoTwitterCreator }}">
+{% elseif twitterSite %}
+<meta name="twitter:creator" content="{{ twitterSite }}">
+{% endif %}
+
+{# Feeds RSS #}
+{% if not seo or seo.enableRssLinks %}
+<link rel="alternate" type="application/rss+xml" title="{{ brandName }} — RSS" href="{{ absolute_url(path('public_rss')) }}">
+{% if seoRssUrl is defined and seoRssUrl %}
+<link rel="alternate" type="application/rss+xml" title="{{ seoRssTitle|default(pageTitle) }} — RSS" href="{{ seoRssUrl }}">
+{% endif %}
+{% endif %}
+
+{# JSON-LD Organization #}
+{% if seo and seo.enableOrganizationSchema %}
+{% set orgLd = {
+    '@context': 'https://schema.org',
+    '@type': seo.organizationTypeSafe(),
+    'name': orgName,
+    'url': absolute_url(path('home'))
+} %}
+{% if seo.organizationLegalName %}
+    {% set orgLd = orgLd|merge({'legalName': seo.organizationLegalName}) %}
+{% endif %}
+{% if orgLogo %}
+    {% set orgLd = orgLd|merge({'logo': {'@type': 'ImageObject', 'url': orgLogo}, 'image': orgLogo}) %}
+{% endif %}
+{% if seo.organizationEmail %}
+    {% set orgLd = orgLd|merge({'email': seo.organizationEmail}) %}
+{% endif %}
+{% if seo.organizationPhone %}
+    {% set orgLd = orgLd|merge({'telephone': seo.organizationPhone}) %}
+{% endif %}
+{% if seo.organizationAddress %}
+    {% set orgLd = orgLd|merge({'address': {'@type': 'PostalAddress', 'streetAddress': seo.organizationAddress}}) %}
+{% endif %}
+{% if seo.foundingDate %}
+    {% set orgLd = orgLd|merge({'foundingDate': seo.foundingDate}) %}
+{% endif %}
+{% set sameAs = [] %}
+{% if footer is defined %}
+    {% for link in footer.socialLinks %}
+        {% set sameAs = sameAs|merge([link.url]) %}
+    {% endfor %}
+{% endif %}
+{% if sameAs %}
+    {% set orgLd = orgLd|merge({'sameAs': sameAs}) %}
+{% endif %}
+<script type="application/ld+json">{{ orgLd|json_encode|raw }}</script>
+{% endif %}
+
+{# JSON-LD WebSite (portada) #}
+{% if seo and seo.enableWebsiteSchema and app.request.attributes.get('_route') == 'home' %}
+{% set websiteLd = {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    'name': brandName,
+    'url': absolute_url(path('home')),
+    'description': pageDescription,
+    'inLanguage': 'es-ES',
+    'potentialAction': {
+        '@type': 'SearchAction',
+        'target': {
+            '@type': 'EntryPoint',
+            'urlTemplate': absolute_url(path('public_search')) ~ '?q={search_term_string}'
+        },
+        'query-input': 'required name=search_term_string'
+    }
+} %}
+{% if orgLogo %}
+    {% set websiteLd = websiteLd|merge({'publisher': {'@type': 'Organization', 'name': orgName, 'logo': {'@type': 'ImageObject', 'url': orgLogo}}}) %}
+{% endif %}
+<script type="application/ld+json">{{ websiteLd|json_encode|raw }}</script>
+{% endif %}
+
+{# JSON-LD NewsArticle #}
+{% if pageType == 'article' and pageUrl and (not seo or seo.enableNewsArticleSchema) %}
+{% set jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'NewsArticle',
+    'headline': pageTitle|striptags|slice(0, 110),
+    'description': pageDescription,
+    'url': pageUrl,
+    'mainEntityOfPage': pageUrl,
+    'datePublished': seoPublishedTime|default(null),
+    'dateModified': seoModifiedTime|default(seoPublishedTime|default(null)),
+    'author': {
+        '@type': authorName ? 'Person' : 'Organization',
+        'name': authorName|default(orgName)
+    },
+    'publisher': {
+        '@type': 'Organization',
+        'name': orgName
+    },
+    'isAccessibleForFree': true
+} %}
+{% if pageImage %}
+    {% set jsonLd = jsonLd|merge({'image': [pageImage]}) %}
+{% endif %}
+{% if seoSection is defined and seoSection %}
+    {% set jsonLd = jsonLd|merge({'articleSection': seoSection}) %}
+{% endif %}
+{% if seoTags is defined and seoTags %}
+    {% set jsonLd = jsonLd|merge({'keywords': seoTags|join(', ')}) %}
+{% endif %}
+{% if orgLogo %}
+    {% set jsonLd = jsonLd|merge({
+        'publisher': {
+            '@type': 'Organization',
+            'name': orgName,
+            'logo': {
+                '@type': 'ImageObject',
+                'url': orgLogo
+            }
+        }
+    }) %}
+{% endif %}
+<script type="application/ld+json">{{ jsonLd|json_encode|raw }}</script>
+{% endif %}
+
+{# HTML extra configurado en admin #}
+{% if seo and seo.extraHeadHtml %}
+{{ seo.extraHeadHtml|raw }}
+{% endif %}

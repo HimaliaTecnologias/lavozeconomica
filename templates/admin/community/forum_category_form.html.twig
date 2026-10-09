@@ -1,0 +1,54 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}{{ category ? 'Editar categoría del foro' : 'Nueva categoría del foro' }}{% endblock %}
+
+{% block body %}
+{% set formData = formData|default({}) %}
+{% set nameValue = formData.name|default(category ? category.name : '') %}
+{% set slugValue = formData.slug|default(category ? category.slug : '') %}
+{% set descriptionValue = formData.description|default(category ? category.description : '') %}
+{% set sortOrderValue = formData.sortOrder|default(category ? category.sortOrder : 0) %}
+{% set isActiveChecked = formData.isActive is defined ? formData.isActive : (category ? category.isActive : true) %}
+
+<h1>{{ category ? 'Editar categoría del foro' : 'Nueva categoría del foro' }}</h1>
+
+<form method="post" action="{{ category ? path('admin_community_forum_category_edit', {id: category.id}) : path('admin_community_forum_category_new') }}" novalidate>
+    <input type="hidden" name="_token" value="{{ csrf_token('forum_category_form') }}">
+
+    <div class="field">
+        <label for="name">Nombre *</label>
+        <input type="text" id="name" name="name" required value="{{ nameValue }}" class="{{ errors.name is defined ? 'error' : '' }}">
+        {% if errors.name is defined %}<div class="error-msg">{{ errors.name }}</div>{% endif %}
+    </div>
+
+    <div class="field">
+        <label for="slug">Slug</label>
+        <input type="text" id="slug" name="slug" value="{{ slugValue }}" placeholder="Se genera del nombre" class="{{ errors.slug is defined ? 'error' : '' }}">
+        {% if errors.slug is defined %}<div class="error-msg">{{ errors.slug }}</div>{% endif %}
+        <div class="hint">URL pública: /foro/categoria/<code>slug</code></div>
+    </div>
+
+    <div class="field">
+        <label for="description">Descripción</label>
+        <textarea id="description" name="description" rows="3">{{ descriptionValue }}</textarea>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+        <div class="field">
+            <label for="sortOrder">Orden</label>
+            <input type="number" id="sortOrder" name="sortOrder" value="{{ sortOrderValue }}" min="0" step="1">
+        </div>
+        <div class="field">
+            <label class="checkbox-row" style="margin-top:1.75rem">
+                <input type="checkbox" name="isActive" value="1" {{ isActiveChecked ? 'checked' : '' }}>
+                Categoría visible en la web
+            </label>
+        </div>
+    </div>
+
+    <div class="actions">
+        <a href="{{ path('admin_community_forum_categories') }}" class="btn btn-secondary">Cancelar</a>
+        <button type="submit" class="btn btn-primary">Guardar</button>
+    </div>
+</form>
+{% endblock %}

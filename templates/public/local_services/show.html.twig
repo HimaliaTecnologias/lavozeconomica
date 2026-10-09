@@ -1,0 +1,98 @@
+{% extends 'public/layout.html.twig' %}
+
+{% block title %}{{ seoTitle }}{% endblock %}
+
+{% block body %}
+<div class="archive-layout">
+    <div class="archive-main local-services-page">
+        <nav class="article-breadcrumb">
+            <a href="{{ path('home') }}">Portada</a> · {{ serviceTitle }}
+        </nav>
+
+        <header class="archive-page-head">
+            <h1>{{ serviceTitle }}</h1>
+            <p class="archive-page-intro">{{ serviceIntro }}</p>
+        </header>
+
+        <form method="post" action="{{ path(serviceRoute) }}" class="local-services-cp-form" novalidate>
+            <input type="hidden" name="_token" value="{{ csrf_token('local_services_cp') }}">
+            <label for="postalCode">Código postal</label>
+            <div class="local-services-cp-row">
+                <input
+                    type="text"
+                    id="postalCode"
+                    name="postalCode"
+                    value="{{ postalInput }}"
+                    maxlength="5"
+                    inputmode="numeric"
+                    pattern="[0-9]{5}"
+                    placeholder="28001"
+                    required
+                    autocomplete="postal-code"
+                    class="{{ postalError ? 'error' : '' }}"
+                >
+                <button type="submit" class="btn btn-primary">Consultar</button>
+            </div>
+            {% if postalError %}
+                <p class="local-services-error">{{ postalError }}</p>
+            {% else %}
+                <p class="hint">Introduce el CP de tu zona (5 dígitos). Por defecto usamos el del periódico{% if location and location.fromSiteDefault %} · {{ location.placeName }}{% endif %}.</p>
+            {% endif %}
+        </form>
+
+        {% if location %}
+            <p class="local-services-place">
+                Resultados para <strong>{{ location.placeName }}</strong>
+                <span class="local-services-cp-badge">{{ location.postalCode }}</span>
+            </p>
+
+            {% if phones is not empty %}
+                <section class="local-services-block">
+                    <h2>Teléfonos</h2>
+                    <ul class="local-services-phones">
+                        {% for phone in phones %}
+                            <li>
+                                <a href="tel:{{ phone.number }}" class="local-services-phone-num">{{ phone.number }}</a>
+                                <span class="local-services-phone-label">{{ phone.label }}</span>
+                                {% if phone.hint is defined and phone.hint %}
+                                    <span class="local-services-phone-hint">{{ phone.hint }}</span>
+                                {% endif %}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </section>
+            {% endif %}
+
+            {% if links is not empty %}
+                <section class="local-services-block">
+                    <h2>Enlaces para {{ location.placeName }}</h2>
+                    <ul class="local-services-links">
+                        {% for link in links %}
+                            <li>
+                                <a href="{{ link.url }}" target="_blank" rel="noopener noreferrer">{{ link.label }}</a>
+                                {% if link.hint is defined and link.hint %}
+                                    <span>{{ link.hint }}</span>
+                                {% endif %}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </section>
+            {% endif %}
+        {% else %}
+            <p class="archive-empty">Indica un código postal para ver {{ serviceTitle|lower }} de tu zona.</p>
+        {% endif %}
+
+        <nav class="local-services-siblings" aria-label="Otros servicios">
+            {% for slug, sibling in siblingServices %}
+                {% if slug != serviceType %}
+                    <a href="{{ path(sibling.route, location ? {cp: location.postalCode} : {}) }}">{{ sibling.title }}</a>
+                {% endif %}
+            {% endfor %}
+        </nav>
+
+        {% include 'public/_partials/content_modules.html.twig' with { surface: 'local_services' } %}
+    </div>
+
+    {% include 'public/archive/_sidebar.html.twig' %}
+</div>
+{% endblock %}

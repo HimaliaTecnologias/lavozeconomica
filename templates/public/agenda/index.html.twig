@@ -1,0 +1,93 @@
+{% extends 'public/layout.html.twig' %}
+
+{% block title %}{{ seoTitle }}{% endblock %}
+
+{% block body %}
+<div class="archive-layout">
+    <div class="archive-main">
+        {% include 'public/_partials/breadcrumb.html.twig' with {
+            crumbs: isToday
+                ? [{ label: 'Agenda' }]
+                : [
+                    { label: 'Agenda', path: path('public_agenda') },
+                    { label: agendaDate|date('d/m/Y') },
+                ]
+        } %}
+        <header class="archive-page-head">
+            <div class="archive-page-head-row">
+                <div>
+                    <h1>Agenda</h1>
+                    <p class="archive-page-intro">
+                        {% if isToday %}
+                            Conciertos, actividades y eventos vigentes hoy en {{ site.name }}.
+                        {% else %}
+                            Eventos vigentes el {{ agendaDate|date('d/m/Y') }} en {{ site.name }}.
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </header>
+
+        <nav class="agenda-day-nav" aria-label="Cambiar día de la agenda">
+            <a href="{{ path('public_agenda_date', {date: prevDayIso}) }}" class="edition-quick-date">← {{ prevDayIso|date('d/m') }}</a>
+            <span class="edition-quick-date is-active">{{ agendaDate|date('d/m/Y') }}{% if isToday %} · Hoy{% endif %}</span>
+            {% if nextDayIso %}
+                <a href="{{ path('public_agenda_date', {date: nextDayIso}) }}" class="edition-quick-date">{{ nextDayIso|date('d/m') }} →</a>
+            {% else %}
+                <span class="edition-quick-date" aria-disabled="true">Mañana</span>
+            {% endif %}
+            {% if not isToday %}
+                <a href="{{ path('public_agenda') }}" class="edition-quick-date">Hoy</a>
+            {% endif %}
+        </nav>
+
+        {% if articles is empty %}
+            <p class="archive-empty">No hay eventos en agenda para esta fecha.</p>
+        {% else %}
+            <p class="archive-results-count">{{ total }} evento{{ total != 1 ? 's' : '' }} en agenda</p>
+            <div class="archive-story-list">
+                {% for article in articles %}
+                    <article class="archive-story{% if loop.first and page == 1 %} archive-story--lead{% endif %}">
+                        <a href="{{ path('public_article_show', {slug: article.slug}) }}" class="archive-story-media">
+                            {% set img = article_usable_featured(article) %}
+                            {% if img %}
+                                {{ seo_article_image(img, article.title, {loading: loop.first and page == 1 ? 'eager' : 'lazy'}) }}
+                            {% else %}
+                                <div class="archive-story-media-placeholder" aria-hidden="true"></div>
+                            {% endif %}
+                        </a>
+                        <div class="archive-story-body">
+                            {% if article.category %}
+                                <a href="{{ path('public_category_show', {slug: article.category.slug}) }}" class="cat-pill{% if not (loop.first and page == 1) %} cat-pill--muted{% endif %}">{{ article.category.name }}</a>
+                            {% endif %}
+                            <h2 class="archive-story-title"><a href="{{ path('public_article_show', {slug: article.slug}) }}">{{ article.title }}</a></h2>
+                            <div class="meta-line">
+                                {% if article.agendaStartsAt and article.agendaEndsAt %}
+                                    Vigencia:
+                                    {{ article.agendaStartsAt|date('d/m/Y H:i') }}
+                                    —
+                                    {{ article.agendaEndsAt|date('d/m/Y H:i') }}
+                                {% endif %}
+                            </div>
+                            {% set excerpt = article.lead ?: article.subtitle %}
+                            {% if excerpt and (loop.first and page == 1) %}
+                                <p class="archive-story-excerpt">{{ excerpt|length > 220 ? excerpt|slice(0, 217) ~ '…' : excerpt }}</p>
+                            {% endif %}
+                        </div>
+                    </article>
+                {% endfor %}
+            </div>
+
+            {% include 'public/_partials/pagination.html.twig' with {
+                route: paginationRoute,
+                routeParams: paginationParams,
+                page: page,
+                totalPages: totalPages,
+                totalArticles: total,
+            } only %}
+        {% endif %}
+    </div>
+
+    {% include 'public/archive/_sidebar.html.twig' %}
+</div>
+{% endblock %}

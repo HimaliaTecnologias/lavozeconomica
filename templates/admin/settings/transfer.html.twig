@@ -1,0 +1,212 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}Exportar / importar{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .transfer-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.25rem;
+        align-items: start;
+    }
+    @media (max-width: 960px) {
+        .transfer-grid { grid-template-columns: 1fr; }
+    }
+    .transfer-card {
+        background: #fff;
+        border: 1px solid var(--admin-border);
+        border-radius: var(--admin-radius-sm);
+        padding: 1.15rem 1.25rem 1.35rem;
+    }
+    .transfer-card h2 {
+        margin: 0 0 .35rem;
+        font-size: 1.05rem;
+    }
+    .transfer-card > .hint { margin: 0 0 1rem; }
+    .transfer-group {
+        margin: 0 0 .85rem;
+        padding: .65rem .75rem .75rem;
+        border: 1px solid var(--admin-border);
+        border-radius: var(--admin-radius-sm);
+        background: #fafbfc;
+    }
+    .transfer-group h3 {
+        margin: 0 0 .5rem;
+        font-size: .8rem;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+        color: var(--admin-muted);
+        font-weight: 600;
+    }
+    .transfer-sections {
+        display: grid;
+        gap: .4rem;
+    }
+    .transfer-sections label {
+        display: flex;
+        align-items: flex-start;
+        gap: .55rem;
+        font-size: .88rem;
+        cursor: pointer;
+        line-height: 1.35;
+    }
+    .transfer-sections input,
+    .transfer-opts input { width: auto; margin-top: .15rem; }
+    .transfer-opts {
+        display: grid;
+        gap: .45rem;
+        margin: .85rem 0 1rem;
+    }
+    .transfer-opts label {
+        display: flex;
+        align-items: flex-start;
+        gap: .55rem;
+        font-size: .88rem;
+        cursor: pointer;
+    }
+    .transfer-toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .5rem;
+        margin: 0 0 .75rem;
+    }
+    .transfer-toolbar button {
+        font-size: .8rem;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+{% set headerActions %}
+    <a href="{{ path('admin_settings_transfer_export') }}" class="btn btn-primary btn-sm">Descarga rápida (todo)</a>
+{% endset %}
+{% include 'admin/_page_header.html.twig' with {
+    title: 'Exportar / importar configuración',
+    subtitle: 'Copia la configuración completa del periódico entre entornos (local ↔ producción).',
+    breadcrumbs: [
+        { label: 'Panel', url: path('admin_dashboard') },
+        { label: 'Configuración', url: path('admin_settings_index') },
+        { label: 'Exportar / importar' },
+    ],
+    actions: headerActions
+} only %}
+
+{% include 'admin/settings/_subnav.html.twig' %}
+
+<div class="transfer-grid">
+    <section class="transfer-card">
+        <h2>Exportar</h2>
+        <p class="hint">Elige qué secciones incluir. Por defecto no se exportan contraseñas, claves API ni caches.</p>
+
+        <form method="post" action="{{ path('admin_settings_transfer_export') }}" id="exportForm">
+            <input type="hidden" name="_token" value="{{ csrf_token('settings_transfer_export') }}">
+
+            <div class="transfer-toolbar">
+                <button type="button" class="btn btn-secondary btn-sm" data-check="export" data-mode="all">Marcar todo</button>
+                <button type="button" class="btn btn-secondary btn-sm" data-check="export" data-mode="none">Desmarcar</button>
+                <button type="button" class="btn btn-secondary btn-sm" data-check="export" data-mode="basic">Solo básico</button>
+            </div>
+
+            {% for groupName, keys in sectionGroups %}
+                <div class="transfer-group">
+                    <h3>{{ groupName }}</h3>
+                    <div class="transfer-sections">
+                        {% for key in keys %}
+                            <label>
+                                <input type="checkbox" name="sections[]" value="{{ key }}" class="export-section" data-group="{{ groupName }}" checked>
+                                <span>{{ sectionLabels[key]|default(key) }}</span>
+                            </label>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endfor %}
+
+            <div class="transfer-opts">
+                <label>
+                    <input type="checkbox" name="includeSecrets" value="1">
+                    <span>Incluir secretos (SMTP password, API keys). <strong>No subas este JSON a repositorios.</strong></span>
+                </label>
+                <label>
+                    <input type="checkbox" name="includeCaches" value="1">
+                    <span>Incluir caches (tiempo, mercados, TV, juegos…). Normalmente innecesario.</span>
+                </label>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Descargar JSON seleccionado</button>
+        </form>
+    </section>
+
+    <section class="transfer-card">
+        <h2>Importar</h2>
+        <p class="hint">Sube un JSON exportado. Las secciones marcadas se aplican sobre <strong>{{ site.name }}</strong>.</p>
+
+        <form method="post" action="{{ path('admin_settings_transfer') }}" enctype="multipart/form-data" id="importForm">
+            <input type="hidden" name="_token" value="{{ csrf_token('settings_transfer') }}">
+
+            <div class="field">
+                <label for="configFile">Archivo .json</label>
+                <input type="file" id="configFile" name="configFile" accept="application/json,.json" required>
+            </div>
+
+            <div class="transfer-toolbar">
+                <button type="button" class="btn btn-secondary btn-sm" data-check="import" data-mode="all">Marcar todo</button>
+                <button type="button" class="btn btn-secondary btn-sm" data-check="import" data-mode="none">Desmarcar</button>
+                <button type="button" class="btn btn-secondary btn-sm" data-check="import" data-mode="basic">Solo básico</button>
+            </div>
+
+            {% for groupName, keys in sectionGroups %}
+                <div class="transfer-group">
+                    <h3>{{ groupName }}</h3>
+                    <div class="transfer-sections">
+                        {% for key in keys %}
+                            <label>
+                                <input type="checkbox" name="sections[]" value="{{ key }}" class="import-section" data-group="{{ groupName }}" checked>
+                                <span>{{ sectionLabels[key]|default(key) }}</span>
+                            </label>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endfor %}
+
+            <div class="transfer-opts">
+                <label>
+                    <input type="checkbox" name="dryRun" value="1">
+                    <span>Simular (dry-run): calcula qué se aplicaría sin escribir nada.</span>
+                </label>
+                <label>
+                    <input type="checkbox" name="includeSecrets" value="1">
+                    <span>Aplicar secretos si vienen en el archivo (password SMTP / API keys).</span>
+                </label>
+            </div>
+
+            <p class="hint">Categorías y etiquetas se actualizan por slug (no se borran las que falten). Enlaces, banners, encuestas, galerías y webcams se <strong>sustituyen por completo</strong> si importas esa sección.</p>
+
+            <button type="submit" class="btn btn-primary" onclick="return confirm(this.form.dryRun?.checked ? '¿Simular la importación?' : '¿Importar la configuración seleccionada en este periódico?')">Importar configuración</button>
+        </form>
+    </section>
+</div>
+
+<script>
+(function () {
+    const basic = {{ sectionGroups['Básico']|json_encode|raw }};
+
+    document.querySelectorAll('[data-check]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            const which = btn.getAttribute('data-check');
+            const mode = btn.getAttribute('data-mode');
+            const boxes = document.querySelectorAll('.' + which + '-section');
+            boxes.forEach(function (el) {
+                if (mode === 'all') {
+                    el.checked = true;
+                } else if (mode === 'none') {
+                    el.checked = false;
+                } else if (mode === 'basic') {
+                    el.checked = basic.indexOf(el.value) !== -1;
+                }
+            });
+        });
+    });
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,38 @@
+<aside class="article-sidebar archive-sidebar">
+    {% include 'public/_partials/sidebar_ad_stack.html.twig' with {
+        placements: ['category_sidebar', 'sidebar_top']
+    } only %}
+
+    {% include 'public/_partials/popular_sidebar.html.twig' with {
+        articles: popularArticles|default([]),
+        limit: layout.sidebarPopularCount|default(5),
+        period: popularPeriod|default('week'),
+        title: 'Más vistas',
+    } %}
+
+    {% include 'public/_partials/sidebar_ad_stack.html.twig' with {
+        placements: ['sidebar_between_lists']
+    } only %}
+
+    {% include 'public/_partials/latest_sidebar.html.twig' with {
+        articles: latestArticles|default([]),
+        limit: layout.sidebarLatestCount|default(5),
+        title: 'Últimas noticias',
+    } %}
+
+    {% if topRatedArticles is not empty %}
+        <div class="sidebar-block">
+            <p class="sidebar-label">Más valoradas</p>
+            <div class="sidebar-list">
+                {% for article in topRatedArticles|slice(0, layout.sidebarPopularCount|default(5)) %}
+                    {% include 'public/_partials/sidebar_story.html.twig' with { article: article } %}
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+
+    {% include 'public/_partials/sidebar_ad_stack.html.twig' with {
+        placements: ['sidebar_bottom']
+    } only %}
+    {% include 'public/_partials/sidebar_links.html.twig' %}
+</aside>

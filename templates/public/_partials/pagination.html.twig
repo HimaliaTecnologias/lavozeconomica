@@ -1,0 +1,48 @@
+{% if totalPages is defined and totalPages > 1 %}
+    {% set routeParams = routeParams|default({}) %}
+    {% set pagedRoute = pagedRoute|default(null) %}
+    <nav class="list-pagination" aria-label="Paginación de noticias">
+        {% if page > 1 %}
+            {% if page == 2 %}
+                {% set prevHref = path(route, routeParams) %}
+            {% elseif pagedRoute %}
+                {% set prevHref = path(pagedRoute, routeParams|merge({page: page - 1})) %}
+            {% else %}
+                {% set prevHref = path(route, routeParams|merge({page: page - 1})) %}
+            {% endif %}
+            <a href="{{ prevHref }}" class="list-pagination-btn" rel="prev">Anterior</a>
+        {% endif %}
+
+        <div class="list-pagination-pages">
+            {% for p in 1..totalPages %}
+                {% if p == page %}
+                    <span class="list-pagination-current" aria-current="page">{{ p }}</span>
+                {% elseif p == 1 or p == totalPages or (p >= page - 2 and p <= page + 2) %}
+                    {% if p == 1 %}
+                        {% set href = path(route, routeParams) %}
+                    {% elseif pagedRoute %}
+                        {% set href = path(pagedRoute, routeParams|merge({page: p})) %}
+                    {% else %}
+                        {% set href = path(route, routeParams|merge({page: p})) %}
+                    {% endif %}
+                    <a href="{{ href }}" class="list-pagination-link">{{ p }}</a>
+                {% elseif p == page - 3 or p == page + 3 %}
+                    <span class="list-pagination-ellipsis" aria-hidden="true">…</span>
+                {% endif %}
+            {% endfor %}
+        </div>
+
+        {% if page < totalPages %}
+            {% if pagedRoute %}
+                {% set nextHref = path(pagedRoute, routeParams|merge({page: page + 1})) %}
+            {% else %}
+                {% set nextHref = path(route, routeParams|merge({page: page + 1})) %}
+            {% endif %}
+            <a href="{{ nextHref }}" class="list-pagination-btn" rel="next">Siguiente</a>
+        {% endif %}
+
+        {% if totalArticles is defined %}
+            <span class="list-pagination-meta">{{ totalArticles }} noticias</span>
+        {% endif %}
+    </nav>
+{% endif %}

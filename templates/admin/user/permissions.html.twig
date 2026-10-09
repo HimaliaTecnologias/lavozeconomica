@@ -1,0 +1,155 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}Permisos por rol{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .perm-page {
+        display: grid;
+        gap: 1rem;
+        max-width: 920px;
+    }
+    .perm-intro {
+        background: #fff;
+        border: 1px solid var(--admin-border);
+        border-radius: var(--admin-radius-sm);
+        padding: 1rem 1.15rem;
+    }
+    .perm-intro p { margin: 0; color: var(--admin-muted); font-size: .9rem; line-height: 1.5; }
+    .perm-matrix-card {
+        background: #fff;
+        border: 1px solid var(--admin-border);
+        border-radius: var(--admin-radius-sm);
+        overflow: hidden;
+    }
+    .perm-matrix {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .perm-matrix th,
+    .perm-matrix td {
+        padding: .7rem .9rem;
+        border-bottom: 1px solid var(--admin-border);
+        text-align: left;
+        vertical-align: middle;
+        font-size: .9rem;
+    }
+    .perm-matrix thead th {
+        background: #f8fafc;
+        font-size: .78rem;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+        color: var(--admin-muted);
+    }
+    .perm-matrix th:not(:first-child),
+    .perm-matrix td:not(:first-child) {
+        text-align: center;
+        width: 9rem;
+    }
+    .perm-matrix .group-row td {
+        background: #f8fafc;
+        font-size: .72rem;
+        font-weight: 700;
+        letter-spacing: .05em;
+        text-transform: uppercase;
+        color: var(--admin-muted);
+        padding-top: .85rem;
+        padding-bottom: .55rem;
+    }
+    .perm-matrix label {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: .35rem;
+        cursor: pointer;
+        margin: 0;
+    }
+    .perm-matrix input {
+        width: auto;
+        margin: 0;
+    }
+    .perm-matrix .locked {
+        font-size: .72rem;
+        color: var(--admin-muted);
+        display: block;
+        margin-top: .2rem;
+    }
+    .perm-actions {
+        display: flex;
+        gap: .65rem;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+{% include 'admin/_page_header.html.twig' with {
+    title: 'Permisos por tipo de usuario',
+    subtitle: 'Define qué secciones del panel puede usar cada rol en este periódico.',
+    breadcrumbs: [
+        { label: 'Panel', url: path('admin_dashboard') },
+        { label: 'Usuarios', url: path('admin_users_index') },
+        { label: 'Permisos' },
+    ],
+    actions: '<a href="' ~ path('admin_users_index') ~ '" class="btn btn-secondary btn-sm">Volver al listado</a>'
+} only %}
+
+<div class="perm-page">
+    <div class="perm-intro">
+        <p>
+            Los cambios afectan a todos los usuarios con ese rol. El <strong>administrador</strong> siempre conserva
+            «Usuarios y permisos» y «Configuración del sitio» para no quedar bloqueado.
+        </p>
+    </div>
+
+    <form method="post" action="{{ path('admin_users_permissions') }}">
+        <input type="hidden" name="_token" value="{{ csrf_token('users_permissions') }}">
+
+        <div class="perm-matrix-card">
+            <table class="perm-matrix">
+                <thead>
+                    <tr>
+                        <th>Acción del panel</th>
+                        {% for role, label in roleOptions %}
+                            <th>{{ label }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                {% for groupName, keys in permissionGroups %}
+                    <tr class="group-row"><td colspan="{{ 1 + roleOptions|length }}">{{ groupName }}</td></tr>
+                    {% for key in keys %}
+                        <tr>
+                            <td>{{ permissionLabels[key]|default(key) }}</td>
+                            {% for role, label in roleOptions %}
+                                {% set checked = key in matrix[role]|default([]) %}
+                                {% set locked = role == 'site_admin' and key in lockedForAdmin %}
+                                <td>
+                                    <label>
+                                        <input type="checkbox"
+                                               name="perm_{{ role }}[]"
+                                               value="{{ key }}"
+                                               {{ checked or locked ? 'checked' : '' }}
+                                               {{ locked ? 'disabled' : '' }}>
+                                    </label>
+                                    {% if locked %}
+                                        <input type="hidden" name="perm_{{ role }}[]" value="{{ key }}">
+                                        <span class="locked">Obligatorio</span>
+                                    {% endif %}
+                                </td>
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="perm-actions" style="margin-top:1rem">
+            <button type="submit" class="btn btn-primary">Guardar permisos</button>
+            <a href="{{ path('admin_users_index') }}" class="btn btn-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

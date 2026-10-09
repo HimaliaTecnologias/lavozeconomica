@@ -1,0 +1,10 @@
+framework:
+    messenger:
+        transports:
+            sync: 'sync://'
+
+        routing:
+            'App\Messenger\EnhanceArticleImageMessage': async_low
+            'App\Messenger\EnhanceMediaMessage': async_low
+            'App\Messenger\ProcessMediaMessage': async_low
+            'App\Messenger\SendNewsletterDigestMessage': async_low

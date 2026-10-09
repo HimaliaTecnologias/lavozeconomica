@@ -1,0 +1,43 @@
+{% set route = app.request.attributes.get('_route') %}
+<nav class="settings-subnav" aria-label="Secciones de configuración">
+    <div class="settings-subnav-groups">
+        <div class="settings-subnav-group">
+            <span class="settings-subnav-label">Base</span>
+            <div class="settings-subnav-links">
+                <a href="{{ path('admin_settings_index') }}" class="{{ route == 'admin_settings_index' ? 'active' : '' }}">Resumen</a>
+                <a href="{{ path('admin_settings_general') }}" class="{{ route == 'admin_settings_general' ? 'active' : '' }}">General</a>
+                <a href="{{ path('admin_settings_appearance') }}" class="{{ route == 'admin_settings_appearance' ? 'active' : '' }}">Apariencia</a>
+                <a href="{{ path('admin_settings_seo') }}" class="{{ route == 'admin_settings_seo' ? 'active' : '' }}">SEO</a>
+                <a href="{{ path('admin_settings_layout') }}" class="{{ route == 'admin_settings_layout' ? 'active' : '' }}">Plantillas</a>
+                <a href="{{ path('admin_settings_content_modules') }}" class="{{ route == 'admin_settings_content_modules' ? 'active' : '' }}">Módulos</a>
+                <a href="{{ path('admin_settings_footer') }}" class="{{ route == 'admin_settings_footer' ? 'active' : '' }}">Pie</a>
+                <a href="{{ path('admin_settings_transfer') }}" class="{{ route starts with 'admin_settings_transfer' ? 'active' : '' }}">Exportar</a>
+            </div>
+        </div>
+        <div class="settings-subnav-group">
+            <span class="settings-subnav-label">Contenido</span>
+            <div class="settings-subnav-links">
+                <a href="{{ path('admin_settings_navigation') }}" class="{{ route == 'admin_settings_navigation' ? 'active' : '' }}">Menús</a>
+                <a href="{{ path('admin_settings_pages') }}" class="{{ route == 'admin_settings_pages' ? 'active' : '' }}">Páginas</a>
+                <a href="{{ path('admin_settings_error_404') }}" class="{{ route starts with 'admin_settings_error_404' ? 'active' : '' }}">404</a>
+                <a href="{{ path('admin_links_index') }}" class="{{ route starts with 'admin_links' ? 'active' : '' }}">Enlaces</a>
+            </div>
+        </div>
+        <div class="settings-subnav-group">
+            <span class="settings-subnav-label">Servicios</span>
+            <div class="settings-subnav-links">
+                <a href="{{ path('admin_settings_ai') }}" class="{{ route == 'admin_settings_ai' ? 'active' : '' }}">IA</a>
+                <a href="{{ path('admin_settings_mail') }}" class="{{ route starts with 'admin_settings_mail' ? 'active' : '' }}">Correo</a>
+                <a href="{{ path('admin_settings_analytics') }}" class="{{ route == 'admin_settings_analytics' ? 'active' : '' }}">Estadísticas</a>
+                <a href="{{ path('admin_settings_ingest') }}" class="{{ route starts with 'admin_settings_ingest' ? 'active' : '' }}">HimtecMedia</a>
+                <a href="{{ path('admin_settings_weather') }}" class="{{ route == 'admin_settings_weather' ? 'active' : '' }}">Tiempo</a>
+                <a href="{{ path('admin_settings_markets') }}" class="{{ route == 'admin_settings_markets' ? 'active' : '' }}">Bolsa</a>
+                <a href="{{ path('admin_settings_tv') }}" class="{{ route == 'admin_settings_tv' ? 'active' : '' }}">TV</a>
+                <a href="{{ path('admin_settings_games') }}" class="{{ route == 'admin_settings_games' ? 'active' : '' }}">Juegos</a>
+                <a href="{{ path('admin_settings_horoscope') }}" class="{{ route == 'admin_settings_horoscope' ? 'active' : '' }}">Horóscopo</a>
+                <a href="{{ path('admin_settings_classifieds') }}" class="{{ route == 'admin_settings_classifieds' ? 'active' : '' }}">Avisos (on/off)</a>
+                <a href="{{ path('admin_settings_forum') }}" class="{{ route == 'admin_settings_forum' ? 'active' : '' }}">Foro (on/off)</a>
+            </div>
+        </div>
+    </div>
+</nav>

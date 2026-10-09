@@ -1,0 +1,169 @@
+services:
+  nginx:
+    image: nginx:1.27-alpine
+    ports:
+      - "${APP_PORT:-19140}:80"
+    volumes:
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./public:/var/www/html/public:ro
+    depends_on:
+      php:
+        condition: service_healthy
+    networks:
+      - mymedia
+
+  php:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    user: "0:0"
+    volumes:
+      - .:/var/www/html
+    environment:
+      # Fijo como Territorio Madrid: no heredar APP_ENV=prod del shell del host.
+      APP_ENV: dev
+      APP_DEBUG: "1"
+      APP_SECRET: ${APP_SECRET:-dev_secret_change_me}
+      PLATFORM_DATABASE_URL: mysql://mymedia:mymedia_secret@mysql:3306/mymedia_platform?serverVersion=mariadb-11.4.0&charset=utf8mb4
+      SITE_DATABASE_URL: mysql://mymedia:mymedia_secret@mysql:3306/mymedia_site_lavoz-economica?serverVersion=mariadb-11.4.0&charset=utf8mb4
+      CACHE_APP_ADAPTER: cache.adapter.redis_tag_aware
+      REDIS_URL: redis://redis:6379
+      MESSENGER_TRANSPORT_DSN: redis://redis:6379/messages
+      MAILER_DSN: ${MAILER_DSN:-null://null}
+      NEWSLETTER_FROM: ${NEWSLETTER_FROM:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      INGEST_API_KEY: ${INGEST_API_KEY:-}
+      RECAPTCHA_SITE_KEY: ${RECAPTCHA_SITE_KEY:-}
+      RECAPTCHA_SECRET_KEY: ${RECAPTCHA_SECRET_KEY:-}
+      DEFAULT_SITE_CODE: lavoz-economica
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-https://www.lavozeconomica.com}
+      DEFAULT_URI: ${DEFAULT_URI:-https://www.lavozeconomica.com}
+      PROVISION_DB_HOST: mysql
+      PROVISION_DB_USER: mymedia
+      PROVISION_DB_PASSWORD: mymedia_secret
+      PROVISION_DB_ROOT_USER: root
+      PROVISION_DB_ROOT_PASSWORD: root_secret
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "php", "-r", "echo 'ok';"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - mymedia
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  worker:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    user: "0:0"
+    command: ["php", "bin/console", "messenger:consume", "async_high", "async_low", "-vv", "--time-limit=3600"]
+    volumes:
+      - .:/var/www/html
+    environment:
+      APP_ENV: dev
+      APP_DEBUG: "1"
+      APP_SECRET: ${APP_SECRET:-dev_secret_change_me}
+      PLATFORM_DATABASE_URL: mysql://mymedia:mymedia_secret@mysql:3306/mymedia_platform?serverVersion=mariadb-11.4.0&charset=utf8mb4
+      SITE_DATABASE_URL: mysql://mymedia:mymedia_secret@mysql:3306/mymedia_site_lavoz-economica?serverVersion=mariadb-11.4.0&charset=utf8mb4
+      CACHE_APP_ADAPTER: cache.adapter.redis_tag_aware
+      REDIS_URL: redis://redis:6379
+      MESSENGER_TRANSPORT_DSN: redis://redis:6379/messages
+      MAILER_DSN: ${MAILER_DSN:-null://null}
+      NEWSLETTER_FROM: ${NEWSLETTER_FROM:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      INGEST_API_KEY: ${INGEST_API_KEY:-}
+      DEFAULT_SITE_CODE: lavoz-economica
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-https://www.lavozeconomica.com}
+      DEFAULT_URI: ${DEFAULT_URI:-https://www.lavozeconomica.com}
+      PROVISION_DB_HOST: mysql
+      PROVISION_DB_USER: mymedia
+      PROVISION_DB_PASSWORD: mymedia_secret
+      PROVISION_DB_ROOT_USER: root
+      PROVISION_DB_ROOT_PASSWORD: root_secret
+    depends_on:
+      - php
+      - redis
+    networks:
+      - mymedia
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  scheduler:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    user: "0:0"
+    command: ["sh", "-c", "while true; do php bin/console articles:publish-scheduled --no-ansi; php bin/console ingest:himtecmedia:scheduled --no-ansi; php bin/console newsletter:send-digests --no-ansi; php bin/console games:generate-daily --no-ansi; sleep 60; done"]
+    volumes:
+      - .:/var/www/html
+    environment:
+      APP_ENV: dev
+      APP_DEBUG: "1"
+      APP_SECRET: ${APP_SECRET:-dev_secret_change_me}
+      PLATFORM_DATABASE_URL: mysql://mymedia:mymedia_secret@mysql:3306/mymedia_platform?serverVersion=mariadb-11.4.0&charset=utf8mb4
+      SITE_DATABASE_URL: mysql://mymedia:mymedia_secret@mysql:3306/mymedia_site_lavoz-economica?serverVersion=mariadb-11.4.0&charset=utf8mb4
+      CACHE_APP_ADAPTER: cache.adapter.redis_tag_aware
+      REDIS_URL: redis://redis:6379
+      MESSENGER_TRANSPORT_DSN: redis://redis:6379/messages
+      MAILER_DSN: ${MAILER_DSN:-null://null}
+      NEWSLETTER_FROM: ${NEWSLETTER_FROM:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      INGEST_API_KEY: ${INGEST_API_KEY:-}
+      DEFAULT_SITE_CODE: lavoz-economica
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-https://www.lavozeconomica.com}
+      DEFAULT_URI: ${DEFAULT_URI:-https://www.lavozeconomica.com}
+      PROVISION_DB_HOST: mysql
+      PROVISION_DB_USER: mymedia
+      PROVISION_DB_PASSWORD: mymedia_secret
+      PROVISION_DB_ROOT_USER: root
+      PROVISION_DB_ROOT_PASSWORD: root_secret
+    depends_on:
+      - php
+    networks:
+      - mymedia
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  mysql:
+    image: mariadb:11.4
+    environment:
+      MYSQL_ROOT_PASSWORD: root_secret
+      MYSQL_DATABASE: mymedia_platform
+      MYSQL_USER: mymedia
+      MYSQL_PASSWORD: mymedia_secret
+    ports:
+      - "${MYSQL_PORT:-3319}:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./docker/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - mymedia
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "${REDIS_PORT:-6392}:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - mymedia
+
+volumes:
+  mysql_data:
+  redis_data:
+
+networks:
+  mymedia:
+    driver: bridge

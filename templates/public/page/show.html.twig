@@ -1,0 +1,24 @@
+{% extends 'public/layout.html.twig' %}
+
+{% block title %}{{ pageTitle }} — {{ site.name }}{% endblock %}
+
+{% block body %}
+<div class="archive-layout">
+    <div class="archive-main static-page">
+        <nav class="article-breadcrumb">
+            <a href="{{ path('home') }}">Portada</a> · {{ pageTitle }}
+        </nav>
+
+        <article class="static-page-body">
+            <h1 class="static-page-title">{{ pageTitle }}</h1>
+            <div class="static-page-content article-content">
+                {{ bodyHtml|seo_enrich_html(pageTitle)|raw }}
+            </div>
+        </article>
+
+        {% include 'public/page/_news_sections.html.twig' %}
+    </div>
+
+    {% include 'public/archive/_sidebar.html.twig' %}
+</div>
+{% endblock %}

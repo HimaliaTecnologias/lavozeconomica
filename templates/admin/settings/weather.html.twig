@@ -1,0 +1,237 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}El tiempo{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .settings-subnav { display: flex; gap: .5rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
+    .settings-subnav a { padding: .4rem .75rem; border-radius: 6px; background: #edf2f7; text-decoration: none; color: var(--text); font-size: .9rem; font-weight: 600; }
+    .settings-subnav a.active { background: var(--primary); color: #fff; }
+    .form-section { margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+    .form-section h2 { font-size: 1rem; margin: 0 0 1rem; }
+    .weather-preview { background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 10px; padding: 1rem; margin-top: 1rem; }
+    .webcam-table { width: 100%; margin-top: 1rem; }
+    .webcam-table th, .webcam-table td { padding: .5rem; border-bottom: 1px solid var(--border); text-align: left; font-size: .9rem; }
+    .inline-actions { display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; }
+</style>
+{% endblock %}
+
+{% block body %}
+<h1>El tiempo</h1>
+<p class="hint">Configura el código postal de referencia, las webcams de <code>/tiempo</code> y el widget de alojamientos.</p>
+{% include 'admin/settings/_subnav.html.twig' %}
+
+<form method="post" action="{{ path('admin_settings_weather') }}">
+    <input type="hidden" name="_token" value="{{ csrf_token('settings_weather') }}">
+
+    <div class="checkbox-row field">
+        <input type="checkbox" id="enabled" name="enabled" value="1" {{ (data.enabled|default(config.enabled)) ? 'checked' : '' }}>
+        <label for="enabled">Mostrar sección del tiempo en el periódico</label>
+    </div>
+
+    <div class="field">
+        <label for="postalCode">Código postal *</label>
+        <input type="text" id="postalCode" name="postalCode" maxlength="5" pattern="[0-9]{5}"
+               value="{{ data.postalCode|default(config.postalCode) }}"
+               class="{{ errors.postalCode is defined ? 'error' : '' }}"
+               placeholder="28001">
+        {% if errors.postalCode is defined %}<div class="error-msg">{{ errors.postalCode }}</div>{% endif %}
+        <p class="hint">Se usa para localizar la zona y obtener predicciones (España, 5 dígitos).</p>
+    </div>
+
+    {% if config.placeName %}
+        <p class="hint"><strong>Localidad detectada:</strong> {{ config.placeName }} ({{ config.latitude }}, {{ config.longitude }})</p>
+    {% endif %}
+
+    <div class="form-section">
+        <h2>Pronóstico con IA</h2>
+        <p class="hint">Genera un texto editorial sobre los próximos días en <code>/tiempo</code> usando los datos meteorológicos y OpenAI. Se actualiza al refrescar la predicción.</p>
+
+        <div class="checkbox-row field">
+            <input type="checkbox" id="aiSummaryEnabled" name="aiSummaryEnabled" value="1"
+                   {{ (data.aiSummaryEnabled|default(config.aiSummaryEnabled)) ? 'checked' : '' }}>
+            <label for="aiSummaryEnabled">Mostrar pronóstico editorial generado por IA</label>
+        </div>
+        <p class="hint">La API key se configura en <a href="{{ path('admin_settings_ai') }}">Configuración → IA</a>.</p>
+        {% if errors.openaiApiKey is defined %}<div class="error-msg">{{ errors.openaiApiKey }}</div>{% endif %}
+    </div>
+
+    <div class="form-section">
+        <h2>Patrocinio exclusivo</h2>
+        <p class="hint">La sección <code>/tiempo</code> siempre muestra este patrocinio. También puedes crear banners adicionales en Publicidad con ubicación «El tiempo».</p>
+
+        <div class="field">
+            <label for="sponsorHeadline">Texto de patrocinio</label>
+            <input type="text" id="sponsorHeadline" name="sponsorHeadline"
+                   value="{{ data.sponsorHeadline|default(data.headline|default(config.sponsor.headline)) }}"
+                   placeholder="El tiempo patrocinado por">
+        </div>
+        <div class="field">
+            <label for="sponsorName">Nombre del patrocinador</label>
+            <input type="text" id="sponsorName" name="sponsorName"
+                   value="{{ data.sponsorName|default(data.name|default(config.sponsor.name)) }}">
+        </div>
+        <div class="field">
+            <label for="sponsorLogoUrl">URL del logo</label>
+            <input type="url" id="sponsorLogoUrl" name="sponsorLogoUrl"
+                   value="{{ data.sponsorLogoUrl|default(data.logoUrl|default(config.sponsor.logoUrl)) }}"
+                   class="{{ errors.sponsorLogoUrl is defined ? 'error' : '' }}"
+                   placeholder="https://… o /media/sites/…">
+            {% if errors.sponsorLogoUrl is defined %}<div class="error-msg">{{ errors.sponsorLogoUrl }}</div>{% endif %}
+        </div>
+        <div class="field">
+            <label for="sponsorLinkUrl">URL de destino (clic)</label>
+            <input type="url" id="sponsorLinkUrl" name="sponsorLinkUrl"
+                   value="{{ data.sponsorLinkUrl|default(data.linkUrl|default(config.sponsor.linkUrl)) }}"
+                   class="{{ errors.sponsorLinkUrl is defined ? 'error' : '' }}">
+            {% if errors.sponsorLinkUrl is defined %}<div class="error-msg">{{ errors.sponsorLinkUrl }}</div>{% endif %}
+        </div>
+        <div class="field">
+            <label for="sponsorBannerUrl">URL banner amplio (opcional)</label>
+            <input type="url" id="sponsorBannerUrl" name="sponsorBannerUrl"
+                   value="{{ data.sponsorBannerUrl|default(data.bannerUrl|default(config.sponsor.bannerUrl)) }}"
+                   class="{{ errors.sponsorBannerUrl is defined ? 'error' : '' }}">
+            {% if errors.sponsorBannerUrl is defined %}<div class="error-msg">{{ errors.sponsorBannerUrl }}</div>{% endif %}
+        </div>
+        <div class="field">
+            <label for="sponsorHtml">HTML adicional (opcional)</label>
+            <textarea id="sponsorHtml" name="sponsorHtml" rows="3"
+                      placeholder="Código promocional o texto extra">{{ data.sponsorHtml|default(data.html|default(config.sponsor.html)) }}</textarea>
+        </div>
+        <div class="checkbox-row field">
+            <input type="checkbox" id="sponsorShowInNav" name="sponsorShowInNav" value="1"
+                   {{ (data.sponsorShowInNav|default(data.showInNav|default(config.sponsor.showInNav))) ? 'checked' : '' }}>
+            <label for="sponsorShowInNav">Mostrar patrocinador en la barra superior</label>
+        </div>
+    </div>
+
+    <div class="form-section" id="alojamientos">
+        <h2>Alojamientos</h2>
+        <p class="hint">Widget que aparece bajo los comentarios de las noticias y al final de las secciones (Economía, Sociedad…). Usa el código postal del tiempo.</p>
+
+        <div class="checkbox-row field">
+            <input type="checkbox" id="accommodationsEnabled" name="accommodationsEnabled" value="1"
+                   {{ (data.accommodationsEnabled|default(false)) ? 'checked' : '' }}>
+            <label for="accommodationsEnabled">Mostrar sección de alojamientos</label>
+        </div>
+        <div class="field">
+            <label for="accommodationsTitle">Título de la sección</label>
+            <input type="text" id="accommodationsTitle" name="accommodationsTitle"
+                   value="{{ data.accommodationsTitle|default('Alojamientos') }}"
+                   placeholder="Alojamientos">
+        </div>
+        <div class="field">
+            <label for="accommodationsWidgetHtml">Código del widget (HTML / embed)</label>
+            <textarea id="accommodationsWidgetHtml" name="accommodationsWidgetHtml" rows="8"
+                      class="{{ errors.accommodationsWidgetHtml is defined ? 'error' : '' }}"
+                      placeholder="Pega aquí el iframe o script del proveedor…">{{ data.accommodationsWidgetHtml|default('') }}</textarea>
+            {% if errors.accommodationsWidgetHtml is defined %}<div class="error-msg">{{ errors.accommodationsWidgetHtml }}</div>{% endif %}
+            <p class="hint">Puedes usar <code>{postal_code}</code> o <code>{place_name}</code>; se sustituyen por el CP y la localidad del tiempo.</p>
+        </div>
+    </div>
+
+    <div class="actions">
+        <button type="submit" class="btn btn-primary">Guardar</button>
+    </div>
+</form>
+
+{% if config.isConfigured() %}
+    <form class="inline-form" method="post" action="{{ path('admin_settings_weather') }}" style="margin-top:.75rem">
+        <input type="hidden" name="action" value="refresh_forecast">
+        <button type="submit" class="btn btn-secondary">Actualizar predicción ahora</button>
+    </form>
+{% endif %}
+
+{% if forecast %}
+    <div class="weather-preview">
+        <strong>Vista previa</strong> — {{ forecast.placeName }} ({{ forecast.postalCode }})
+        {% if forecast.currentTemp is not null %}
+            · Ahora: {{ forecast.currentTemp }}°C, {{ forecast.currentDescription }}
+        {% endif %}
+        <ul style="margin:.5rem 0 0;padding-left:1.2rem">
+            {% for day in forecast.daily|slice(0, 4) %}
+                <li>{{ day.label }}: {{ day.description }} · {{ day.min }}° / {{ day.max }}°</li>
+            {% endfor %}
+        </ul>
+        <p class="hint" style="margin-top:.5rem">Actualizado: {{ forecast.fetchedAt|date('d/m/Y H:i') }}</p>
+    </div>
+{% endif %}
+
+{% if aiSummary %}
+    <div class="weather-preview" style="background:#f0fdf4;border-color:#bbf7d0">
+        <strong>Pronóstico editorial (vista previa)</strong>
+        <h3 style="margin:.5rem 0 .35rem;font-size:1rem">{{ aiSummary.headline }}</h3>
+        {% for paragraph in aiSummary.paragraphs %}
+            <p style="margin:.35rem 0;font-size:.9rem">{{ paragraph }}</p>
+        {% endfor %}
+        <p class="hint" style="margin-top:.5rem">Generado: {{ aiSummary.generatedAt|date('d/m/Y H:i') }}</p>
+    </div>
+{% endif %}
+
+<div class="form-section">
+    <h2>Webcams cercanas</h2>
+    <p class="hint">Añade enlaces de embed (iframe) o imágenes en directo de webcams de la zona.</p>
+
+    <form method="post" action="{{ path('admin_settings_weather') }}" class="field">
+        <input type="hidden" name="action" value="add_webcam">
+        <input type="hidden" name="_token" value="{{ csrf_token('weather_webcam_add') }}">
+        <div class="field">
+            <label for="webcamTitle">Título</label>
+            <input type="text" id="webcamTitle" name="webcamTitle" required placeholder="Plaza Mayor">
+        </div>
+        <div class="field">
+            <label for="webcamUrl">URL</label>
+            <input type="url" id="webcamUrl" name="webcamUrl" required placeholder="https://...">
+            <p class="hint">URL de embed (YouTube, Windy, etc.) o imagen JPG en directo.</p>
+        </div>
+        <div class="field">
+            <label for="webcamType">Tipo</label>
+            <select id="webcamType" name="webcamType">
+                <option value="embed">Embed / iframe</option>
+                <option value="image">Imagen en directo</option>
+            </select>
+        </div>
+        <div class="field">
+            <label for="webcamSort">Orden</label>
+            <input type="number" id="webcamSort" name="webcamSort" value="0" min="0" max="999">
+        </div>
+        <div class="checkbox-row field">
+            <input type="checkbox" id="webcamEnabled" name="webcamEnabled" value="1" checked>
+            <label for="webcamEnabled">Visible en la web</label>
+        </div>
+        <button type="submit" class="btn btn-secondary">Añadir webcam</button>
+    </form>
+
+    {% if webcams is not empty %}
+        <table class="webcam-table">
+            <thead>
+                <tr>
+                    <th>Título</th>
+                    <th>Tipo</th>
+                    <th>Estado</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for webcam in webcams %}
+                <tr>
+                    <td>{{ webcam.title }}</td>
+                    <td>{{ webcam.type }}</td>
+                    <td>{{ webcam.enabled ? 'Activa' : 'Oculta' }}</td>
+                    <td>
+                        <form class="inline-form" method="post" action="{{ path('admin_settings_weather') }}" onsubmit="return confirm('¿Eliminar esta webcam?')">
+                            <input type="hidden" name="action" value="delete_webcam">
+                            <input type="hidden" name="webcamId" value="{{ webcam.id }}">
+                            <input type="hidden" name="_token" value="{{ csrf_token('weather_webcam_delete' ~ webcam.id) }}">
+                            <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p class="hint" style="margin-top:1rem">No hay webcams configuradas.</p>
+    {% endif %}
+</div>
+{% endblock %}

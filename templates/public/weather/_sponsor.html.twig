@@ -1,0 +1,49 @@
+{% set sponsor = config.sponsor %}
+<aside class="weather-sponsor" role="complementary" aria-label="Patrocinio del tiempo">
+    <div class="weather-sponsor-inner">
+        <p class="weather-sponsor-headline">
+            {{ sponsor.headline|trim }}
+            {% if sponsor.name %}
+                {% if sponsor.linkUrl %}
+                    <a href="{{ sponsor.linkUrl }}" target="_blank" rel="noopener sponsored" class="weather-sponsor-inline-link">{{ sponsor.name }}</a>
+                {% else %}
+                    <span class="weather-sponsor-inline-name">{{ sponsor.name }}</span>
+                {% endif %}
+            {% endif %}
+        </p>
+
+        {% if sponsor.logoUrl or sponsor.bannerUrl or sponsor.html %}
+            <div class="weather-sponsor-body">
+                {% if sponsor.logoUrl %}
+                    <div class="weather-sponsor-brand">
+                        {% if sponsor.linkUrl %}
+                            <a href="{{ sponsor.linkUrl }}" target="_blank" rel="noopener sponsored" class="weather-sponsor-link">
+                                {{ seo_img(sponsor.logoUrl, sponsor.name|default('Patrocinador'), {class: 'weather-sponsor-logo'}) }}
+                            </a>
+                        {% else %}
+                            {{ seo_img(sponsor.logoUrl, sponsor.name|default('Patrocinador'), {class: 'weather-sponsor-logo'}) }}
+                        {% endif %}
+                    </div>
+                {% endif %}
+
+                {% if sponsor.bannerUrl %}
+                    <div class="weather-sponsor-banner">
+                        {% if sponsor.linkUrl %}
+                            <a href="{{ sponsor.linkUrl }}" target="_blank" rel="noopener sponsored">
+                                {{ seo_img(sponsor.bannerUrl, sponsor.name|default('Patrocinador')) }}
+                            </a>
+                        {% else %}
+                            {{ seo_img(sponsor.bannerUrl, sponsor.name|default('Patrocinador')) }}
+                        {% endif %}
+                    </div>
+                {% endif %}
+
+                {% if sponsor.html %}
+                    <div class="weather-sponsor-html">{{ sponsor.html|seo_enrich_html(sponsor.name|default('Patrocinador'))|raw }}</div>
+                {% endif %}
+            </div>
+        {% elseif not sponsor.name and not sponsor.headline %}
+            <p class="weather-sponsor-placeholder">Espacio reservado para patrocinio exclusivo de esta sección.</p>
+        {% endif %}
+    </div>
+</aside>

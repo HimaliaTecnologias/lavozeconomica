@@ -1,0 +1,5 @@
+{% if analytics.isActive and not (previewMode is defined and previewMode) %}
+    {% if analytics.bodyCode %}
+        {{ analytics.bodyCode|raw }}
+    {% endif %}
+{% endif %}

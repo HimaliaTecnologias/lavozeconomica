@@ -1,0 +1,19 @@
+<article class="market-card {{ market_change_class(index.change) }}">
+    <header class="market-card-head">
+        <h3 class="market-card-name">{{ index.name }}</h3>
+        <span class="market-card-badge {{ market_change_class(index.change) }}">
+            {{ market_format_change_percent(index.changePercent) }}
+        </span>
+    </header>
+    <p class="market-card-price">{{ market_format_price(index.price, index.currency) }}</p>
+    <p class="market-card-change">
+        <span>{{ market_format_change(index.change, index.currency) }}</span>
+    </p>
+    {% include 'public/markets/_sparkline.html.twig' with { index: index } only %}
+    {% if index.dayHigh is not null or index.dayLow is not null %}
+        <p class="market-card-range-line">
+            {% if index.dayLow is not null %}<span>Mín. {{ market_format_price(index.dayLow, index.currency) }}</span>{% endif %}
+            {% if index.dayHigh is not null %}<span>Máx. {{ market_format_price(index.dayHigh, index.currency) }}</span>{% endif %}
+        </p>
+    {% endif %}
+</article>

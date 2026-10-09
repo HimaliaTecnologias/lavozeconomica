@@ -1,0 +1,33 @@
+{% set img = article_usable_featured(article) %}
+{% if article_is_visible(article) and (img or article.videoReplacesFeatured) %}
+<article class="story-card{% if compact is defined and compact %} story-card--compact{% endif %}{% if grid_card is defined and grid_card %} story-card--grid{% endif %}{% if section_card is defined and section_card %} story-card--section{% endif %}">
+    <div class="story-card-media-wrap">
+        <a href="{{ path('public_article_show', {slug: article.slug}) }}" class="story-card-media">
+            {% if img %}
+                {{ seo_article_image(img, article.title) }}
+            {% endif %}
+        </a>
+        {% if section_card is defined and section_card and article.category %}
+            <a href="{{ path('public_category_show', {slug: article.category.slug}) }}" class="cat-pill story-card-cat">{{ article.category.name }}</a>
+        {% endif %}
+    </div>
+    {% if article.category and (section_card is not defined or not section_card) %}
+        <a href="{{ path('public_category_show', {slug: article.category.slug}) }}" class="cat-pill{% if muted is defined and muted %} cat-pill--muted{% endif %}">{{ article.category.name }}</a>
+    {% endif %}
+    <h3><a href="{{ path('public_article_show', {slug: article.slug}) }}">{{ article.title }}</a></h3>
+    {% if show_meta is defined and show_meta %}
+        <div class="meta-line">
+            {% if article.publishedAt %}{{ article.publishedAt|date('d/m/Y') }}{% endif %}
+            {% if article.viewCount > 0 %} · {{ article.viewCount }} visitas{% endif %}
+        </div>
+    {% endif %}
+    {% if show_excerpt is defined and show_excerpt %}
+        {% set excerpt = article.lead ?: article.subtitle %}
+        {% set excerpt = excerpt|default('')|trim %}
+        {% set maxLen = excerpt_max|default(120) %}
+        {% if excerpt|length >= 40 %}
+            <p>{{ excerpt|length > maxLen ? excerpt|slice(0, maxLen - 1) ~ '…' : excerpt }}</p>
+        {% endif %}
+    {% endif %}
+</article>
+{% endif %}

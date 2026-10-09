@@ -1,0 +1,43 @@
+{% extends 'install/layout.html.twig' %}
+
+{% block title %}Administrador{% endblock %}
+
+{% block steps %}
+<div class="steps">
+    <div class="step done">Inicio</div>
+    <div class="step done">Periódico</div>
+    <div class="step done">Apariencia</div>
+    <div class="step active">Administrador</div>
+    <div class="step">Finalizar</div>
+</div>
+{% endblock %}
+
+{% block body %}
+<h2>Cuenta de administrador</h2>
+<p class="hint">Será superadministrador de la plataforma y administrador del periódico <strong>{{ data.name }}</strong>.</p>
+<form method="post" action="{{ path('install_admin') }}" novalidate>
+    <div class="field">
+        <label for="adminName">Nombre completo *</label>
+        <input type="text" id="adminName" name="adminName" value="{{ data.adminName }}" required
+               class="{{ errors.adminName is defined ? 'error' : '' }}">
+        {% if errors.adminName is defined %}<div class="error-msg">{{ errors.adminName }}</div>{% endif %}
+    </div>
+    <div class="field">
+        <label for="adminEmail">Usuario *</label>
+        <input type="text" id="adminEmail" name="adminEmail" value="{{ data.adminEmail|default('admin') }}" required
+               class="{{ errors.adminEmail is defined ? 'error' : '' }}" autocapitalize="off" autocomplete="username">
+        {% if errors.adminEmail is defined %}<div class="error-msg">{{ errors.adminEmail }}</div>{% endif %}
+    </div>
+    <div class="field">
+        <label for="adminPassword">Contraseña *</label>
+        <input type="password" id="adminPassword" name="adminPassword" value="admin" required minlength="4"
+               class="{{ errors.adminPassword is defined ? 'error' : '' }}">
+        <div class="hint">Por defecto: admin (mínimo 4 caracteres).</div>
+        {% if errors.adminPassword is defined %}<div class="error-msg">{{ errors.adminPassword }}</div>{% endif %}
+    </div>
+    <div class="actions">
+        <a href="{{ path('install_apariencia') }}" class="btn btn-secondary">Atrás</a>
+        <button type="submit" class="btn btn-primary">Continuar</button>
+    </div>
+</form>
+{% endblock %}

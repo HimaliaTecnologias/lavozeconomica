@@ -1,0 +1,24 @@
+<article class="portada-band-card portada-band-card--featured">
+    <div class="portada-band-media-wrap">
+        <a href="{{ path('public_article_show', {slug: article.slug}) }}" class="portada-band-media">
+            {% set img = article_usable_featured(article) %}
+            {% if img %}
+                {{ seo_article_image(img, article.title) }}
+            {% endif %}
+            <span class="portada-band-overlay" aria-hidden="true"></span>
+        </a>
+        {% if article.category %}
+            <a href="{{ path('public_category_show', {slug: article.category.slug}) }}" class="cat-pill portada-band-cat-badge">{{ article.category.name }}</a>
+        {% endif %}
+        <div class="portada-band-caption">
+            <h3 class="portada-band-title">
+                <a href="{{ path('public_article_show', {slug: article.slug}) }}">{{ article.title }}</a>
+            </h3>
+        </div>
+    </div>
+    {% include 'public/_partials/home_related_links.html.twig' with {
+        article: article,
+        modifier: ' home-related-links--compact',
+        limit: related_limit|default(2),
+    } %}
+</article>

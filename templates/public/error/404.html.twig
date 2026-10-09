@@ -1,0 +1,56 @@
+{% extends 'public/layout.html.twig' %}
+
+{% block title %}{{ error404.title }} — {{ site.name }}{% endblock %}
+
+{% block body %}
+<section class="error404-page" aria-labelledby="error404-title">
+    <div class="error404-inner">
+        {% if previewMode|default(false) %}
+            <p class="error404-preview-note">Vista previa de la página 404</p>
+        {% endif %}
+
+        <p class="error404-code" aria-hidden="true">404</p>
+        <h1 id="error404-title">{{ error404.title }}</h1>
+        <p class="error404-message">{{ error404.message }}</p>
+
+        {% if requestedPath %}
+            <p class="error404-path"><code>{{ requestedPath }}</code></p>
+        {% endif %}
+
+        <div class="error404-actions">
+            {% if error404.showHomeButton %}
+                <a class="error404-btn error404-btn--primary" href="{{ path('home') }}">{{ error404.homeButtonLabel }}</a>
+            {% endif %}
+            <a class="error404-btn error404-btn--ghost" href="{{ path('public_edition') }}">Edición de hoy</a>
+        </div>
+
+        {% if error404.showSearch %}
+            <form class="error404-search" method="get" action="{{ path('public_search') }}" role="search">
+                <label class="visually-hidden" for="error404-q">Buscar</label>
+                <input type="search" id="error404-q" name="q" placeholder="{{ error404.searchPlaceholder }}" autocomplete="off">
+                <button type="submit">Buscar</button>
+            </form>
+        {% endif %}
+
+        {% if error404.extraHtml %}
+            <div class="error404-extra">{{ error404.extraHtml|raw }}</div>
+        {% endif %}
+
+        {% if error404.showLatestArticles and latestArticles is not empty %}
+            <div class="error404-latest">
+                <h2>Últimas noticias</h2>
+                <ul>
+                    {% for article in latestArticles %}
+                        <li>
+                            <a href="{{ path('public_article_show', {slug: article.slug}) }}">{{ article.title }}</a>
+                            {% if article.category %}
+                                <span>{{ article.category.name }}</span>
+                            {% endif %}
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

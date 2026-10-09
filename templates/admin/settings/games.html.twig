@@ -1,0 +1,55 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}Pasatiempos{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .settings-subnav { display: flex; gap: .5rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
+    .settings-subnav a { padding: .4rem .75rem; border-radius: 6px; background: #edf2f7; text-decoration: none; color: var(--text); font-size: .9rem; font-weight: 600; }
+    .settings-subnav a.active { background: var(--primary); color: #fff; }
+    .inline-actions { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: 1rem; }
+</style>
+{% endblock %}
+
+{% block body %}
+<h1>Pasatiempos</h1>
+<p class="hint">Sudoku y anagrama diarios en <code>/pasatiempos</code>. Con el módulo activo, el programador genera los retos una vez al día (hora de Madrid); también puedes forzarlos con el botón de abajo.</p>
+{% include 'admin/settings/_subnav.html.twig' %}
+
+<form method="post" action="{{ path('admin_settings_games') }}">
+    <input type="hidden" name="_token" value="{{ csrf_token('settings_games') }}">
+
+    <div class="checkbox-row field">
+        <input type="checkbox" id="enabled" name="enabled" value="1" {{ (data.enabled|default(config.enabled)) ? 'checked' : '' }}>
+        <label for="enabled">Mostrar pasatiempos en el periódico</label>
+    </div>
+
+    <div class="checkbox-row field">
+        <input type="checkbox" id="sudokuEnabled" name="sudokuEnabled" value="1" {{ (data.sudokuEnabled|default(config.sudokuEnabled)) ? 'checked' : '' }}>
+        <label for="sudokuEnabled">Sudoku del día</label>
+    </div>
+
+    <div class="checkbox-row field">
+        <input type="checkbox" id="wordScrambleEnabled" name="wordScrambleEnabled" value="1" {{ (data.wordScrambleEnabled|default(config.wordScrambleEnabled)) ? 'checked' : '' }}>
+        <label for="wordScrambleEnabled">Anagrama del día</label>
+    </div>
+
+    <div class="actions" style="margin-top:1rem">
+        <button type="submit" class="btn btn-primary">Guardar</button>
+    </div>
+</form>
+
+<form method="post" action="{{ path('admin_settings_games') }}" class="inline-actions">
+    <input type="hidden" name="_token" value="{{ csrf_token('settings_games') }}">
+    <input type="hidden" name="action" value="refresh_puzzles">
+    <button type="submit" class="btn btn-secondary btn-sm">Generar retos de hoy</button>
+</form>
+
+{% if sudoku or anagrama %}
+    <div class="hint" style="margin-top:1.5rem;padding:1rem;background:#f8fafc;border-radius:8px;border:1px solid var(--border)">
+        <strong>Vista previa de hoy</strong>
+        {% if sudoku %}<p>Sudoku: {{ sudoku.dateKey }} ({{ sudoku.puzzle|length }}×{{ sudoku.puzzle[0]|length }})</p>{% endif %}
+        {% if anagrama %}<p>Anagrama: {{ anagrama.scrambled }} → {{ anagrama.word }}</p>{% endif %}
+    </div>
+{% endif %}
+{% endblock %}

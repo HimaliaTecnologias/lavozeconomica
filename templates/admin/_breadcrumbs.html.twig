@@ -1,0 +1,15 @@
+{% macro breadcrumbs(items) %}
+<nav class="admin-breadcrumbs" aria-label="Ruta de navegación">
+    <ol>
+        {% for item in items %}
+            <li>
+                {% if item.url is defined and item.url %}
+                    <a href="{{ item.url }}">{{ item.label }}</a>
+                {% else %}
+                    <span>{{ item.label }}</span>
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ol>
+</nav>
+{% endmacro %}

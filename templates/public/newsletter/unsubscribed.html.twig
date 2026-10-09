@@ -1,0 +1,23 @@
+{% extends 'public/layout.html.twig' %}
+
+{% block title %}Baja del boletín — {{ site.name }}{% endblock %}
+
+{% block body %}
+<div class="archive-layout newsletter-layout">
+    <div class="archive-main">
+        <div class="newsletter-page newsletter-page--status">
+            {% include 'public/_partials/breadcrumb.html.twig' with {
+                crumbs: [
+                    { label: 'Boletín', path: path('public_newsletter_index') },
+                    { label: 'Baja' },
+                ]
+            } %}
+            <header class="newsletter-page-head">
+                <h1>Baja procesada</h1>
+                <p class="newsletter-intro">Ya no recibirás más correos de nuestro boletín.</p>
+            </header>
+            <p><a href="{{ path('home') }}">Volver a la portada</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}

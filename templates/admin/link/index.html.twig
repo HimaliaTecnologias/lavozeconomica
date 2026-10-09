@@ -1,0 +1,68 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}Enlaces{% endblock %}
+
+{% block body %}
+<div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:1rem">
+    <div>
+        <h1 style="margin:0">Enlaces del sitio</h1>
+        <p class="hint">«Otros medios» aparece en una franja de grupo bajo el pie (encima del copyright). Los enlaces de interés van en la zona superior del footer.</p>
+    </div>
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+        <a href="{{ path('admin_links_new', {group: 'other_media'}) }}" class="btn btn-secondary btn-sm">+ Otro medio</a>
+        <a href="{{ path('admin_links_new', {group: 'interest'}) }}" class="btn btn-primary btn-sm">+ Enlace de interés</a>
+    </div>
+</div>
+
+{% for group in groups %}
+    {% set items = grouped[group.value]|default([]) %}
+    <section style="margin-top:1.5rem">
+        <h2 style="font-size:1.05rem;margin:0 0 .75rem">{{ group.label }}</h2>
+        {% if items is empty %}
+            <p class="hint">No hay enlaces en esta categoría.</p>
+        {% else %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Título</th>
+                        <th>URL</th>
+                        <th>Pie</th>
+                        <th>Sidebar</th>
+                        <th>Orden</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for link in items %}
+                    <tr>
+                        <td>
+                            {% if link.logoUrl %}
+                                <img src="{{ link.logoUrl }}" alt="" style="max-height:20px;vertical-align:middle;margin-right:.35rem">
+                            {% endif %}
+                            {{ link.title }}
+                            {% if not link.isEnabled %}<span class="badge badge-draft">Oculto</span>{% endif %}
+                        </td>
+                        <td><code style="font-size:.8rem">{{ link.url|slice(0, 48) }}{% if link.url|length > 48 %}…{% endif %}</code></td>
+                        <td>{{ link.showInFooter ? 'Sí' : '—' }}</td>
+                        <td>{{ link.showInSidebar ? 'Sí' : '—' }}</td>
+                        <td>{{ link.sortOrder }}</td>
+                        <td>
+                            <a href="{{ path('admin_links_edit', {id: link.id}) }}" class="btn btn-secondary btn-sm">Editar</a>
+                            <form class="inline-form" method="post" action="{{ path('admin_links_delete', {id: link.id}) }}" onsubmit="return confirm('¿Eliminar este enlace?')">
+                                <input type="hidden" name="_token" value="{{ csrf_token('delete_link' ~ link.id) }}">
+                                <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+    </section>
+{% endfor %}
+
+<p class="hint" style="margin-top:1.5rem">
+    <a href="{{ path('admin_settings_footer') }}">Configuración del pie</a> ·
+    <a href="{{ path('admin_settings_index') }}">Volver a configuración</a>
+</p>
+{% endblock %}

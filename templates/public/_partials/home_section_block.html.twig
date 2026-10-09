@@ -1,0 +1,63 @@
+{% set items = articles|default(section.articles|default([])) %}
+{% set sectionId = sectionId|default(section is defined ? 'seccion-' ~ section.category.slug : 'portada-destacadas') %}
+{% set sectionTitle = sectionTitle|default(section is defined ? section.category.name : 'En la portada') %}
+{% set sectionUrl = sectionUrl|default(section is defined ? path('public_category_show', {slug: section.category.slug}) : null) %}
+{% set sectionMoreLabel = sectionMoreLabel|default('Ver sección →') %}
+{% set visibleItems = items|filter(article => article_is_visible(article)) %}
+
+{% if visibleItems is not empty %}
+    {% set lead = visibleItems[0] %}
+    {% set stack = visibleItems|slice(1) %}
+    <section class="home-section" id="{{ sectionId }}">
+        <header class="home-section-head">
+            <h2 class="home-section-title">
+                {% if sectionUrl %}
+                    <a href="{{ sectionUrl }}">{{ sectionTitle }}</a>
+                {% else %}
+                    {{ sectionTitle }}
+                {% endif %}
+            </h2>
+            {% if sectionUrl and sectionMoreLabel %}
+                <a href="{{ sectionUrl }}" class="home-section-more">{{ sectionMoreLabel }}</a>
+            {% endif %}
+        </header>
+
+        <div class="home-section-layout home-section-layout--lead{{ stack is empty ? ' home-section-layout--solo' : '' }}">
+            <article class="home-section-lead">
+                <a href="{{ path('public_article_show', {slug: lead.slug}) }}" class="home-section-lead-media">
+                    {% set leadImg = article_usable_featured(lead) %}
+                    {% if leadImg %}
+                        {{ seo_article_image(leadImg, lead.title) }}
+                    {% endif %}
+                </a>
+                <div class="home-section-lead-body">
+                    {% if lead.category %}
+                        <a href="{{ path('public_category_show', {slug: lead.category.slug}) }}" class="cat-pill">{{ lead.category.name }}</a>
+                    {% endif %}
+                    <h3><a href="{{ path('public_article_show', {slug: lead.slug}) }}">{{ lead.title }}</a></h3>
+                    {% set leadExcerpt = lead.lead ?: lead.subtitle %}
+                    {% if leadExcerpt %}
+                        <p class="home-section-lead-excerpt">{{ leadExcerpt|length > 200 ? leadExcerpt|slice(0, 197) ~ '…' : leadExcerpt }}</p>
+                    {% endif %}
+                    <div class="meta-line">
+                        {% if lead.publishedAt %}{{ lead.publishedAt|date('d/m/Y H:i') }}{% endif %}
+                        {% if lead.viewCount > 0 %} · {{ lead.viewCount }} lecturas{% endif %}
+                    </div>
+                    {% include 'public/_partials/home_related_links.html.twig' with {
+                        article: lead,
+                        modifier: ' home-related-links--section',
+                        limit: 3,
+                    } %}
+                </div>
+            </article>
+
+            {% if stack is not empty %}
+                <div class="home-section-stack">
+                    {% for article in stack %}
+                        {% include 'public/_partials/home_stack_item.html.twig' with { article: article, show_meta: true } %}
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+    </section>
+{% endif %}

@@ -1,0 +1,344 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}Noticias{% endblock %}
+
+{% block body %}
+{% import 'admin/_pagination.html.twig' as pagination %}
+{% import 'admin/_icons.html.twig' as icons %}
+
+{% set headerActions %}
+    <a href="{{ path('admin_articles_new') }}" class="btn btn-primary btn-sm">Nueva noticia</a>
+{% endset %}
+{% include 'admin/_page_header.html.twig' with {
+    title: 'Noticias',
+    subtitle: 'Gestiona el contenido editorial del periódico.',
+    breadcrumbs: [
+        { label: 'Panel', url: path('admin_dashboard') },
+        { label: 'Noticias' },
+    ],
+    actions: headerActions
+} only %}
+
+<div class="admin-filters">
+    <div class="admin-filters-head">
+        <p class="admin-filters-title">Filtros</p>
+        {% if totalArticles is defined %}
+            <p class="admin-filters-meta">
+                {{ totalArticles }} resultado{{ totalArticles != 1 ? 's' : '' }}
+                {% if filters.status or filters.q or filters.category or filters.source %}
+                    con filtros activos
+                {% endif %}
+            </p>
+        {% endif %}
+    </div>
+
+    {% if statusCounts is defined and statusCounts is not empty %}
+        <div class="admin-filter-chips" role="group" aria-label="Filtrar por estado">
+            {% set allCount = 0 %}
+            {% for count in statusCounts %}
+                {% set allCount = allCount + count %}
+            {% endfor %}
+            <a
+                href="{{ path('admin_articles_index', listRouteParams) }}"
+                class="admin-filter-chip {{ filters.status == '' ? 'is-active' : '' }}"
+            >
+                Todas <span class="admin-filter-chip-count">{{ allCount }}</span>
+            </a>
+            {% for status in ['draft', 'pending_review', 'scheduled', 'published', 'archived'] %}
+                {% set count = statusCounts[status]|default(0) %}
+                {% set chipParams = listRouteParams|merge({status: status}) %}
+                <a
+                    href="{{ path('admin_articles_index', chipParams) }}"
+                    class="admin-filter-chip {{ filters.status == status ? 'is-active' : '' }}"
+                >
+                    {{ article_status_label(status) }}
+                    <span class="admin-filter-chip-count">{{ count }}</span>
+                </a>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <form class="admin-filters-form admin-filters-form--toolbar" method="get" action="{{ path('admin_articles_index') }}">
+        {% if filters.status %}
+            <input type="hidden" name="status" value="{{ filters.status }}">
+        {% endif %}
+
+        <div class="admin-filters-row admin-filters-row--toolbar">
+            <div class="admin-filter-field admin-filter-field--grow">
+                <label for="filter-q">Buscar</label>
+                <input
+                    type="search"
+                    id="filter-q"
+                    name="q"
+                    value="{{ filters.q }}"
+                    placeholder="Título, entradilla o URL…"
+                    autocomplete="off"
+                >
+            </div>
+            <div class="admin-filter-field">
+                <label for="filter-category">Categoría</label>
+                <select id="filter-category" name="category">
+                    <option value="">Todas las secciones</option>
+                    {% for cat in categories %}
+                        <option value="{{ cat.id }}" {{ filters.category == cat.id ? 'selected' : '' }}>{{ cat.name }}</option>
+                        {% for sub in cat.children %}
+                            <option value="{{ sub.id }}" {{ filters.category == sub.id ? 'selected' : '' }}>— {{ sub.name }}</option>
+                        {% endfor %}
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="admin-filter-field">
+                <label for="filter-source">Origen</label>
+                <select id="filter-source" name="source">
+                    <option value="">Todos los orígenes</option>
+                    <option value="manual" {{ filters.source == 'manual' ? 'selected' : '' }}>Editorial manual</option>
+                    <option value="ingest" {{ filters.source == 'ingest' ? 'selected' : '' }}>HimtecMedia</option>
+                </select>
+            </div>
+            <div class="admin-filter-field">
+                <label for="filter-sort">Ordenar por</label>
+                <select id="filter-sort" name="sort">
+                    <option value="created" {{ filters.sort == 'created' ? 'selected' : '' }}>Fecha de creación</option>
+                    <option value="updated" {{ filters.sort == 'updated' ? 'selected' : '' }}>Última actualización</option>
+                    <option value="published" {{ filters.sort == 'published' ? 'selected' : '' }}>Fecha de publicación</option>
+                    <option value="title" {{ filters.sort == 'title' ? 'selected' : '' }}>Título (A–Z)</option>
+                    <option value="views" {{ filters.sort == 'views' ? 'selected' : '' }}>Más leídas</option>
+                </select>
+            </div>
+            <div class="admin-filter-field admin-filter-field--narrow">
+                <label for="filter-per-page">Por página</label>
+                <select id="filter-per-page" name="per_page">
+                    {% for n in [25, 50, 100] %}
+                        <option value="{{ n }}" {{ filters.per_page == n ? 'selected' : '' }}>{{ n }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="admin-filter-actions">
+                <button type="submit" class="btn btn-primary btn-sm">Aplicar</button>
+                <a href="{{ path('admin_articles_index') }}" class="btn btn-secondary btn-sm">Limpiar</a>
+            </div>
+        </div>
+    </form>
+
+    {% if filters.q or filters.category or filters.source or filters.sort != 'created' or filters.per_page != 25 %}
+        <div class="admin-active-filters" aria-label="Filtros activos">
+            {% if filters.q %}
+                <span class="admin-active-filter is-static">Búsqueda: «{{ filters.q }}»</span>
+            {% endif %}
+            {% if filters.category %}
+                {% for cat in categories %}
+                    {% if cat.id == filters.category %}
+                        <span class="admin-active-filter is-static">{{ cat.name }}</span>
+                    {% endif %}
+                    {% for sub in cat.children %}
+                        {% if sub.id == filters.category %}
+                            <span class="admin-active-filter is-static">{{ sub.name }}</span>
+                        {% endif %}
+                    {% endfor %}
+                {% endfor %}
+            {% endif %}
+            {% if filters.source == 'ingest' %}
+                <span class="admin-active-filter is-static">HimtecMedia</span>
+            {% elseif filters.source == 'manual' %}
+                <span class="admin-active-filter is-static">Editorial manual</span>
+            {% endif %}
+            {% if filters.sort != 'created' %}
+                <span class="admin-active-filter is-static">
+                    Orden:
+                    {% if filters.sort == 'updated' %}última actualización
+                    {% elseif filters.sort == 'published' %}fecha de publicación
+                    {% elseif filters.sort == 'title' %}título
+                    {% elseif filters.sort == 'views' %}más leídas
+                    {% else %}{{ filters.sort }}
+                    {% endif %}
+                </span>
+            {% endif %}
+            {% if filters.per_page != 25 %}
+                <span class="admin-active-filter is-static">{{ filters.per_page }} por página</span>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+
+{% if articles is empty %}
+    <div class="empty-panel">
+        <p>No hay noticias con estos filtros.</p>
+        <p class="hint">Crea una manualmente o publica desde <a href="{{ path('admin_ingest_index') }}">Ingesta HimtecMedia</a>.</p>
+    </div>
+{% else %}
+    {% set bulkParams = listRouteParams %}
+    {% if page > 1 %}
+        {% set bulkParams = bulkParams|merge({page: page}) %}
+    {% endif %}
+
+    {{ pagination.admin_pagination('admin_articles_index', listRouteParams, page, totalPages, totalArticles, perPage) }}
+
+    <form
+        id="articles-bulk-form"
+        class="admin-bulk-form"
+        method="post"
+        action="{{ path('admin_articles_bulk', bulkParams) }}"
+    >
+        <input type="hidden" name="_token" value="{{ csrf_token('articles_bulk') }}">
+
+        <div class="admin-bulk-bar">
+            <label class="visually-hidden" for="articles-bulk-action">Acciones en lote</label>
+            <select id="articles-bulk-action" name="action">
+                <option value="">Acciones en lote</option>
+                <option value="trash">Mover a la papelera</option>
+                <option value="draft">Pasar a borrador</option>
+                <option value="pending_review">Marcar en revisión</option>
+                <option value="publish">Publicar</option>
+                <option value="delete">Eliminar definitivamente</option>
+            </select>
+            <button type="submit" class="btn btn-secondary btn-sm" id="articles-bulk-apply" disabled>Aplicar</button>
+            <span class="admin-bulk-count" id="articles-bulk-count" data-template="%d seleccionada(s)">0 seleccionadas</span>
+        </div>
+    </form>
+
+    <div class="table-responsive">
+        <table class="data-table" id="articles-table">
+            <thead>
+                <tr>
+                    <th class="col-check" scope="col">
+                        <label class="visually-hidden" for="articles-select-all">Seleccionar todas</label>
+                        <input type="checkbox" id="articles-select-all" form="articles-bulk-form" title="Seleccionar todas en esta página">
+                    </th>
+                    <th>Título</th>
+                    <th>Categoría</th>
+                    <th>Estado</th>
+                    <th>Creado</th>
+                    <th>Actualizado</th>
+                    <th class="col-actions">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for article in articles %}
+                <tr>
+                    <td class="col-check" data-label="Seleccionar">
+                        <input
+                            type="checkbox"
+                            name="ids[]"
+                            value="{{ article.id }}"
+                            form="articles-bulk-form"
+                            class="article-row-check"
+                            title="Seleccionar {{ article.title }}"
+                        >
+                    </td>
+                    <td data-label="Título">
+                <strong>{{ article.title }}</strong>
+                {% if article.fromIngest %}
+                    <span class="tag">HimtecMedia</span>
+                {% endif %}
+                {% if article.showOnHome %}
+                    <span class="tag tag-portada">Portada</span>
+                {% endif %}
+                {% if article.pinned %}
+                    <span class="tag tag-pinned" title="Fijada con chincheta en portada">Chincheta</span>
+                {% endif %}
+                {% if articleImageIssues[article.id] is defined %}
+                    <span class="status-badge status-badge--image-warning" title="{{ articleImageIssues[article.id] }}">Revisar imagen</span>
+                {% endif %}
+                        <br>
+                        <span class="hint">/{{ article.slug }}</span>
+                    </td>
+                    <td data-label="Categoría">{{ article.category ? article.category.name : '—' }}</td>
+                    <td data-label="Estado">
+                        {% include 'admin/_article_status_badge.html.twig' with { status: article.status.value } %}
+                    </td>
+                    <td data-label="Creado" class="col-date">
+                        <time datetime="{{ article.createdAt|date('c') }}">{{ article.createdAt|date('d/m/Y H:i') }}</time>
+                    </td>
+                    <td data-label="Actualizado" class="col-date">
+                        <time datetime="{{ article.updatedAt|date('c') }}">{{ article.updatedAt|date('d/m/Y H:i') }}</time>
+                    </td>
+                    <td data-label="Acciones" class="col-actions">
+                        <div class="table-actions" role="group" aria-label="Acciones de la noticia">
+                            <a
+                                href="{{ path('admin_articles_edit', {id: article.id}) }}"
+                                class="btn btn-icon btn-secondary"
+                                title="Editar"
+                                aria-label="Editar"
+                            >{{ icons.edit() }}</a>
+                            {% if article.id %}
+                            <a
+                                href="{{ path('admin_articles_preview', {id: article.id}) }}"
+                                class="btn btn-icon btn-secondary"
+                                target="_blank"
+                                rel="noopener"
+                                title="Vista previa"
+                                aria-label="Vista previa"
+                            >{{ icons.preview() }}</a>
+                            {% endif %}
+                            {% if article.status.value != 'published' %}
+                            <form class="inline-form" method="post" action="{{ path('admin_articles_publish', {id: article.id}) }}">
+                                <input type="hidden" name="_token" value="{{ csrf_token('publish' ~ article.id) }}">
+                                <button
+                                    type="submit"
+                                    class="btn btn-icon btn-primary"
+                                    title="Publicar"
+                                    aria-label="Publicar"
+                                >{{ icons.publish() }}</button>
+                            </form>
+                            {% endif %}
+                            <form class="inline-form" method="post" action="{{ path('admin_articles_duplicate', {id: article.id}) }}">
+                                <input type="hidden" name="_token" value="{{ csrf_token('duplicate' ~ article.id) }}">
+                                <button
+                                    type="submit"
+                                    class="btn btn-icon btn-secondary"
+                                    title="Duplicar"
+                                    aria-label="Duplicar"
+                                >{{ icons.duplicate() }}</button>
+                            </form>
+                            {% if article.status.value == 'archived' %}
+                            <form class="inline-form" method="post" action="{{ path('admin_articles_bulk', bulkParams) }}">
+                                <input type="hidden" name="_token" value="{{ csrf_token('articles_bulk') }}">
+                                <input type="hidden" name="action" value="draft">
+                                <input type="hidden" name="ids[]" value="{{ article.id }}">
+                                <button
+                                    type="submit"
+                                    class="btn btn-icon btn-secondary"
+                                    title="Restaurar a borrador"
+                                    aria-label="Restaurar a borrador"
+                                >{{ icons.restore() }}</button>
+                            </form>
+                            {% else %}
+                            <form class="inline-form" method="post" action="{{ path('admin_articles_bulk', bulkParams) }}">
+                                <input type="hidden" name="_token" value="{{ csrf_token('articles_bulk') }}">
+                                <input type="hidden" name="action" value="trash">
+                                <input type="hidden" name="ids[]" value="{{ article.id }}">
+                                <button
+                                    type="submit"
+                                    class="btn btn-icon btn-secondary"
+                                    title="Mover a la papelera"
+                                    aria-label="Mover a la papelera"
+                                >{{ icons.trash() }}</button>
+                            </form>
+                            {% endif %}
+                            <form class="inline-form" method="post" action="{{ path('admin_articles_bulk', bulkParams) }}">
+                                <input type="hidden" name="_token" value="{{ csrf_token('articles_bulk') }}">
+                                <input type="hidden" name="action" value="delete">
+                                <input type="hidden" name="ids[]" value="{{ article.id }}">
+                                <button
+                                    type="submit"
+                                    class="btn btn-icon btn-danger"
+                                    title="Eliminar definitivamente"
+                                    aria-label="Eliminar definitivamente"
+                                    data-confirm="¿Eliminar definitivamente «{{ article.title|e('html_attr') }}»? Esta acción no se puede deshacer."
+                                >{{ icons.remove() }}</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {{ pagination.admin_pagination('admin_articles_index', listRouteParams, page, totalPages, totalArticles, perPage) }}
+{% endif %}
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="/js/admin-articles-list.js?v=1" defer></script>
+{% endblock %}

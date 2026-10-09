@@ -1,0 +1,75 @@
+{% extends 'public/layout.html.twig' %}
+
+{% block title %}{% if query %}Buscar: {{ query }}{% else %}Buscar{% endif %}{% if page > 1 %} — página {{ page }}{% endif %} — {{ site.name }}{% endblock %}
+
+{% block body %}
+<div class="archive-layout">
+    <div class="archive-main">
+        {% include 'public/_partials/breadcrumb.html.twig' with {
+            crumbs: query
+                ? [
+                    { label: 'Buscar', path: path('public_search') },
+                    { label: query|length > 40 ? query|slice(0, 37) ~ '…' : query },
+                ]
+                : [{ label: 'Buscar' }]
+        } %}
+
+        <header class="archive-page-head">
+            <div class="archive-page-head-row">
+                <div>
+                    {% if query %}
+                        <h1>Resultados de búsqueda</h1>
+                        <p class="archive-page-intro">
+                            {% if totalArticles > 0 %}
+                                {{ totalArticles }} resultado{{ totalArticles == 1 ? '' : 's' }} para «{{ query }}»
+                            {% else %}
+                                No hay resultados para «{{ query }}»
+                            {% endif %}
+                        </p>
+                    {% else %}
+                        <h1>Buscar noticias</h1>
+                        <p class="archive-page-intro">Usa el buscador de la cabecera para encontrar noticias. Mientras, estas son las más recientes de {{ site.name }}.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </header>
+
+        {% include 'public/_partials/ad_slot.html.twig' with { placement: 'category_sidebar' } only %}
+
+        {% if articles is empty %}
+            <p class="archive-empty">
+                {% if query %}
+                    No hay noticias para «{{ query }}». Prueba con otras palabras en el buscador de la cabecera.
+                {% else %}
+                    Todavía no hay noticias publicadas.
+                {% endif %}
+            </p>
+        {% else %}
+            {% if query %}
+                <p class="archive-results-count">{{ totalArticles }} noticia{{ totalArticles != 1 ? 's' : '' }} encontrada{{ totalArticles != 1 ? 's' : '' }}</p>
+            {% else %}
+                <p class="archive-results-count">Últimas noticias</p>
+            {% endif %}
+
+            <div class="archive-story-list">
+                {% include 'public/archive/_article_items.html.twig' with {
+                    articles: articles,
+                    page: page,
+                    showExcerpt: true,
+                } %}
+            </div>
+
+            {% include 'public/_partials/pagination.html.twig' with {
+                route: 'public_search',
+                pagedRoute: 'public_search_paged',
+                routeParams: {},
+                page: page,
+                totalPages: totalPages,
+                totalArticles: totalArticles,
+            } %}
+        {% endif %}
+    </div>
+
+    {% include 'public/archive/_sidebar.html.twig' %}
+</div>
+{% endblock %}

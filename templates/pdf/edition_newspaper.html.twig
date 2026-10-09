@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <title>{{ siteName }} — Edición {{ editionDateLabel }}</title>
+    <style>
+        @page {
+            margin: 14mm 12mm 16mm;
+        }
+        * { box-sizing: border-box; }
+        body {
+            font-family: DejaVu Sans, sans-serif;
+            font-size: 9.5pt;
+            line-height: 1.35;
+            color: #111;
+            margin: 0;
+        }
+        .np {
+            width: 100%;
+        }
+        .np-masthead {
+            border-bottom: 3px solid {{ theme.primaryColor|default('#b91c1c') }};
+            padding-bottom: 8pt;
+            margin-bottom: 10pt;
+        }
+        .np-masthead-top {
+            display: table;
+            width: 100%;
+            margin-bottom: 6pt;
+        }
+        .np-masthead-logo {
+            display: table-cell;
+            vertical-align: middle;
+            width: 28%;
+        }
+        .np-masthead-logo img {
+            max-height: 42pt;
+            max-width: 100%;
+        }
+        .np-masthead-title {
+            display: table-cell;
+            vertical-align: middle;
+            text-align: center;
+            font-size: 26pt;
+            font-weight: bold;
+            letter-spacing: 0.02em;
+            line-height: 1.05;
+        }
+        .np-masthead-meta {
+            display: table-cell;
+            vertical-align: middle;
+            width: 28%;
+            text-align: right;
+            font-size: 8pt;
+            color: #444;
+        }
+        .np-edition-bar {
+            background: #111;
+            color: #fff;
+            text-align: center;
+            padding: 5pt 8pt;
+            font-size: 8.5pt;
+            font-weight: bold;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            margin-bottom: 12pt;
+        }
+        .np-lead {
+            border: 1pt solid #ccc;
+            padding: 10pt;
+            margin-bottom: 12pt;
+            background: #f7f7f7;
+        }
+        .np-lead-inner {
+            display: table;
+            width: 100%;
+        }
+        .np-lead-media {
+            display: table-cell;
+            width: 42%;
+            vertical-align: top;
+            padding-right: 10pt;
+        }
+        .np-lead-media img {
+            width: 100%;
+            max-height: 140pt;
+            object-fit: cover;
+        }
+        .np-lead-body {
+            display: table-cell;
+            vertical-align: top;
+        }
+        .np-lead-body-only {
+            display: block;
+        }
+        .np-cat {
+            font-size: 7.5pt;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: {{ theme.primaryColor|default('#b91c1c') }};
+            margin-bottom: 4pt;
+        }
+        .np-lead-title {
+            font-size: 18pt;
+            font-weight: bold;
+            line-height: 1.15;
+            margin: 0 0 6pt;
+        }
+        .np-lead-text {
+            font-size: 10pt;
+            line-height: 1.45;
+            color: #333;
+            margin: 0;
+        }
+        .np-meta {
+            font-size: 7.5pt;
+            color: #666;
+            margin-top: 5pt;
+        }
+        .np-columns {
+            column-count: 3;
+            column-gap: 10pt;
+            column-rule: 1pt solid #ddd;
+        }
+        .np-story {
+            break-inside: avoid;
+            margin-bottom: 10pt;
+            padding-bottom: 8pt;
+            border-bottom: 0.5pt solid #e5e5e5;
+        }
+        .np-story:last-child {
+            border-bottom: none;
+        }
+        .np-story-title {
+            font-size: 10.5pt;
+            font-weight: bold;
+            line-height: 1.2;
+            margin: 0 0 4pt;
+        }
+        .np-story-text {
+            font-size: 8.5pt;
+            color: #444;
+            margin: 0;
+            line-height: 1.4;
+        }
+        .np-footer {
+            margin-top: 14pt;
+            padding-top: 6pt;
+            border-top: 2pt solid #111;
+            font-size: 7.5pt;
+            color: #555;
+            text-align: center;
+        }
+        .np-empty {
+            padding: 24pt;
+            text-align: center;
+            border: 1pt dashed #ccc;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+<div class="np">
+    <header class="np-masthead">
+        <div class="np-masthead-top">
+            <div class="np-masthead-logo">
+                {% if logoSrc %}
+                    <img src="{{ logoSrc }}" alt="{{ siteName }}">
+                {% endif %}
+            </div>
+            <div class="np-masthead-title">{{ siteName }}</div>
+            <div class="np-masthead-meta">
+                Edición digital<br>
+                {{ editionDateLabel }}<br>
+                {{ siteUrl }}
+            </div>
+        </div>
+    </header>
+
+    <div class="np-edition-bar">Edición del día · {{ editionDateLabel }}</div>
+
+    {% if articles is empty %}
+        <p class="np-empty">No hay noticias publicadas en esta fecha.</p>
+    {% else %}
+        {% set lead = articles[0] %}
+        <section class="np-lead">
+            <div class="np-lead-inner">
+                {% if lead.imageSrc %}
+                    <div class="np-lead-media">
+                        <img src="{{ lead.imageSrc }}" alt="">
+                    </div>
+                    <div class="np-lead-body">
+                {% else %}
+                    <div class="np-lead-body-only">
+                {% endif %}
+                        {% if lead.category %}
+                            <div class="np-cat">{{ lead.category }}</div>
+                        {% endif %}
+                        <h1 class="np-lead-title">{{ lead.title }}</h1>
+                        {% if lead.lead %}
+                            <p class="np-lead-text">{{ lead.lead }}</p>
+                        {% endif %}
+                        <div class="np-meta">
+                            {% if lead.publishedAt %}Publicado a las {{ lead.publishedAt }}{% endif %}
+                            · {{ lead.articleUrl }}
+                        </div>
+                {% if lead.imageSrc %}
+                    </div>
+                {% else %}
+                    </div>
+                {% endif %}
+            </div>
+        </section>
+
+        {% if articles|length > 1 %}
+            <div class="np-columns">
+                {% for story in articles|slice(1) %}
+                    <article class="np-story">
+                        {% if story.category %}
+                            <div class="np-cat">{{ story.category }}</div>
+                        {% endif %}
+                        <h2 class="np-story-title">{{ story.title }}</h2>
+                        {% if story.lead %}
+                            <p class="np-story-text">{{ story.lead }}</p>
+                        {% endif %}
+                        <div class="np-meta">
+                            {% if story.publishedAt %}{{ story.publishedAt }}{% endif %}
+                        </div>
+                    </article>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endif %}
+
+    <footer class="np-footer">
+        {{ siteName }} — Edición {{ editionDateLabel }}
+        {% if truncated %}
+            · Mostrando {{ articles|length }} de {{ totalArticles }} noticias del día
+        {% else %}
+            · {{ totalArticles }} noticia{{ totalArticles != 1 ? 's' : '' }}
+        {% endif %}
+        · {{ editionUrl }}
+    </footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,45 @@
+<section class="markets-detail-table-wrap" aria-label="Tabla de cotizaciones">
+    <h2 class="section-label">Resumen de cotizaciones</h2>
+    <div class="markets-detail-table-scroll">
+        <table class="markets-detail-table">
+            <thead>
+                <tr>
+                    <th>Índice</th>
+                    <th>Último</th>
+                    <th>Variación</th>
+                    <th>%</th>
+                    <th>Mín. sesión</th>
+                    <th>Máx. sesión</th>
+                    <th>Cierre ant.</th>
+                    <th>5 días</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for index in board.indices %}
+                    {% set trend = market_sparkline_trend(index.sparkline) %}
+                    <tr class="{{ market_change_class(index.change) }}">
+                        <td>
+                            <span class="markets-table-name">{{ index.name }}</span>
+                            {% if index.exchangeName %}
+                                <span class="markets-table-exchange">{{ index.exchangeName }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="markets-table-num">{{ market_format_price(index.price, index.currency) }}</td>
+                        <td class="markets-table-num">{{ market_format_change(index.change, index.currency) }}</td>
+                        <td class="markets-table-num">{{ market_format_change_percent(index.changePercent) }}</td>
+                        <td class="markets-table-num">{{ market_format_price(index.dayLow, index.currency) }}</td>
+                        <td class="markets-table-num">{{ market_format_price(index.dayHigh, index.currency) }}</td>
+                        <td class="markets-table-num">{{ market_format_price(index.previousClose, index.currency) }}</td>
+                        <td>
+                            {% if trend %}
+                                <span class="markets-table-trend markets-table-trend--{{ trend }}">{{ trend }}</span>
+                            {% else %}
+                                <span class="markets-table-trend markets-table-trend--neutral">—</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>

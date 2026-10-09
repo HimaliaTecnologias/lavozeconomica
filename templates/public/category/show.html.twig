@@ -1,0 +1,9 @@
+{% extends 'public/layout.html.twig' %}
+
+{% block title %}{{ category.name }}{% if page > 1 %} — página {{ page }}{% endif %} — {{ site.name }}{% endblock %}
+
+{% block body %}
+<div class="category-page">
+{% include 'public/category/' ~ layout.categoryTemplate ~ '.html.twig' %}
+</div>
+{% endblock %}

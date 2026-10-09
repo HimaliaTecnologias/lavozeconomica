@@ -1,0 +1,32 @@
+<nav class="admin-subnav">
+    {% if admin_can('dashboard') %}
+        <a href="{{ path('admin_dashboard') }}">Panel</a>
+    {% endif %}
+    {% if admin_can('articles') %}
+        <a href="{{ path('admin_articles_index') }}" class="{{ app.request.attributes.get('_route') starts with 'admin_articles' ? 'active' : '' }}">Noticias</a>
+    {% endif %}
+    {% if admin_can('media') %}
+        <a href="{{ path('admin_media_index') }}" class="{{ app.request.attributes.get('_route') starts with 'admin_media' ? 'active' : '' }}">Biblioteca de medios</a>
+    {% endif %}
+    {% if admin_can('ads') %}
+        <a href="{{ path('admin_ads_index') }}" class="{{ app.request.attributes.get('_route') starts with 'admin_ads' ? 'active' : '' }}">Publicidad</a>
+    {% endif %}
+    {% if admin_can('ingest') %}
+        <a href="{{ path('admin_ingest_index') }}" class="{{ app.request.attributes.get('_route') starts with 'admin_ingest' ? 'active' : '' }}">Ingesta HimtecMedia</a>
+    {% endif %}
+    {% if admin_can('categories') %}
+        <a href="{{ path('admin_categories_index') }}" class="{{ app.request.attributes.get('_route') starts with 'admin_categories' ? 'active' : '' }}">Categorías</a>
+    {% endif %}
+    {% if admin_can('polls') %}
+        <a href="{{ path('admin_polls_index') }}" class="{{ app.request.attributes.get('_route') starts with 'admin_polls' ? 'active' : '' }}">Encuestas</a>
+    {% endif %}
+    {% if admin_can('newsletter') %}
+        <a href="{{ path('admin_newsletter_index') }}" class="{{ app.request.attributes.get('_route') starts with 'admin_newsletter' ? 'active' : '' }}">Boletín</a>
+    {% endif %}
+    {% if admin_can('users') %}
+        <a href="{{ path('admin_users_index') }}" class="{{ app.request.attributes.get('_route') starts with 'admin_users' ? 'active' : '' }}">Usuarios</a>
+    {% endif %}
+    {% if admin_can('settings') %}
+        <a href="{{ path('admin_settings_index') }}" class="{{ app.request.attributes.get('_route') starts with 'admin_settings' ? 'active' : '' }}">Configuración</a>
+    {% endif %}
+</nav>

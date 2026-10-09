@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es" class="admin-html">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Admin{% endblock %} · MyMediaCMS</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/admin.css?v=21">
+    <style>:root {
+        --primary: #1e40af;
+        --secondary: #3b82f6;
+        --admin-accent: var(--primary);
+        --admin-accent-soft: color-mix(in srgb, var(--primary) 12%, white);
+    }</style>
+    {% block extra_styles %}{% endblock %}
+</head>
+<body class="admin-body">
+{% if app.user and app.request.attributes.get('_route') != 'admin_login' %}
+<script>
+(function () {
+    try {
+        if (window.matchMedia('(min-width: 961px)').matches && localStorage.getItem('mymedia-admin-sidebar-collapsed') === '1') {
+            document.documentElement.classList.add('admin-sidebar-pref-collapsed');
+        }
+    } catch (e) {}
+})();
+</script>
+<div id="admin-toast-root" class="admin-toast-root" aria-live="polite"></div>
+<div class="admin-app">
+    {% include 'admin/_sidebar.html.twig' %}
+    <div class="admin-main">
+        <header class="admin-header">
+            <div class="admin-header-left">
+                <button type="button" class="admin-menu-toggle" id="admin-menu-toggle" aria-label="Ocultar menú" aria-expanded="true" aria-controls="admin-sidebar" title="Mostrar u ocultar menú">
+                    <svg class="admin-menu-icon-open" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+                    <svg class="admin-menu-icon-close" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+                </button>
+                <div class="admin-header-titles">
+                    {% block admin_breadcrumbs %}{% endblock %}
+                    <p class="admin-header-kicker">Panel editorial</p>
+                    {% if site is defined %}
+                        <p class="admin-header-site">{{ site.name }}</p>
+                    {% else %}
+                        <p class="admin-header-site">MyMediaCMS</p>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="admin-header-actions">
+                <a href="{{ path('admin_articles_new') }}" class="btn btn-primary btn-sm admin-header-cta" data-shortcut-new>
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    <span>Nueva noticia</span>
+                </a>
+                <div class="admin-user-chip" title="{{ app.user.email|default(app.user.userIdentifier) }}">
+                    <span class="admin-user-avatar" aria-hidden="true">{{ app.user.userIdentifier|slice(0, 1)|upper }}</span>
+                    <span class="admin-user-name">{{ app.user.name|default(app.user.userIdentifier) }}</span>
+                </div>
+            </div>
+        </header>
+
+        <main class="admin-content {% block admin_content_modifier %}{% endblock %}">
+            {% for message in app.flashes('success') %}
+                <div class="flash flash-success" data-toast>{{ message }}</div>
+            {% endfor %}
+            {% for message in app.flashes('error') %}
+                <div class="flash flash-error" data-toast>{{ message }}</div>
+            {% endfor %}
+            {% for message in app.flashes('info') %}
+                <div class="flash flash-info" data-toast>{{ message }}</div>
+            {% endfor %}
+
+            <div class="{% block admin_surface_class %}admin-card{% endblock %}">
+                {% block body %}{% endblock %}
+            </div>
+        </main>
+    </div>
+</div>
+<div class="admin-sidebar-backdrop" id="admin-sidebar-backdrop" hidden></div>
+<script src="/js/admin.js?v=5" defer></script>
+{% endif %}
+
+{% block extra_scripts %}{% endblock %}
+</body>
+</html>

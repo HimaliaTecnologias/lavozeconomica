@@ -1,0 +1,44 @@
+{% if article.category and (categoryFeedItems is not empty or categoryFeedTotal > 0) %}
+{% set feedPage = categoryFeedPage|default(1) %}
+{% set feedTotalPages = categoryFeedTotalPages|default(1) %}
+<section
+    class="article-section-block article-category-feed"
+    data-feed-url="{{ path('public_article_category_feed', {slug: article.slug}) }}"
+    data-page="{{ feedPage }}"
+    data-total-pages="{{ feedTotalPages }}"
+    aria-label="Más noticias de {{ article.category.name }}"
+>
+    <div class="article-category-feed-head">
+        <p class="section-label">
+            Sigue leyendo en <a href="{{ path('public_category_show', {slug: article.category.slug}) }}">{{ article.category.name }}</a>
+        </p>
+        {% if categoryFeedTotal > 0 %}
+            <span class="article-feed-count">{{ categoryFeedTotal }} {{ categoryFeedTotal == 1 ? 'noticia' : 'noticias' }}</span>
+        {% endif %}
+    </div>
+
+    <div class="more-stories more-stories--feed" id="article-category-feed-list">
+        {% include 'public/article/_category_feed_items.html.twig' with { articles: categoryFeedItems } %}
+    </div>
+
+    {% if feedTotalPages > 1 %}
+    <nav class="list-pagination article-feed-pagination" id="article-category-feed-pagination" aria-label="Paginación de Sigue leyendo">
+        <button type="button" class="list-pagination-btn" data-feed-prev {% if feedPage <= 1 %}disabled{% endif %}>Anterior</button>
+        <div class="list-pagination-pages" id="article-category-feed-pages">
+            {% for p in 1..feedTotalPages %}
+                {% if p == feedPage %}
+                    <span class="list-pagination-current" aria-current="page">{{ p }}</span>
+                {% elseif p == 1 or p == feedTotalPages or (p >= feedPage - 2 and p <= feedPage + 2) %}
+                    <button type="button" class="list-pagination-link" data-feed-page="{{ p }}">{{ p }}</button>
+                {% elseif p == feedPage - 3 or p == feedPage + 3 %}
+                    <span class="list-pagination-ellipsis" aria-hidden="true">…</span>
+                {% endif %}
+            {% endfor %}
+        </div>
+        <button type="button" class="list-pagination-btn" data-feed-next {% if feedPage >= feedTotalPages %}disabled{% endif %}>Siguiente</button>
+        <span class="list-pagination-meta" id="article-category-feed-meta">Página {{ feedPage }} de {{ feedTotalPages }}</span>
+    </nav>
+    <p class="article-feed-status" id="article-category-feed-status" hidden>Cargando…</p>
+    {% endif %}
+</section>
+{% endif %}

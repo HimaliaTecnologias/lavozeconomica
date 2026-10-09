@@ -1,0 +1,304 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}Correo (SMTP){% endblock %}
+
+{% block extra_styles %}
+<style>
+    .mail-preset-btn {
+        margin-bottom: 1rem;
+        font-size: .85rem;
+    }
+    .mail-preset-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .5rem;
+        margin-bottom: 1rem;
+    }
+    .mail-preset-notice {
+        padding: .75rem 1rem;
+        border-radius: 8px;
+        background: #c6f6d5;
+        color: #22543d;
+        font-size: .9rem;
+        margin-bottom: 1rem;
+        border: 1px solid #9ae6b4;
+    }
+    .mail-preset-notice[hidden] { display: none; }
+    .mail-smtp-config {
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 1.25rem;
+        margin-top: .5rem;
+        background: #fafafa;
+    }
+    .mail-smtp-config[hidden] { display: none; }
+    .mail-smtp-config.is-highlight {
+        animation: mail-config-pulse 1.2s ease;
+    }
+    @keyframes mail-config-pulse {
+        0%, 100% { box-shadow: none; }
+        50% { box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 35%, transparent); }
+    }
+    .mail-test-box {
+        margin-top: 2rem;
+        padding: 1rem 1.25rem;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: #fafafa;
+    }
+    .mail-test-box[hidden] { display: none; }
+    .mail-test-box h3 { margin: 0 0 .75rem; font-size: 1rem; }
+    .mail-test-row { display: flex; gap: .75rem; flex-wrap: wrap; align-items: flex-end; }
+    .mail-test-row .field { flex: 1; min-width: 220px; margin-bottom: 0; }
+    .info-box {
+        background: #ebf8ff;
+        border: 1px solid #bee3f8;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1.25rem;
+        font-size: .9rem;
+        line-height: 1.55;
+    }
+    .info-box ol { margin: .5rem 0 0; padding-left: 1.25rem; }
+    .info-box code { background: #fff; padding: .1rem .35rem; border-radius: 3px; }
+    .mail-advanced-toggle {
+        margin: .25rem 0 1rem;
+        font-size: .85rem;
+        color: var(--primary);
+        background: none;
+        border: none;
+        padding: 0;
+        cursor: pointer;
+        text-decoration: underline;
+    }
+    .mail-smtp-advanced[hidden] { display: none; }
+</style>
+{% endblock %}
+
+{% block body %}
+<h1>Correo (SMTP)</h1>
+<p class="hint">Configura el envío de emails del sitio: formulario de contacto, boletín y notificaciones.</p>
+
+{% include 'admin/settings/_subnav.html.twig' %}
+
+<div class="info-box">
+    <strong>Google / Gmail</strong>
+    <ol>
+        <li>Activa la verificación en 2 pasos en tu cuenta Google.</li>
+        <li>Crea una <strong>contraseña de aplicación</strong> en <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener">Google Cuenta → Seguridad → Contraseñas de aplicaciones</a>.</li>
+        <li>Usa <code>smtp.gmail.com</code>, puerto <code>587</code> y cifrado <code>TLS</code>.</li>
+        <li>Usuario: tu email completo de Gmail. Contraseña: la de 16 letras generada (no la de la cuenta).</li>
+    </ol>
+</div>
+
+{% if gmailNeedsAppPassword|default(false) %}
+<div class="mail-preset-notice" style="background:#fed7d7;color:#742a2a;border-color:#feb2b2;" role="alert">
+    La contraseña guardada no es una contraseña de aplicación de Gmail. Google rechaza la contraseña normal de la cuenta. Genera una nueva de 16 letras y pégala abajo.
+</div>
+{% endif %}
+
+<div class="mail-preset-actions">
+    <button type="button" class="btn btn-primary btn-sm mail-preset-btn" id="google-smtp-preset">Usar valores de Google Gmail</button>
+    <button type="button" class="btn btn-secondary btn-sm" id="mail-show-manual">Configurar otro proveedor SMTP</button>
+</div>
+
+<div class="mail-preset-notice" id="mail-preset-notice" hidden role="status">
+    Valores de Gmail aplicados. Completa tu email y la contraseña de aplicación, luego guarda.
+</div>
+
+<form method="post" action="{{ path('admin_settings_mail') }}" id="mail-settings-form">
+    <input type="hidden" name="_token" value="{{ csrf_token('settings_mail') }}">
+
+    <div class="checkbox-row">
+        <input type="checkbox" id="enabled" name="enabled" value="1" {{ data.enabled ? 'checked' : '' }}>
+        <label for="enabled">Activar SMTP para este sitio</label>
+    </div>
+
+    <div class="mail-smtp-config" id="mail-smtp-config" {% if not data.enabled and not hasPassword and errors is empty %}hidden{% endif %}>
+        <p class="hint" style="margin-top:0">Datos de conexión SMTP. Con Gmail solo necesitas tu email y la contraseña de aplicación.</p>
+
+        <div class="field">
+            <label for="username">Usuario SMTP (email)</label>
+            <input type="email" id="username" name="username" value="{{ data.username|default('') }}"
+                   class="{{ errors.username is defined ? 'error' : '' }}" autocomplete="off"
+                   placeholder="tu@gmail.com">
+            {% if errors.username is defined %}<div class="error-msg">{{ errors.username }}</div>{% endif %}
+        </div>
+
+        <div class="field">
+            <label for="password">Contraseña de aplicación</label>
+            <input type="password" id="password" name="password" value=""
+                   class="{{ errors.password is defined ? 'error' : '' }}" autocomplete="new-password"
+                   placeholder="{{ hasPassword ? 'Dejar en blanco para mantener la actual' : 'Contraseña de aplicación de Google' }}">
+            {% if errors.password is defined %}<div class="error-msg">{{ errors.password }}</div>{% endif %}
+            {% if hasPassword %}<p class="hint">Ya hay una contraseña guardada. Déjala vacía si no quieres cambiarla.</p>{% endif %}
+            {% if gmailNeedsAppPassword|default(false) %}<p class="hint">Hay que sustituirla: la actual no sirve para Gmail SMTP.</p>{% endif %}
+        </div>
+
+        <div class="field-row" style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+            <div class="field">
+                <label for="fromEmail">Email remitente</label>
+                <input type="email" id="fromEmail" name="fromEmail" value="{{ data.fromEmail|default('') }}"
+                       class="{{ errors.fromEmail is defined ? 'error' : '' }}"
+                       placeholder="normalmente el mismo Gmail">
+                {% if errors.fromEmail is defined %}<div class="error-msg">{{ errors.fromEmail }}</div>{% endif %}
+            </div>
+            <div class="field">
+                <label for="fromName">Nombre remitente</label>
+                <input type="text" id="fromName" name="fromName" value="{{ data.fromName|default('') }}"
+                       placeholder="{{ site.name }}">
+            </div>
+        </div>
+
+        <div class="field">
+            <label for="contactRecipient">Destino del formulario de contacto</label>
+            <input type="email" id="contactRecipient" name="contactRecipient" value="{{ data.contactRecipient|default('') }}"
+                   class="{{ errors.contactRecipient is defined ? 'error' : '' }}"
+                   placeholder="Email donde recibir mensajes del formulario">
+            {% if errors.contactRecipient is defined %}<div class="error-msg">{{ errors.contactRecipient }}</div>{% endif %}
+            <p class="hint">Si está vacío, se usará el email del pie de página.</p>
+        </div>
+
+        <button type="button" class="mail-advanced-toggle" id="mail-advanced-toggle" aria-expanded="false">
+            Mostrar opciones avanzadas (servidor, puerto, cifrado)
+        </button>
+
+        <div class="mail-smtp-advanced" id="mail-smtp-advanced" {% if errors.host is not defined and errors.port is not defined and errors.encryption is not defined %}hidden{% endif %}>
+            <div class="field">
+                <label for="host">Servidor SMTP</label>
+                <input type="text" id="host" name="host" value="{{ data.host|default('smtp.gmail.com') }}"
+                       class="{{ errors.host is defined ? 'error' : '' }}">
+                {% if errors.host is defined %}<div class="error-msg">{{ errors.host }}</div>{% endif %}
+            </div>
+
+            <div class="field-row" style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+                <div class="field">
+                    <label for="port">Puerto</label>
+                    <input type="number" id="port" name="port" min="1" max="65535" value="{{ data.port|default(587) }}"
+                           class="{{ errors.port is defined ? 'error' : '' }}">
+                    {% if errors.port is defined %}<div class="error-msg">{{ errors.port }}</div>{% endif %}
+                </div>
+                <div class="field">
+                    <label for="encryption">Cifrado</label>
+                    <select id="encryption" name="encryption" class="{{ errors.encryption is defined ? 'error' : '' }}">
+                        <option value="tls" {{ data.encryption|default('tls') == 'tls' ? 'selected' : '' }}>TLS (587 — Gmail)</option>
+                        <option value="ssl" {{ data.encryption|default('tls') == 'ssl' ? 'selected' : '' }}>SSL (465)</option>
+                        <option value="none" {{ data.encryption|default('tls') == 'none' ? 'selected' : '' }}>Sin cifrado</option>
+                    </select>
+                    {% if errors.encryption is defined %}<div class="error-msg">{{ errors.encryption }}</div>{% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="actions" id="mail-save-actions" {% if not data.enabled and not hasPassword and errors is empty %}hidden{% endif %}>
+        <button type="submit" class="btn btn-primary">Guardar configuración</button>
+    </div>
+</form>
+
+<div class="mail-test-box" id="mail-test-box" {% if not hasPassword and not data.enabled and errors is empty %}hidden{% endif %}>
+    <h3>Probar configuración</h3>
+    <p class="hint">Envía un email de prueba para verificar que SMTP funciona. Guarda antes si acabas de cambiar la contraseña.</p>
+    <form method="post" action="{{ path('admin_settings_mail_test') }}" class="mail-test-row">
+        <input type="hidden" name="_token" value="{{ csrf_token('settings_mail_test') }}">
+        <div class="field">
+            <label for="testRecipient">Enviar prueba a</label>
+            <input type="email" id="testRecipient" name="testRecipient" value="{{ data.fromEmail|default(data.username|default('')) }}" required>
+        </div>
+        <button type="submit" class="btn btn-secondary">Enviar prueba</button>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+(function () {
+    const enabled = document.getElementById('enabled');
+    const configPanel = document.getElementById('mail-smtp-config');
+    const saveActions = document.getElementById('mail-save-actions');
+    const testBox = document.getElementById('mail-test-box');
+    const presetNotice = document.getElementById('mail-preset-notice');
+    const advancedPanel = document.getElementById('mail-smtp-advanced');
+    const advancedToggle = document.getElementById('mail-advanced-toggle');
+    const presetBtn = document.getElementById('google-smtp-preset');
+    const manualBtn = document.getElementById('mail-show-manual');
+
+    function showMailConfig(highlight) {
+        if (!configPanel) return;
+        configPanel.hidden = false;
+        if (saveActions) saveActions.hidden = false;
+        if (highlight) {
+            configPanel.classList.remove('is-highlight');
+            configPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            requestAnimationFrame(function () {
+                configPanel.classList.add('is-highlight');
+            });
+        }
+    }
+
+    function applyGmailPreset() {
+        const host = document.getElementById('host');
+        const port = document.getElementById('port');
+        const encryption = document.getElementById('encryption');
+        if (host) host.value = 'smtp.gmail.com';
+        if (port) port.value = '587';
+        if (encryption) encryption.value = 'tls';
+        if (enabled) enabled.checked = true;
+        if (advancedPanel) advancedPanel.hidden = true;
+        if (advancedToggle) {
+            advancedToggle.setAttribute('aria-expanded', 'false');
+            advancedToggle.textContent = 'Mostrar opciones avanzadas (servidor, puerto, cifrado)';
+        }
+        showMailConfig(true);
+        if (presetNotice) presetNotice.hidden = false;
+        const username = document.getElementById('username');
+        if (username) username.focus();
+    }
+
+    function showManualConfig() {
+        if (enabled) enabled.checked = true;
+        showMailConfig(true);
+        if (advancedPanel) advancedPanel.hidden = false;
+        if (advancedToggle) {
+            advancedToggle.setAttribute('aria-expanded', 'true');
+            advancedToggle.textContent = 'Ocultar opciones avanzadas';
+        }
+        if (presetNotice) presetNotice.hidden = true;
+        const host = document.getElementById('host');
+        if (host) host.focus();
+    }
+
+    if (enabled) {
+        enabled.addEventListener('change', function () {
+            const on = enabled.checked;
+            if (configPanel) configPanel.hidden = !on;
+            if (saveActions) saveActions.hidden = !on;
+            if (!on && presetNotice) presetNotice.hidden = true;
+        });
+    }
+
+    if (advancedToggle && advancedPanel) {
+        advancedToggle.addEventListener('click', function () {
+            const open = advancedPanel.hidden;
+            advancedPanel.hidden = !open;
+            advancedToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+            advancedToggle.textContent = open
+                ? 'Ocultar opciones avanzadas'
+                : 'Mostrar opciones avanzadas (servidor, puerto, cifrado)';
+        });
+    }
+
+    if (advancedToggle && advancedPanel && !advancedPanel.hidden) {
+        advancedToggle.setAttribute('aria-expanded', 'true');
+        advancedToggle.textContent = 'Ocultar opciones avanzadas';
+    }
+
+    if (presetBtn) presetBtn.addEventListener('click', applyGmailPreset);
+    if (manualBtn) manualBtn.addEventListener('click', showManualConfig);
+
+    if (testBox && ({{ hasPassword ? 'true' : 'false' }} || enabled?.checked)) {
+        testBox.hidden = false;
+    }
+})();
+</script>
+{% endblock %}

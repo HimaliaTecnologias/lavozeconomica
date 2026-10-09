@@ -1,0 +1,41 @@
+{% set popularLimit = limit|default(5) %}
+{% set popularPeriod = period|default('week') %}
+{% set popularHomeOnly = homeOnly|default(false) %}
+{% set popularExcludeId = excludeId|default(null) %}
+{% set popularCategoryIds = categoryIds|default([]) %}
+{% set popularTitle = title|default('Más vistas') %}
+{% set popularArticles = articles|default([]) %}
+{% set categoriesParam = popularCategoryIds|join(',') %}
+
+<div
+    class="sidebar-block popular-sidebar"
+    data-popular-url="{{ path('public_popular_articles') }}"
+    data-popular-limit="{{ popularLimit }}"
+    data-popular-home="{{ popularHomeOnly ? '1' : '0' }}"
+    data-popular-exclude="{{ popularExcludeId|default('') }}"
+    data-popular-categories="{{ categoriesParam }}"
+    data-popular-period="{{ popularPeriod }}"
+>
+    <div class="popular-sidebar-head">
+        <p class="sidebar-label">{{ popularTitle }}</p>
+        <div class="popular-period-tabs" role="tablist" aria-label="Periodo de más vistas">
+            {% for option in [
+                {value: 'day', label: 'Día'},
+                {value: 'week', label: 'Semana'},
+                {value: 'month', label: 'Mes'},
+                {value: 'year', label: 'Año'},
+            ] %}
+                <button
+                    type="button"
+                    class="popular-period-tab{{ popularPeriod == option.value ? ' is-active' : '' }}"
+                    role="tab"
+                    data-period="{{ option.value }}"
+                    aria-selected="{{ popularPeriod == option.value ? 'true' : 'false' }}"
+                >{{ option.label }}</button>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="sidebar-list popular-sidebar-list" data-popular-list>
+        {% include 'public/_partials/popular_sidebar_list.html.twig' with { articles: popularArticles } only %}
+    </div>
+</div>

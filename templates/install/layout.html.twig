@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Instalación{% endblock %} · MyMediaCMS</title>
+    <style>
+        :root {
+            --primary: #1a365d;
+            --secondary: #2c5282;
+            --bg: #f7fafc;
+            --card: #ffffff;
+            --text: #1a202c;
+            --muted: #718096;
+            --border: #e2e8f0;
+            --error: #c53030;
+            --success: #276749;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.5;
+        }
+        .wrap { max-width: 640px; margin: 0 auto; padding: 2rem 1rem 4rem; }
+        .brand { text-align: center; margin-bottom: 2rem; }
+        .brand h1 { margin: 0; font-size: 1.5rem; color: var(--primary); }
+        .brand p { margin: .5rem 0 0; color: var(--muted); font-size: .95rem; }
+        .steps {
+            display: flex;
+            gap: .5rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+        .step {
+            flex: 1;
+            min-width: 4rem;
+            text-align: center;
+            font-size: .75rem;
+            color: var(--muted);
+            padding: .5rem;
+            border-radius: 6px;
+            background: #edf2f7;
+        }
+        .step.active { background: var(--primary); color: #fff; font-weight: 600; }
+        .step.done { background: #c6f6d5; color: var(--success); }
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.75rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,.06);
+        }
+        h2 { margin: 0 0 1rem; font-size: 1.25rem; }
+        .field { margin-bottom: 1.25rem; }
+        label { display: block; font-weight: 600; margin-bottom: .35rem; font-size: .9rem; }
+        .hint { font-size: .8rem; color: var(--muted); margin-top: .25rem; }
+        input[type=text], input[type=email], input[type=password], input[type=color], select, textarea {
+            width: 100%;
+            padding: .65rem .75rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+        input.error { border-color: var(--error); }
+        .error-msg { color: var(--error); font-size: .85rem; margin-top: .25rem; }
+        .flash-error {
+            background: #fed7d7;
+            color: var(--error);
+            padding: .75rem 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+        .actions {
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-top: 1.5rem;
+            flex-wrap: wrap;
+        }
+        .btn {
+            display: inline-block;
+            padding: .65rem 1.25rem;
+            border-radius: 8px;
+            font-weight: 600;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        .btn-primary { background: var(--primary); color: #fff; }
+        .btn-secondary { background: #edf2f7; color: var(--text); }
+        .preview-header {
+            padding: 1rem 1.25rem;
+            border-radius: 8px;
+            color: #fff;
+            margin-top: .5rem;
+        }
+        .color-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        @media (max-width: 480px) { .color-row { grid-template-columns: 1fr; } }
+    </style>
+    {% block extra_styles %}{% endblock %}
+</head>
+<body>
+<div class="wrap">
+    <div class="brand">
+        <h1>MyMediaCMS</h1>
+        <p>Asistente de instalación — Momento cero</p>
+    </div>
+    {% block steps %}{% endblock %}
+    {% for message in app.flashes('error') %}
+        <div class="flash-error">{{ message }}</div>
+    {% endfor %}
+    {% if errors._form is defined %}
+        <div class="flash-error">{{ errors._form }}</div>
+    {% endif %}
+    <div class="card">
+        {% block body %}{% endblock %}
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,10 @@
+{% if relatedArticles is not empty %}
+<section class="article-section-block article-related-section">
+    <p class="section-label">Te puede interesar</p>
+    <div class="story-grid story-grid--cols-4 story-grid--related">
+        {% for item in relatedArticles %}
+            {% include 'public/_partials/story_card.html.twig' with { article: item, muted: true, show_excerpt: true, grid_card: true } %}
+        {% endfor %}
+    </div>
+</section>
+{% endif %}

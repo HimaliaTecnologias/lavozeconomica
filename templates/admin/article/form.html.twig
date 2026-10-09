@@ -1,0 +1,1476 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}{{ article ? 'Editar noticia' : 'Nueva noticia' }}{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .article-edit-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(260px, 320px);
+        gap: 1.25rem;
+        align-items: start;
+    }
+    .article-edit-main {
+        min-width: 0;
+        display: grid;
+        gap: 0;
+    }
+    .article-edit-aside-sticky {
+        position: sticky;
+        top: 1rem;
+        display: grid;
+        gap: .85rem;
+    }
+    .article-edit-card {
+        border: 1px solid var(--admin-border);
+        border-radius: var(--admin-radius-sm);
+        background: #f8fafc;
+        padding: 1rem 1.05rem;
+    }
+    .article-edit-card-title {
+        margin: 0 0 .75rem;
+        font-size: .78rem;
+        font-weight: 700;
+        letter-spacing: .04em;
+        text-transform: uppercase;
+        color: var(--admin-muted);
+    }
+    .article-edit-card .field { margin-bottom: .85rem; }
+    .article-edit-card .field:last-child { margin-bottom: 0; }
+    .article-title-row {
+        display: flex;
+        gap: .5rem;
+        align-items: stretch;
+    }
+    .article-title-row input {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+    .article-title-row .btn {
+        flex: 0 0 auto;
+        white-space: nowrap;
+    }
+    .article-title-row .btn.is-busy {
+        opacity: .7;
+        pointer-events: none;
+    }
+    .article-edit-actions .btn { flex: 1 1 auto; justify-content: center; }
+    .article-edit-actions .btn-primary { flex: 1.4 1 auto; }
+
+    .article-edit-aside .editorial-checklist {
+        margin: 0;
+        padding: 1rem 1.05rem;
+    }
+    .editorial-checklist-hint {
+        margin: 0 0 .55rem;
+        font-size: .78rem;
+    }
+    .editorial-checklist-optional {
+        font-weight: 500;
+        opacity: .75;
+    }
+    .article-edit-aside .editorial-checklist ul {
+        flex-direction: column;
+        flex-wrap: nowrap;
+        gap: .35rem;
+    }
+    .article-edit-aside .editorial-checklist li {
+        border-radius: 8px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .gallery-editor { display: grid; gap: .75rem; }
+    .gallery-row {
+        display: grid;
+        grid-template-columns: 28px 108px minmax(0, 1fr);
+        gap: .65rem;
+        align-items: start;
+        padding: .75rem;
+        border: 1px solid var(--admin-border);
+        border-radius: var(--admin-radius-sm);
+        background: #fff;
+    }
+    .gallery-row.dragging { opacity: .55; }
+    .gallery-drag {
+        cursor: grab;
+        padding: .5rem .15rem;
+        color: var(--admin-muted);
+        font-size: 1rem;
+        user-select: none;
+        line-height: 1;
+        text-align: center;
+    }
+    .gallery-fields {
+        display: grid;
+        gap: .45rem;
+        min-width: 0;
+    }
+    .gallery-fields input[type="url"],
+    .gallery-fields input[type="text"] {
+        width: 100%;
+    }
+    .gallery-actions {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        gap: .35rem;
+        align-items: center;
+        margin-top: .15rem;
+    }
+    .gallery-actions .btn { white-space: nowrap; flex-shrink: 0; }
+    .gallery-section {
+        border: 1px solid var(--admin-border);
+        border-radius: var(--admin-radius-sm);
+        padding: 1rem;
+        background: #f8fafc;
+        margin-bottom: 1rem;
+    }
+    .gallery-section summary {
+        font-weight: 700;
+        cursor: pointer;
+        margin-bottom: .75rem;
+    }
+    .featured-advanced { margin-top: .15rem; }
+    .featured-picker-preview .media-busy { border-radius: 12px; }
+
+    .featured-section {
+        border: 1px solid var(--admin-border);
+        border-radius: var(--admin-radius-sm);
+        padding: 1.1rem 1.15rem 1.2rem;
+        background: #fff;
+        margin-bottom: 1rem;
+    }
+    .featured-section-head { margin-bottom: .9rem; }
+    .featured-section-title {
+        margin: 0 0 .35rem;
+        font-size: 1rem;
+        font-weight: 700;
+    }
+    .featured-required { color: #dc2626; }
+    .featured-section-head .hint { margin: 0; }
+
+    .featured-picker {
+        display: grid;
+        grid-template-columns: minmax(220px, 1.15fr) minmax(240px, 1fr);
+        gap: 1rem;
+        align-items: stretch;
+    }
+    .featured-picker-preview {
+        position: relative;
+        min-height: 220px;
+        aspect-ratio: 16 / 10;
+        border-radius: 12px;
+        overflow: hidden;
+        background: linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%);
+        border: 1px dashed color-mix(in srgb, var(--admin-border) 85%, #94a3b8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        padding: 0;
+        margin: 0;
+        cursor: pointer;
+        font: inherit;
+        color: inherit;
+        text-align: center;
+        transition: border-color .15s, box-shadow .15s, background .15s;
+    }
+    .featured-picker-preview:hover,
+    .featured-picker-preview.is-dragover {
+        border-color: var(--admin-accent);
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--admin-accent) 16%, transparent);
+        background: color-mix(in srgb, var(--admin-accent) 6%, #f8fafc);
+    }
+    .featured-picker.has-media .featured-picker-preview {
+        border-style: solid;
+        border-color: var(--admin-border);
+        background: #0f172a;
+    }
+    .featured-picker-preview img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+    .featured-picker-overlay {
+        position: absolute;
+        inset: auto 0 0 0;
+        padding: .55rem .75rem;
+        background: linear-gradient(transparent, rgba(15, 23, 42, .78));
+        color: #fff;
+        font-size: .82rem;
+        font-weight: 700;
+        opacity: 0;
+        transition: opacity .15s;
+    }
+    .featured-picker-preview:hover .featured-picker-overlay { opacity: 1; }
+    .featured-picker-empty {
+        display: grid;
+        gap: .35rem;
+        justify-items: center;
+        text-align: center;
+        padding: 1.25rem;
+        color: var(--admin-muted);
+    }
+    .featured-picker-empty-icon {
+        display: inline-flex;
+        color: #94a3af;
+        margin-bottom: .15rem;
+    }
+    .featured-picker-empty strong {
+        color: var(--admin-text, #1e293b);
+        font-size: .95rem;
+    }
+    .featured-picker-empty span {
+        font-size: .8rem;
+        max-width: 16rem;
+        line-height: 1.35;
+    }
+    .featured-picker-side {
+        display: grid;
+        gap: .7rem;
+        align-content: start;
+        min-width: 0;
+    }
+    .featured-picker-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .4rem;
+        align-items: center;
+    }
+    .featured-picker-formats { margin: 0; }
+    .featured-picker-side .field label {
+        font-size: .78rem;
+        font-weight: 600;
+        margin-bottom: .25rem;
+    }
+    .featured-picker-side input[type="text"] {
+        width: 100%;
+    }
+    .related-section {
+        margin-top: .25rem;
+        margin-bottom: 1rem;
+    }
+
+    .article-tags-preview {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .4rem;
+        list-style: none;
+        margin: .5rem 0 .75rem;
+        padding: 0;
+    }
+    .article-tag-preview {
+        display: inline-block;
+        padding: .2rem .55rem;
+        font-size: .78rem;
+        font-weight: 700;
+        color: var(--admin-accent);
+        background: #eff6ff;
+        border: 1px solid #bfdbfe;
+        border-radius: 999px;
+    }
+
+    .related-picker-search-wrap {
+        position: relative;
+        margin-bottom: .75rem;
+    }
+    .related-picker-results {
+        position: absolute;
+        z-index: 20;
+        left: 0;
+        right: 0;
+        top: calc(100% + .25rem);
+        background: #fff;
+        border: 1px solid var(--admin-border);
+        border-radius: var(--admin-radius-sm);
+        box-shadow: 0 8px 24px rgba(15, 23, 42, .12);
+        max-height: 240px;
+        overflow: auto;
+        display: none;
+    }
+    .related-picker-results.is-open { display: block; }
+    .related-picker-results button {
+        display: block;
+        width: 100%;
+        text-align: left;
+        border: 0;
+        background: transparent;
+        padding: .55rem .7rem;
+        cursor: pointer;
+        border-bottom: 1px solid #f1f5f9;
+    }
+    .related-picker-results button:hover { background: #f8fafc; }
+    .related-picker-results .meta {
+        display: block;
+        font-size: .72rem;
+        color: var(--admin-muted);
+        margin-top: .15rem;
+    }
+    .related-picker-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: grid;
+        gap: .45rem;
+    }
+    .related-picker-item {
+        display: flex;
+        align-items: flex-start;
+        gap: .5rem;
+        padding: .55rem .65rem;
+        border: 1px solid var(--admin-border);
+        border-radius: var(--admin-radius-sm);
+        background: #f8fafc;
+    }
+    .related-picker-item .related-picker-title {
+        flex: 1;
+        font-size: .88rem;
+        font-weight: 600;
+        line-height: 1.3;
+    }
+    .related-picker-item .related-picker-meta {
+        display: block;
+        font-size: .72rem;
+        color: var(--admin-muted);
+        font-weight: 500;
+        margin-top: .15rem;
+    }
+    .related-picker-empty {
+        margin: 0;
+        font-size: .85rem;
+        color: var(--admin-muted);
+    }
+    .enhancement-badge {
+        font-size: .7rem;
+        padding: .15rem .45rem;
+        border-radius: 4px;
+        background: #f0f0f0;
+        color: #444;
+        margin-top: .25rem;
+        display: inline-block;
+    }
+    .enhancement-badge.pending, .enhancement-badge.processing { background: #fff3cd; color: #856404; }
+    .enhancement-badge.enhanced { background: #d4edda; color: #155724; }
+    .enhancement-badge.skipped { background: #e2e3e5; color: #383d41; }
+    .enhancement-badge.failed { background: #f8d7da; color: #721c24; }
+    .poll-section,
+    .video-section {
+        border: 1px solid var(--admin-border);
+        border-radius: var(--admin-radius-sm);
+        padding: 1rem;
+        background: #f8fafc;
+        margin-bottom: 1rem;
+    }
+    .poll-section summary,
+    .video-section summary { font-weight: 700; cursor: pointer; }
+    .poll-source-tabs { display: flex; gap: .5rem; flex-wrap: wrap; margin: .75rem 0; }
+    .poll-source-tabs label {
+        display: flex;
+        align-items: center;
+        gap: .35rem;
+        padding: .35rem .65rem;
+        border: 1px solid var(--admin-border);
+        border-radius: 6px;
+        background: #fff;
+        cursor: pointer;
+        font-size: .85rem;
+    }
+    .poll-panel { margin-top: .75rem; }
+    .poll-panel[hidden] { display: none; }
+    .poll-options-editor { display: grid; gap: .5rem; }
+    .video-preview {
+        width: 100%;
+        max-width: 480px;
+        aspect-ratio: 16/9;
+        background: #1a202c;
+        border-radius: 8px;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #a0aec0;
+        font-size: .85rem;
+    }
+    .video-preview video { width: 100%; height: 100%; object-fit: contain; }
+    .video-actions { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .75rem; }
+    .media-picker-video-badge {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        aspect-ratio: 4/3;
+        background: #1a202c;
+        color: #fff;
+        font-size: .85rem;
+        font-weight: 600;
+    }
+    .article-publish-ingest-note {
+        margin: 0 0 .85rem;
+        padding: .55rem .7rem;
+        border-radius: 8px;
+        background: #eff6ff;
+        border: 1px solid #bfdbfe;
+        color: #1d4ed8;
+        font-size: .8rem;
+        line-height: 1.4;
+    }
+    .article-publish-timing {
+        border: 0;
+        margin: 0 0 .85rem;
+        padding: 0;
+        display: grid;
+        gap: .4rem;
+    }
+    .article-publish-timing-legend {
+        padding: 0;
+        margin: 0 0 .45rem;
+        font-size: .78rem;
+        font-weight: 700;
+        letter-spacing: .02em;
+        color: var(--admin-muted);
+    }
+    .article-publish-option {
+        display: flex;
+        align-items: flex-start;
+        gap: .55rem;
+        padding: .55rem .65rem;
+        border: 1px solid var(--admin-border);
+        border-radius: 8px;
+        background: #fff;
+        cursor: pointer;
+        margin: 0;
+        font-weight: 500;
+    }
+    .article-publish-option input {
+        width: auto;
+        margin-top: .2rem;
+        flex-shrink: 0;
+    }
+    .article-publish-option span {
+        display: grid;
+        gap: .1rem;
+        min-width: 0;
+    }
+    .article-publish-option strong {
+        font-size: .88rem;
+        color: #0f172a;
+    }
+    .article-publish-option small {
+        font-size: .75rem;
+        color: var(--admin-muted);
+        font-weight: 500;
+    }
+    .article-publish-option:has(input:checked) {
+        border-color: color-mix(in srgb, var(--admin-accent) 55%, var(--admin-border));
+        background: color-mix(in srgb, var(--admin-accent) 8%, #fff);
+        box-shadow: 0 0 0 1px color-mix(in srgb, var(--admin-accent) 25%, transparent);
+    }
+    .article-body-editor label { display: block; margin-bottom: .4rem; }
+    .article-body-editor .hint { margin: .35rem 0 0; font-size: .8rem; }
+    .article-body-editor .tox-tinymce {
+        border-radius: 10px;
+        border-color: var(--admin-border) !important;
+    }
+    .article-body-editor textarea.error + .tox-tinymce {
+        border-color: #c53030 !important;
+    }
+
+    @media (max-width: 1100px) {
+        .article-edit-layout {
+            grid-template-columns: 1fr;
+        }
+        .article-edit-aside-sticky {
+            position: static;
+        }
+        .article-edit-aside .editorial-checklist ul {
+            flex-direction: row;
+            flex-wrap: wrap;
+        }
+        .article-edit-aside .editorial-checklist li {
+            width: auto;
+            border-radius: 999px;
+        }
+    }
+    @media (max-width: 900px) {
+        .gallery-row {
+            grid-template-columns: 1fr;
+        }
+        .gallery-drag { display: none; }
+        .gallery-preview {
+            width: 100%;
+            height: 140px;
+        }
+        .gallery-actions {
+            flex-wrap: wrap;
+        }
+        .article-title-row {
+            flex-direction: column;
+        }
+        .article-title-row .btn {
+            width: 100%;
+        }
+        .featured-picker {
+            grid-template-columns: 1fr;
+        }
+        .featured-picker-preview {
+            min-height: 180px;
+            aspect-ratio: 16 / 9;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+{% set formData = formData|default({}) %}
+{% set titleValue = formData.title|default(article ? article.title : '') %}
+{% set subtitleValue = formData.subtitle|default(article ? article.subtitle : '') %}
+{% set leadValue = formData.lead|default(article ? article.lead : '') %}
+{% set bodyValue = formData.bodyHtml|default(article ? article.bodyHtml : '') %}
+{% set slugValue = formData.slug|default(article ? article.slug : '') %}
+{% set selectedCategory = formData.categoryId|default(article and article.category ? article.category.id : '') %}
+{% set extraTagsValue = formData.extraTags|default(extraTagsValue|default('')) %}
+{% set currentStatus = formData.status|default(article ? article.status.value : 'draft') %}
+{% set includePoll = formData.includePoll is defined ? true : (article and article.poll ? true : false) %}
+{% set pollSource = formData.pollSource|default(article and article.poll ? 'edit' : 'existing') %}
+{% set selectedPollId = formData.pollId|default(article and article.poll ? article.poll.id : '') %}
+{% set pollQuestion = formData.pollQuestion|default(article and article.poll ? article.poll.question : '') %}
+{% set pollIsOpen = formData.pollIsOpen is defined ? true : (article and article.poll ? article.poll.getIsOpenFlag() : true) %}
+{% set pollShowResults = formData.pollShowResultsBeforeVote is defined ? true : (article and article.poll ? article.poll.isShowResultsBeforeVote() : false) %}
+{% set pollClosesAt = formData.pollClosesAt|default(article and article.poll and article.poll.closesAt ? article.poll.closesAt|date('Y-m-d\\TH:i') : '') %}
+{% set legacyGalleryImages = article ? article.legacyGalleryImages : [] %}
+{% set includeGallery = formData.includeGallery is defined ? true : (article and (article.gallery or legacyGalleryImages is not empty) ? true : false) %}
+{% set gallerySource = formData.gallerySource|default(article and article.gallery ? 'edit' : (legacyGalleryImages is not empty ? 'new' : 'existing')) %}
+{% set selectedGalleryId = formData.galleryId|default(article and article.gallery ? article.gallery.id : '') %}
+{% set galleryTitle = formData.galleryTitle|default(article and article.gallery ? article.gallery.title : '') %}
+{% set includeVideo = formData.includeVideo is defined ? true : (article and article.video ? true : false) %}
+{% set videoMediaId = formData.videoMediaId|default(article and article.video ? article.video.id : '') %}
+{% set videoReplacesFeatured = formData.videoReplacesFeatured is defined ? true : (article ? article.videoReplacesFeatured : false) %}
+
+{% set scheduledAtValue = formData.scheduledAt|default(article and article.scheduledAt ? article.scheduledAt|date('Y-m-d\\TH:i') : '') %}
+{% set agendaStartsAtValue = formData.agendaStartsAt|default(article and article.agendaStartsAt ? article.agendaStartsAt|date('Y-m-d\\TH:i') : '') %}
+{% set agendaEndsAtValue = formData.agendaEndsAt|default(article and article.agendaEndsAt ? article.agendaEndsAt|date('Y-m-d\\TH:i') : '') %}
+{% set showOnHomeChecked = formData.showOnHome is defined ? true : (article ? article.showOnHome : true) %}
+{% set isPinnedChecked = formData.isPinned is defined ? true : (article ? article.pinned : false) %}
+{% set authorUserIdValue = formData.authorUserId|default(article ? article.authorUserId : '') %}
+{% set authorNameValue = formData.authorName|default(article ? article.authorName : '') %}
+{% set featuredForm = formData.featured|default(null) %}
+{% set hasFeaturedImage = (featuredForm and (featuredForm.url|default('') != '' or featuredForm.mediaId|default('') != '')) or (article and article.featuredImage) %}
+{% set hasCategory = selectedCategory != '' %}
+{% set authors = authors|default([]) %}
+{% set galleries = galleries|default([]) %}
+
+{% set headerActions %}
+    {% if article and article.id %}
+        <a href="{{ path('admin_articles_preview', {id: article.id}) }}" class="btn btn-secondary btn-sm" target="_blank" rel="noopener">Vista previa</a>
+    {% endif %}
+    <button type="submit" form="article-form" class="btn btn-primary btn-sm">Guardar</button>
+{% endset %}
+
+{% include 'admin/_page_header.html.twig' with {
+    title: article ? 'Editar noticia' : 'Nueva noticia',
+    subtitle: article ? 'Última actualización: ' ~ article.updatedAt|date('d/m/Y H:i') : 'Completa los campos para crear una nueva noticia.',
+    breadcrumbs: [
+        { label: 'Panel', url: path('admin_dashboard') },
+        { label: 'Noticias', url: path('admin_articles_index') },
+        { label: article ? 'Editar' : 'Nueva' },
+    ],
+    actions: headerActions
+} only %}
+
+<form method="post" action="{{ article ? path('admin_articles_edit', {id: article.id}) : path('admin_articles_new') }}" novalidate id="article-form" class="article-edit-form">
+    <input type="hidden" name="_token" value="{{ csrf_token('article_form') }}">
+
+    <div class="article-edit-layout">
+        <div class="article-edit-main">
+            <div class="field">
+                <label for="title">Título *</label>
+                <div class="article-title-row">
+                    <input type="text" id="title" name="title" required
+                           value="{{ titleValue }}"
+                           class="{{ errors.title is defined ? 'error' : '' }}">
+                    <button type="button"
+                            id="article-ai-improve-btn"
+                            class="btn btn-secondary"
+                            data-ai-improve-url="{{ path('admin_articles_ai_improve') }}"
+                            data-ai-improve-token="{{ csrf_token('article_ai_improve') }}"
+                            data-ai-configured="{{ aiConfigured|default(false) ? '1' : '0' }}"
+                            data-ai-settings-url="{{ path('admin_settings_ai') }}"
+                            title="Mejorar titular, entradilla y cuerpo con IA">Mejorar con IA</button>
+                </div>
+                {% if errors.title is defined %}<div class="error-msg">{{ errors.title }}</div>{% endif %}
+                <p class="hint" id="article-ai-improve-hint">Reescribe título, subtítulo, entradilla y cuerpo con el prompt configurable de <a href="{{ path('admin_settings_ai') }}">Configuración → IA</a>. Revisa el resultado antes de guardar.</p>
+            </div>
+
+            <div class="field">
+                <label for="subtitle">Subtítulo</label>
+                <input type="text" id="subtitle" name="subtitle" value="{{ subtitleValue }}">
+            </div>
+
+            <div class="field">
+                <label for="lead">Entradilla</label>
+                <textarea id="lead" name="lead" rows="2">{{ leadValue }}</textarea>
+            </div>
+
+            <div class="field article-body-editor">
+                <label for="bodyHtml">Cuerpo de la noticia *</label>
+                <textarea id="bodyHtml" name="bodyHtml"
+                          class="{{ errors.bodyHtml is defined ? 'error' : '' }}"
+                          data-upload-url="{{ path('admin_media_upload') }}"
+                          data-upload-csrf="{{ csrf_token('media_upload') }}"
+                          data-media-api-url="{{ path('admin_media_api') }}">{{ bodyValue }}</textarea>
+                <p class="hint">Editor visual (negrita, enlaces, imágenes, listas…). Puedes pegar texto desde Word o el navegador.</p>
+                {% if errors.bodyHtml is defined %}<div class="error-msg">{{ errors.bodyHtml }}</div>{% endif %}
+            </div>
+
+            <div class="featured-section" id="featured-section">
+                <div class="featured-section-head">
+                    <h2 class="featured-section-title">Imagen principal <span class="featured-required">*</span></h2>
+                    <p class="hint">Portada en listados, SEO y cabecera. Obligatoria al publicar o programar.</p>
+                </div>
+                <div id="featured-editor" class="featured-editor" data-gallery-editor data-field-prefix="featured" data-single="1"
+                     data-upload-url="{{ path('admin_media_upload') }}"
+                     data-upload-csrf="{{ csrf_token('media_upload') }}">
+                    <div data-gallery-rows>
+                        {% if formData.featured is defined %}
+                            {% include 'admin/article/_featured_row.html.twig' with { row: formData.featured, img: null } %}
+                        {% elseif article and article.featuredImage %}
+                            {% include 'admin/article/_featured_row.html.twig' with { row: null, img: article.featuredImage } %}
+                        {% else %}
+                            {% include 'admin/article/_featured_row.html.twig' with { row: null, img: null } %}
+                        {% endif %}
+                    </div>
+                </div>
+                {% if errors.featured is defined %}<div class="error-msg">{{ errors.featured }}</div>{% endif %}
+            </div>
+
+            <details class="gallery-section" {{ includeGallery ? 'open' : '' }}>
+                <summary>Galería de imágenes (opcional)</summary>
+                <p class="hint">Galería aparte de la portada. Gestiona galerías en <a href="{{ path('admin_galleries_index') }}">Galerías</a>.</p>
+
+                <div class="checkbox-row" style="margin-top:.5rem">
+                    <input type="checkbox" id="includeGallery" name="includeGallery" value="1" {{ includeGallery ? 'checked' : '' }}>
+                    <label for="includeGallery">Incluir galería en esta noticia</label>
+                </div>
+
+                <div id="article-gallery-editor" {{ includeGallery ? '' : 'hidden' }}>
+                    <div class="poll-source-tabs">
+                        <label>
+                            <input type="radio" name="gallerySource" value="existing" {{ gallerySource == 'existing' ? 'checked' : '' }}>
+                            Usar galería existente
+                        </label>
+                        <label>
+                            <input type="radio" name="gallerySource" value="new" {{ gallerySource == 'new' ? 'checked' : '' }}>
+                            Crear nueva galería
+                        </label>
+                        {% if article and article.gallery %}
+                            <label>
+                                <input type="radio" name="gallerySource" value="edit" {{ gallerySource == 'edit' ? 'checked' : '' }}>
+                                Editar galería vinculada
+                            </label>
+                        {% endif %}
+                    </div>
+
+                    <div id="gallery-panel-existing" class="poll-panel" {{ gallerySource != 'existing' ? 'hidden' : '' }}>
+                        <div class="field">
+                            <label for="galleryId">Galería</label>
+                            <select id="galleryId" name="galleryId">
+                                <option value="">— Seleccionar —</option>
+                                {% for g in galleries %}
+                                    <option value="{{ g.id }}" {{ selectedGalleryId == g.id ? 'selected' : '' }}>
+                                        {{ g.title }} ({{ g.images|length }} imágenes)
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="gallery-panel-create" class="poll-panel" {{ gallerySource == 'existing' ? 'hidden' : '' }}>
+                        <div class="field">
+                            <label for="galleryTitle">Título de la galería</label>
+                            <input type="text" id="galleryTitle" name="galleryTitle" value="{{ galleryTitle }}" maxlength="255" placeholder="Se usará el título de la noticia si lo dejas vacío">
+                        </div>
+                        <div id="gallery-editor" class="gallery-editor" data-gallery-editor data-field-prefix="galleryImages"
+                             data-upload-url="{{ path('admin_media_upload') }}"
+                             data-upload-csrf="{{ csrf_token('media_upload') }}">
+                            <div data-gallery-rows>
+                                {% if formData.galleryImages is defined and formData.galleryImages is not empty %}
+                                    {% for row in formData.galleryImages %}
+                                        {% include 'admin/article/_gallery_row.html.twig' with { index: loop.index0, row: row, img: null, namePrefix: 'galleryImages' } %}
+                                    {% endfor %}
+                                {% elseif article and article.gallery and gallerySource != 'new' %}
+                                    {% for img in article.gallery.images %}
+                                        {% include 'admin/article/_gallery_row.html.twig' with { index: loop.index0, row: null, img: img, namePrefix: 'galleryImages' } %}
+                                    {% endfor %}
+                                {% elseif legacyGalleryImages is not empty %}
+                                    {% for img in legacyGalleryImages %}
+                                        {% include 'admin/article/_gallery_row.html.twig' with { index: loop.index0, row: null, img: img, namePrefix: 'galleryImages' } %}
+                                    {% endfor %}
+                                {% else %}
+                                    {% include 'admin/article/_gallery_row.html.twig' with { index: 0, row: null, img: null, namePrefix: 'galleryImages' } %}
+                                {% endif %}
+                            </div>
+                            <button type="button" class="btn btn-secondary btn-sm" data-action="add-row">+ Añadir imagen</button>
+                            <template data-gallery-row-template>
+                                {% include 'admin/article/_gallery_row.html.twig' with { index: '__INDEX__', row: null, img: null, is_template: true, namePrefix: 'galleryImages' } %}
+                            </template>
+                        </div>
+                    </div>
+                </div>
+            </details>
+
+            <details class="video-section" {{ includeVideo ? 'open' : '' }}>
+                <summary>Vídeo (opcional)</summary>
+                <p class="hint">Añade un vídeo desde la biblioteca o subiendo MP4/WebM (máx. 100 MB).</p>
+
+                <div class="checkbox-row" style="margin-top:.5rem">
+                    <input type="checkbox" id="includeVideo" name="includeVideo" value="1" {{ includeVideo ? 'checked' : '' }}>
+                    <label for="includeVideo">Incluir vídeo en esta noticia</label>
+                </div>
+
+                <div id="video-editor" {{ includeVideo ? '' : 'hidden' }}
+                     data-upload-url="{{ path('admin_media_upload') }}"
+                     data-upload-csrf="{{ csrf_token('media_upload') }}">
+                    <input type="hidden" id="videoMediaId" name="videoMediaId" value="{{ videoMediaId }}">
+
+                    <div id="video-preview" class="video-preview" {{ article and article.video ? '' : 'hidden' }}>
+                        {% if article and article.video %}
+                            <video controls preload="metadata" src="{{ article.video.publicPath }}"></video>
+                        {% endif %}
+                    </div>
+
+                    <div class="video-actions">
+                        <button type="button" class="btn btn-secondary btn-sm" id="video-pick-btn">Elegir de biblioteca</button>
+                        <button type="button" class="btn btn-secondary btn-sm" id="video-upload-btn">Subir vídeo</button>
+                        <input type="file" id="video-file-input" accept="video/mp4,video/webm" hidden>
+                    </div>
+
+                    <div class="checkbox-row" style="margin-top:.85rem">
+                        <input type="checkbox" id="videoReplacesFeatured" name="videoReplacesFeatured" value="1" {{ videoReplacesFeatured ? 'checked' : '' }}>
+                        <label for="videoReplacesFeatured">Sustituir la imagen principal (si no, el vídeo aparece al final del artículo)</label>
+                    </div>
+                </div>
+            </details>
+
+            <details class="poll-section" {{ includePoll ? 'open' : '' }}>
+                <summary>Encuesta (opcional)</summary>
+                <p class="hint">Añade una encuesta al final del artículo. Gestiona encuestas en <a href="{{ path('admin_polls_index') }}">Encuestas</a>.</p>
+
+                <div class="checkbox-row" style="margin-top:.5rem">
+                    <input type="checkbox" id="includePoll" name="includePoll" value="1" {{ includePoll ? 'checked' : '' }}>
+                    <label for="includePoll">Incluir encuesta en esta noticia</label>
+                </div>
+
+                <div id="poll-editor" {{ includePoll ? '' : 'hidden' }}>
+                    <div class="poll-source-tabs">
+                        <label>
+                            <input type="radio" name="pollSource" value="existing" {{ pollSource == 'existing' ? 'checked' : '' }}>
+                            Usar encuesta existente
+                        </label>
+                        <label>
+                            <input type="radio" name="pollSource" value="new" {{ pollSource == 'new' ? 'checked' : '' }}>
+                            Crear nueva encuesta
+                        </label>
+                        {% if article and article.poll %}
+                            <label>
+                                <input type="radio" name="pollSource" value="edit" {{ pollSource == 'edit' ? 'checked' : '' }}>
+                                Editar encuesta vinculada
+                            </label>
+                        {% endif %}
+                    </div>
+
+                    <div id="poll-panel-existing" class="poll-panel" {{ pollSource != 'existing' ? 'hidden' : '' }}>
+                        <div class="field">
+                            <label for="pollId">Encuesta</label>
+                            <select id="pollId" name="pollId">
+                                <option value="">— Seleccionar —</option>
+                                {% for p in polls %}
+                                    <option value="{{ p.id }}" {{ selectedPollId == p.id ? 'selected' : '' }}>
+                                        {{ p.question }} ({{ p.totalVotes }} votos)
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="poll-panel-create" class="poll-panel" {{ pollSource == 'existing' ? 'hidden' : '' }}>
+                        <div class="field">
+                            <label for="pollQuestion">Pregunta</label>
+                            <input type="text" id="pollQuestion" name="pollQuestion" value="{{ pollQuestion }}" maxlength="500">
+                        </div>
+                        <div class="field">
+                            <label>Opciones</label>
+                            <div id="article-poll-options" class="poll-options-editor">
+                                {% if formData.pollOptions is defined and formData.pollOptions is not empty %}
+                                    {% for label in formData.pollOptions %}
+                                        <input type="text" name="pollOptions[]" value="{{ label }}" placeholder="Opción">
+                                    {% endfor %}
+                                {% elseif article and article.poll and pollSource != 'new' %}
+                                    {% for option in article.poll.options %}
+                                        <input type="text" name="pollOptions[]" value="{{ option.label }}" placeholder="Opción">
+                                    {% endfor %}
+                                {% else %}
+                                    <input type="text" name="pollOptions[]" placeholder="Opción 1">
+                                    <input type="text" name="pollOptions[]" placeholder="Opción 2">
+                                {% endif %}
+                            </div>
+                            <button type="button" class="btn btn-secondary btn-sm" id="article-poll-add-option" style="margin-top:.5rem">+ Añadir opción</button>
+                        </div>
+                        <div class="form-grid-2">
+                            <div class="field">
+                                <label for="pollClosesAt">Cierre (opcional)</label>
+                                <input type="datetime-local" id="pollClosesAt" name="pollClosesAt" value="{{ pollClosesAt }}">
+                            </div>
+                            <div class="field" style="padding-top:1.25rem">
+                                <div class="checkbox-row">
+                                    <input type="checkbox" id="pollIsOpen" name="pollIsOpen" value="1" {{ pollIsOpen ? 'checked' : '' }}>
+                                    <label for="pollIsOpen">Abierta</label>
+                                </div>
+                                <div class="checkbox-row" style="margin-top:.35rem">
+                                    <input type="checkbox" id="pollShowResultsBeforeVote" name="pollShowResultsBeforeVote" value="1" {{ pollShowResults ? 'checked' : '' }}>
+                                    <label for="pollShowResultsBeforeVote">Mostrar resultados antes de votar</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </details>
+
+            {% set relatedSelected = selectedRelated|default([]) %}
+            <div class="related-section article-edit-card"
+                 id="related-picker"
+                 data-search-url="{{ path('admin_articles_search_json') }}"
+                 data-exclude-id="{{ article ? article.id : '' }}"
+                 data-max="8">
+                <p class="article-edit-card-title">Noticias relacionadas</p>
+                <p class="hint" style="margin-top:0">Elige hasta 8 noticias. En la web se muestran primero estas; si faltan, se completan automáticamente.</p>
+                <div class="related-picker-search-wrap">
+                    <label for="relatedSearch">Buscar noticia</label>
+                    <input type="search" id="relatedSearch" placeholder="Título o URL…" autocomplete="off">
+                    <div id="relatedSearchResults" class="related-picker-results" role="listbox" hidden></div>
+                </div>
+                <ul id="relatedSelectedList" class="related-picker-list" aria-label="Relacionadas seleccionadas">
+                    {% for related in relatedSelected %}
+                        <li class="related-picker-item" data-id="{{ related.id }}">
+                            <input type="hidden" name="relatedIds[]" value="{{ related.id }}">
+                            <div class="related-picker-title">
+                                {{ related.title }}
+                                <span class="related-picker-meta">
+                                    {% if related.category %}{{ related.category.name }} · {% endif %}{{ related.status.value }}
+                                </span>
+                            </div>
+                            <button type="button" class="btn btn-secondary btn-sm" data-remove-related>Quitar</button>
+                        </li>
+                    {% endfor %}
+                </ul>
+                <p id="relatedEmptyHint" class="related-picker-empty" {% if relatedSelected is not empty %}hidden{% endif %}>
+                    Todavía no hay relacionadas elegidas.
+                </p>
+            </div>
+        </div>
+
+        <aside class="article-edit-aside" aria-label="Publicación y metadatos">
+            <div class="article-edit-aside-sticky">
+                <div class="editorial-checklist" aria-label="Antes de publicar">
+                    <p class="editorial-checklist-title">Antes de publicar</p>
+                    <p class="hint editorial-checklist-hint">Comprueba lo imprescindible. La entradilla es recomendable.</p>
+                    <ul>
+                        <li class="{{ titleValue ? 'is-ok' : 'is-warn' }}" data-checklist="title">Título</li>
+                        <li class="{{ bodyValue and bodyValue|striptags|trim ? 'is-ok' : 'is-warn' }}" data-checklist="body">Cuerpo</li>
+                        <li class="{{ hasFeaturedImage ? 'is-ok' : 'is-warn' }}" data-checklist="featured">Imagen principal</li>
+                        <li class="{{ hasCategory ? 'is-ok' : 'is-warn' }}" data-checklist="category">Categoría</li>
+                        <li class="{{ leadValue ? 'is-ok' : 'is-warn' }}" data-checklist="lead">Entradilla <span class="editorial-checklist-optional">(recomendada)</span></li>
+                    </ul>
+                </div>
+
+                <div class="article-edit-card">
+                    <p class="article-edit-card-title">Publicación</p>
+
+                    {% if article and article.fromIngest %}
+                        <p class="article-publish-ingest-note">
+                            Origen HimtecMedia: estas noticias se publican al instante al ingerirse.
+                        </p>
+                    {% endif %}
+
+                    <fieldset class="article-publish-timing">
+                        <legend class="article-publish-timing-legend">¿Cuándo publicar?</legend>
+                        <label class="article-publish-option">
+                            <input type="radio" name="status" value="draft" {{ currentStatus == 'draft' ? 'checked' : '' }}>
+                            <span>
+                                <strong>Borrador</strong>
+                                <small>Guardar sin publicar</small>
+                            </span>
+                        </label>
+                        <label class="article-publish-option">
+                            <input type="radio" name="status" value="pending_review" {{ currentStatus == 'pending_review' ? 'checked' : '' }}>
+                            <span>
+                                <strong>En revisión</strong>
+                                <small>Pendiente de aprobación</small>
+                            </span>
+                        </label>
+                        <label class="article-publish-option">
+                            <input type="radio" name="status" value="published" {{ currentStatus == 'published' ? 'checked' : '' }}>
+                            <span>
+                                <strong>Publicar ahora</strong>
+                                <small>Visible al guardar</small>
+                            </span>
+                        </label>
+                        <label class="article-publish-option">
+                            <input type="radio" name="status" value="scheduled" {{ currentStatus == 'scheduled' ? 'checked' : '' }}>
+                            <span>
+                                <strong>Programar</strong>
+                                <small>Elegir fecha y hora</small>
+                            </span>
+                        </label>
+                        <label class="article-publish-option">
+                            <input type="radio" name="status" value="archived" {{ currentStatus == 'archived' ? 'checked' : '' }}>
+                            <span>
+                                <strong>Papelera</strong>
+                                <small>Oculta en el sitio; se puede restaurar o borrar</small>
+                            </span>
+                        </label>
+                    </fieldset>
+
+                    <div class="field" id="scheduled-at-field" {% if currentStatus != 'scheduled' %}hidden{% endif %}>
+                        <label for="scheduledAt">Fecha y hora de publicación</label>
+                        <input type="datetime-local" id="scheduledAt" name="scheduledAt" value="{{ scheduledAtValue }}">
+                        {% if errors.scheduledAt is defined %}<div class="error-msg">{{ errors.scheduledAt }}</div>{% endif %}
+                        <p class="hint">Se publicará automáticamente al llegar ese momento (tarea <code>articles:publish-scheduled</code>).</p>
+                    </div>
+
+                    <div class="field">
+                        <label for="authorUserId">Autor</label>
+                        <select id="authorUserId" name="authorUserId">
+                            <option value="">— Nombre personalizado —</option>
+                            {% for author in authors %}
+                                <option
+                                    value="{{ author.id }}"
+                                    data-name="{{ author.name }}"
+                                    {{ authorUserIdValue == author.id ? 'selected' : '' }}
+                                >{{ author.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <p class="hint">Elige un usuario del equipo o escribe un nombre libre abajo.</p>
+                    </div>
+
+                    <div class="field">
+                        <label for="authorName">Nombre que se muestra</label>
+                        <input
+                            type="text"
+                            id="authorName"
+                            name="authorName"
+                            value="{{ authorNameValue }}"
+                            placeholder="Firma pública de la noticia"
+                            maxlength="255"
+                        >
+                    </div>
+
+                    <div class="field">
+                        <label class="checkbox-inline">
+                            <input type="checkbox" name="showOnHome" value="1" {{ showOnHomeChecked ? 'checked' : '' }}>
+                            Mostrar en la portada
+                        </label>
+                        <p class="hint">Si está desmarcado, no aparece en la home.</p>
+                    </div>
+
+                    <div class="field">
+                        <label class="checkbox-inline">
+                            <input type="checkbox" name="isPinned" value="1" {{ isPinnedChecked ? 'checked' : '' }} data-pin-home>
+                            Chincheta — fijar entre las 4 destacadas
+                        </label>
+                        <p class="hint">Aunque no sea la más reciente, entrará en el bloque principal de portada (hero + banda). Activa también «Mostrar en la portada».</p>
+                    </div>
+
+                    <div class="field" style="margin-top:1.25rem;padding-top:1rem;border-top:1px solid var(--admin-border)">
+                        <strong style="display:block;margin-bottom:.65rem;font-size:.92rem">Agenda</strong>
+                        <p class="hint" style="margin-top:0">Si defines vigencia inicio y fin, la noticia aparece en <strong>Agenda</strong> los días en que el intervalo esté activo (conciertos, actividades…).</p>
+                    </div>
+                    <div class="field">
+                        <label for="agendaStartsAt">Vigencia inicio</label>
+                        <input type="datetime-local" id="agendaStartsAt" name="agendaStartsAt" value="{{ agendaStartsAtValue }}">
+                        {% if errors.agendaStartsAt is defined %}<div class="error-msg">{{ errors.agendaStartsAt }}</div>{% endif %}
+                    </div>
+                    <div class="field">
+                        <label for="agendaEndsAt">Vigencia fin</label>
+                        <input type="datetime-local" id="agendaEndsAt" name="agendaEndsAt" value="{{ agendaEndsAtValue }}">
+                        {% if errors.agendaEndsAt is defined %}<div class="error-msg">{{ errors.agendaEndsAt }}</div>{% endif %}
+                        <p class="hint">Zona horaria Europe/Madrid. Deja ambos vacíos para no incluirla en Agenda.</p>
+                    </div>
+
+                    <div class="field">
+                        <label for="categoryId">Categoría</label>
+                        <select id="categoryId" name="categoryId">
+                            <option value="">— Sin categoría —</option>
+                            {% for cat in categories %}
+                                <option value="{{ cat.id }}" {{ selectedCategory == cat.id ? 'selected' : '' }}>{{ cat.name }}</option>
+                                {% for child in cat.children %}
+                                    <option value="{{ child.id }}" {{ selectedCategory == child.id ? 'selected' : '' }}>— {{ child.name }}</option>
+                                    {% for grand in child.children %}
+                                        <option value="{{ grand.id }}" {{ selectedCategory == grand.id ? 'selected' : '' }}>—— {{ grand.name }}</option>
+                                    {% endfor %}
+                                {% endfor %}
+                            {% endfor %}
+                        </select>
+                        <p class="hint"><a href="{{ path('admin_categories_index') }}">Gestionar categorías</a></p>
+                    </div>
+
+                    <div class="field">
+                        <label for="slug">URL amigable</label>
+                        <input type="text" id="slug" name="slug"
+                               value="{{ slugValue }}"
+                               placeholder="Se genera del título">
+                    </div>
+                </div>
+
+                <div class="article-edit-card">
+                    <p class="article-edit-card-title">Etiquetas</p>
+                    <p class="hint" style="margin-top:0">Se generan al guardar desde categoría, título y entradilla (máx. 8).</p>
+                    {% if suggestedTags is not empty %}
+                        <ul class="article-tags-preview" aria-label="Etiquetas que se asignarán">
+                            {% for name in suggestedTags %}
+                                <li><span class="article-tag-preview">{{ name }}</span></li>
+                            {% endfor %}
+                        </ul>
+                    {% elseif article and article.tags is not empty %}
+                        <ul class="article-tags-preview" aria-label="Etiquetas actuales">
+                            {% for tag in article.tags %}
+                                <li><span class="article-tag-preview">{{ tag.name }}</span></li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="hint">Al guardar verás aquí las etiquetas propuestas.</p>
+                    {% endif %}
+                    <div class="field" style="margin-bottom:0">
+                        <label for="extraTags">Adicionales (opcional)</label>
+                        <input type="text" id="extraTags" name="extraTags" value="{{ extraTagsValue }}"
+                               placeholder="Madrid, elecciones…">
+                        <p class="hint">Separa con comas.</p>
+                    </div>
+                </div>
+
+                <div class="article-edit-card article-edit-actions-card">
+                    <div class="article-edit-actions">
+                        <a href="{{ path('admin_articles_index') }}" class="btn btn-secondary">Cancelar</a>
+                        <button type="submit" class="btn btn-primary">Guardar</button>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+</form>
+
+{% include 'admin/_media_picker_modal.html.twig' %}
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="/vendor/tinymce/tinymce.min.js"></script>
+<script src="/js/admin-media.js?v=6"></script>
+<script src="/js/admin-article-editor.js?v=5"></script>
+<script>
+(function () {
+    const include = document.getElementById('includePoll');
+    const editor = document.getElementById('poll-editor');
+    const panelExisting = document.getElementById('poll-panel-existing');
+    const panelCreate = document.getElementById('poll-panel-create');
+    const sourceRadios = document.querySelectorAll('input[name="pollSource"]');
+    const addBtn = document.getElementById('article-poll-add-option');
+    const optionsList = document.getElementById('article-poll-options');
+
+    function syncPollPanels() {
+        const selected = document.querySelector('input[name="pollSource"]:checked');
+        const value = selected ? selected.value : 'existing';
+        if (panelExisting) panelExisting.hidden = value !== 'existing';
+        if (panelCreate) panelCreate.hidden = value === 'existing';
+    }
+
+    if (include && editor) {
+        include.addEventListener('change', function () {
+            editor.hidden = !include.checked;
+        });
+    }
+
+    sourceRadios.forEach(function (radio) {
+        radio.addEventListener('change', syncPollPanels);
+    });
+
+    if (addBtn && optionsList) {
+        addBtn.addEventListener('click', function () {
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.name = 'pollOptions[]';
+            input.placeholder = 'Opción';
+            optionsList.appendChild(input);
+            input.focus();
+        });
+    }
+
+    const includeGallery = document.getElementById('includeGallery');
+    const galleryEditorWrap = document.getElementById('article-gallery-editor');
+    const galleryPanelExisting = document.getElementById('gallery-panel-existing');
+    const galleryPanelCreate = document.getElementById('gallery-panel-create');
+    const gallerySourceRadios = document.querySelectorAll('input[name="gallerySource"]');
+
+    function syncGalleryPanels() {
+        const selected = document.querySelector('input[name="gallerySource"]:checked');
+        const value = selected ? selected.value : 'existing';
+        if (galleryPanelExisting) galleryPanelExisting.hidden = value !== 'existing';
+        if (galleryPanelCreate) galleryPanelCreate.hidden = value === 'existing';
+    }
+
+    if (includeGallery && galleryEditorWrap) {
+        includeGallery.addEventListener('change', function () {
+            galleryEditorWrap.hidden = !includeGallery.checked;
+        });
+    }
+
+    gallerySourceRadios.forEach(function (radio) {
+        radio.addEventListener('change', syncGalleryPanels);
+    });
+
+    const includeVideo = document.getElementById('includeVideo');
+    const videoEditor = document.getElementById('video-editor');
+    const videoPreview = document.getElementById('video-preview');
+    const videoMediaIdInput = document.getElementById('videoMediaId');
+    const videoPickBtn = document.getElementById('video-pick-btn');
+    const videoUploadBtn = document.getElementById('video-upload-btn');
+    const videoFileInput = document.getElementById('video-file-input');
+
+    function applyVideoMedia(media) {
+        if (!videoMediaIdInput || !videoPreview) return;
+        videoMediaIdInput.value = media.id || '';
+        videoPreview.hidden = false;
+        videoPreview.innerHTML = `<video controls preload="metadata" src="${media.url}"></video>`;
+    }
+
+    if (includeVideo && videoEditor) {
+        includeVideo.addEventListener('change', function () {
+            videoEditor.hidden = !includeVideo.checked;
+        });
+    }
+
+    if (videoPickBtn) {
+        videoPickBtn.addEventListener('click', function () {
+            document.dispatchEvent(new CustomEvent('media:open-picker', { detail: { kind: 'video', target: 'video' } }));
+        });
+    }
+
+    if (videoUploadBtn && videoFileInput && videoEditor) {
+        videoUploadBtn.addEventListener('click', () => videoFileInput.click());
+        videoFileInput.addEventListener('change', async function () {
+            const file = videoFileInput.files?.[0];
+            if (!file) return;
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('_token', videoEditor.dataset.uploadCsrf);
+            const response = await fetch(videoEditor.dataset.uploadUrl, {
+                method: 'POST',
+                body: formData,
+                credentials: 'same-origin',
+            });
+            const data = await response.json();
+            videoFileInput.value = '';
+            if (!response.ok) {
+                alert(data.error || 'Error al subir el vídeo.');
+                return;
+            }
+            applyVideoMedia(data.media);
+        });
+    }
+
+    document.addEventListener('media:selected', function (e) {
+        if (e.detail?.target === 'video' && e.detail.media) {
+            applyVideoMedia(e.detail.media);
+        }
+    });
+
+    const statusRadios = document.querySelectorAll('input[name="status"]');
+    const scheduledField = document.getElementById('scheduled-at-field');
+    const scheduledInput = document.getElementById('scheduledAt');
+    const submitButtons = document.querySelectorAll('button[type="submit"][form="article-form"], #article-form button[type="submit"]');
+
+    function selectedStatus() {
+        const checked = document.querySelector('input[name="status"]:checked');
+        return checked ? checked.value : 'draft';
+    }
+
+    function syncPublishTiming() {
+        const status = selectedStatus();
+        if (scheduledField) {
+            scheduledField.hidden = status !== 'scheduled';
+        }
+        if (status === 'scheduled' && scheduledInput && !scheduledInput.value) {
+            const soon = new Date(Date.now() + 60 * 60 * 1000);
+            soon.setMinutes(soon.getMinutes() - soon.getTimezoneOffset());
+            scheduledInput.value = soon.toISOString().slice(0, 16);
+        }
+        const label = status === 'published'
+            ? 'Publicar ahora'
+            : (status === 'scheduled' ? 'Programar' : 'Guardar');
+        submitButtons.forEach(function (btn) {
+            btn.textContent = label;
+        });
+    }
+
+    statusRadios.forEach(function (radio) {
+        radio.addEventListener('change', syncPublishTiming);
+    });
+    syncPublishTiming();
+
+    const authorSelect = document.getElementById('authorUserId');
+    const authorNameInput = document.getElementById('authorName');
+    if (authorSelect && authorNameInput) {
+        authorSelect.addEventListener('change', function () {
+            const option = authorSelect.options[authorSelect.selectedIndex];
+            const name = option ? (option.getAttribute('data-name') || '') : '';
+            if (authorSelect.value && name) {
+                authorNameInput.value = name;
+            }
+        });
+    }
+
+    (function initRelatedPicker() {
+        const root = document.getElementById('related-picker');
+        if (!root) return;
+
+        const searchUrl = root.dataset.searchUrl;
+        const excludeId = root.dataset.excludeId || '';
+        const max = parseInt(root.dataset.max || '8', 10) || 8;
+        const input = document.getElementById('relatedSearch');
+        const results = document.getElementById('relatedSearchResults');
+        const list = document.getElementById('relatedSelectedList');
+        const emptyHint = document.getElementById('relatedEmptyHint');
+        let timer = null;
+        let seq = 0;
+
+        function selectedIds() {
+            return Array.from(list.querySelectorAll('[data-id]')).map((el) => el.dataset.id);
+        }
+
+        function syncEmpty() {
+            if (emptyHint) {
+                emptyHint.hidden = selectedIds().length > 0;
+            }
+        }
+
+        function closeResults() {
+            results.classList.remove('is-open');
+            results.hidden = true;
+            results.innerHTML = '';
+        }
+
+        function addRelated(item) {
+            if (!item?.id) return;
+            const id = String(item.id);
+            if (selectedIds().includes(id)) {
+                closeResults();
+                return;
+            }
+            if (selectedIds().length >= max) {
+                alert('Máximo ' + max + ' noticias relacionadas.');
+                return;
+            }
+
+            const li = document.createElement('li');
+            li.className = 'related-picker-item';
+            li.dataset.id = id;
+            const metaParts = [];
+            if (item.category) metaParts.push(item.category);
+            if (item.status) metaParts.push(item.status);
+            if (item.publishedAt) metaParts.push(item.publishedAt);
+            li.innerHTML =
+                '<input type="hidden" name="relatedIds[]" value="' + id + '">' +
+                '<div class="related-picker-title"></div>' +
+                '<button type="button" class="btn btn-secondary btn-sm" data-remove-related>Quitar</button>';
+            const titleEl = li.querySelector('.related-picker-title');
+            titleEl.appendChild(document.createTextNode(item.title || ('#' + id)));
+            if (metaParts.length) {
+                const meta = document.createElement('span');
+                meta.className = 'related-picker-meta';
+                meta.textContent = metaParts.join(' · ');
+                titleEl.appendChild(meta);
+            }
+            list.appendChild(li);
+            syncEmpty();
+            closeResults();
+            if (input) input.value = '';
+        }
+
+        list.addEventListener('click', function (e) {
+            const btn = e.target.closest('[data-remove-related]');
+            if (!btn) return;
+            const item = btn.closest('[data-id]');
+            if (item) item.remove();
+            syncEmpty();
+        });
+
+        async function runSearch(q) {
+            const mySeq = ++seq;
+            if (q.length < 2) {
+                closeResults();
+                return;
+            }
+            const url = new URL(searchUrl, window.location.origin);
+            url.searchParams.set('q', q);
+            if (excludeId) url.searchParams.set('exclude', excludeId);
+            try {
+                const response = await fetch(url.toString(), { credentials: 'same-origin' });
+                const data = await response.json();
+                if (mySeq !== seq) return;
+                const items = (data.items || []).filter((item) => !selectedIds().includes(String(item.id)));
+                results.innerHTML = '';
+                if (!items.length) {
+                    results.innerHTML = '<button type="button" disabled>Sin resultados</button>';
+                } else {
+                    items.forEach((item) => {
+                        const btn = document.createElement('button');
+                        btn.type = 'button';
+                        btn.setAttribute('role', 'option');
+                        const title = document.createElement('strong');
+                        title.textContent = item.title || ('#' + item.id);
+                        btn.appendChild(title);
+                        const meta = document.createElement('span');
+                        meta.className = 'meta';
+                        const parts = [];
+                        if (item.category) parts.push(item.category);
+                        if (item.status) parts.push(item.status);
+                        if (item.publishedAt) parts.push(item.publishedAt);
+                        meta.textContent = parts.join(' · ');
+                        btn.appendChild(meta);
+                        btn.addEventListener('click', () => addRelated(item));
+                        results.appendChild(btn);
+                    });
+                }
+                results.hidden = false;
+                results.classList.add('is-open');
+            } catch (err) {
+                closeResults();
+            }
+        }
+
+        if (input) {
+            input.addEventListener('input', function () {
+                clearTimeout(timer);
+                const q = input.value.trim();
+                timer = setTimeout(() => runSearch(q), 220);
+            });
+            input.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') closeResults();
+            });
+        }
+
+        document.addEventListener('click', function (e) {
+            if (!root.contains(e.target)) closeResults();
+        });
+
+        syncEmpty();
+    })();
+
+    const pinInput = document.querySelector('input[name="isPinned"]');
+    const homeInput = document.querySelector('input[name="showOnHome"]');
+    if (pinInput && homeInput) {
+        pinInput.addEventListener('change', function () {
+            if (pinInput.checked) {
+                homeInput.checked = true;
+            }
+        });
+    }
+
+    (function initArticleAiImprove() {
+        const btn = document.getElementById('article-ai-improve-btn');
+        if (!btn) return;
+
+        function readBodyHtml() {
+            if (typeof tinymce !== 'undefined') {
+                const editor = tinymce.get('bodyHtml');
+                if (editor) {
+                    return editor.getContent();
+                }
+            }
+            const ta = document.getElementById('bodyHtml');
+            return ta ? ta.value : '';
+        }
+
+        function writeBodyHtml(html) {
+            if (typeof tinymce !== 'undefined') {
+                const editor = tinymce.get('bodyHtml');
+                if (editor) {
+                    editor.setContent(html || '');
+                    return;
+                }
+            }
+            const ta = document.getElementById('bodyHtml');
+            if (ta) ta.value = html || '';
+        }
+
+        btn.addEventListener('click', async function () {
+            if (btn.dataset.aiConfigured !== '1') {
+                if (confirm('No hay API key de OpenAI. ¿Ir a Configuración → IA?')) {
+                    window.location.href = btn.dataset.aiSettingsUrl || '';
+                }
+                return;
+            }
+
+            const titleEl = document.getElementById('title');
+            const subtitleEl = document.getElementById('subtitle');
+            const leadEl = document.getElementById('lead');
+            const title = titleEl ? titleEl.value.trim() : '';
+            const bodyHtml = readBodyHtml();
+            const plainBody = String(bodyHtml || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+            if (!title && !plainBody) {
+                alert('Escribe al menos un título o el cuerpo antes de mejorar con IA.');
+                return;
+            }
+            if (!confirm('La IA reescribirá título, subtítulo, entradilla y cuerpo según el prompt de Configuración → IA. ¿Continuar?')) {
+                return;
+            }
+
+            const originalLabel = btn.textContent;
+            btn.classList.add('is-busy');
+            btn.textContent = 'Mejorando…';
+            try {
+                const response = await fetch(btn.dataset.aiImproveUrl, {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        _token: btn.dataset.aiImproveToken,
+                        title: title,
+                        subtitle: subtitleEl ? subtitleEl.value : '',
+                        lead: leadEl ? leadEl.value : '',
+                        bodyHtml: bodyHtml,
+                    }),
+                });
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok) {
+                    alert(data.error || 'No se pudo mejorar la noticia.');
+                    return;
+                }
+                const article = data.article || {};
+                if (titleEl && article.title != null) titleEl.value = article.title;
+                if (subtitleEl && article.subtitle != null) subtitleEl.value = article.subtitle;
+                if (leadEl && article.lead != null) leadEl.value = article.lead;
+                if (article.bodyHtml != null) writeBodyHtml(article.bodyHtml);
+                const titleCheck = document.querySelector('[data-checklist="title"]');
+                if (titleCheck) {
+                    titleCheck.classList.toggle('is-ok', !!(titleEl && titleEl.value.trim()));
+                    titleCheck.classList.toggle('is-warn', !(titleEl && titleEl.value.trim()));
+                }
+                const leadCheck = document.querySelector('[data-checklist="lead"]');
+                if (leadCheck) {
+                    leadCheck.classList.toggle('is-ok', !!(leadEl && leadEl.value.trim()));
+                    leadCheck.classList.toggle('is-warn', !(leadEl && leadEl.value.trim()));
+                }
+            } catch (err) {
+                alert('Error de red al contactar con la IA.');
+            } finally {
+                btn.classList.remove('is-busy');
+                btn.textContent = originalLabel;
+            }
+        });
+    })();
+})();
+</script>
+{% endblock %}

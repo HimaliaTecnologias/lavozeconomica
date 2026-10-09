@@ -1,0 +1,7 @@
+{% set sectionCols = layout.homeCategoryArticlesCount|default(4) %}
+{% set hasModules = contentModulesConfig is defined and contentModulesConfig.enabledFor('static_page') is not empty %}
+{% if hasModules or categorySections is not empty or latestArticles is not empty or popularArticles is not empty %}
+<div class="static-page-news">
+    {% include 'public/_partials/content_modules.html.twig' with { surface: 'static_page' } %}
+</div>
+{% endif %}

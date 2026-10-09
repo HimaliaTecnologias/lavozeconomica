@@ -1,0 +1,14 @@
+<div class="masthead-account" aria-label="Acceso de usuario">
+    {% if app.user %}
+        <a href="{{ path('cuenta_profile') }}" class="masthead-account-profile" title="Mi cuenta">
+            <span class="masthead-account-avatar" aria-hidden="true">
+                {{ (app.user.name|default(app.user.userIdentifier)|first)|upper }}
+            </span>
+            <span class="masthead-account-name">{{ app.user.name|default(app.user.userIdentifier) }}</span>
+        </a>
+        <a href="{{ path('logout') }}" class="masthead-account-logout">Salir</a>
+    {% else %}
+        <a href="{{ path('cuenta_login') }}" class="masthead-account-login">Entrar</a>
+        <a href="{{ path('cuenta_register') }}" class="masthead-account-register">Registrarse</a>
+    {% endif %}
+</div>

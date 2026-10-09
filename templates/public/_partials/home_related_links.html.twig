@@ -1,0 +1,24 @@
+{% set relatedItems = related|default([]) %}
+{% if article is defined and article.id and homeRelatedById is defined %}
+    {% set relatedItems = attribute(homeRelatedById, article.id)|default(relatedItems) %}
+{% endif %}
+{% if limit is defined %}
+    {% set relatedItems = relatedItems|slice(0, limit) %}
+{% endif %}
+{% if relatedItems is not empty %}
+<nav class="home-related-links{{ modifier|default('') }}" aria-label="{{ aria_label|default('Relacionadas') }}">
+    <p class="home-related-links-label">Relacionadas</p>
+    <ul class="home-related-links-list">
+        {% for item in relatedItems %}
+            <li>
+                <a href="{{ path('public_article_show', {slug: item.slug}) }}" class="home-related-link">
+                    {% if item.category %}
+                        <span class="home-related-cat">{{ item.category.name }}</span>
+                    {% endif %}
+                    <span class="home-related-title">{{ item.title }}</span>
+                </a>
+            </li>
+        {% endfor %}
+    </ul>
+</nav>
+{% endif %}

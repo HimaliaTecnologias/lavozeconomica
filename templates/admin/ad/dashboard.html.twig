@@ -1,0 +1,244 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}Publicidad — Dashboard{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .ads-kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: .85rem;
+        margin-bottom: 1.5rem;
+    }
+    .ads-kpi {
+        background: #f8fafc;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 1rem 1.1rem;
+    }
+    .ads-kpi-label {
+        font-size: .72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+        color: var(--muted);
+        margin: 0 0 .35rem;
+    }
+    .ads-kpi-value {
+        font-size: 1.75rem;
+        font-weight: 800;
+        line-height: 1.1;
+        margin: 0;
+    }
+    .ads-kpi-hint {
+        font-size: .78rem;
+        color: var(--muted);
+        margin: .35rem 0 0;
+    }
+    .ads-kpi-trend--up { color: #15803d; }
+    .ads-kpi-trend--down { color: #b91c1c; }
+    .ads-period-tabs {
+        display: flex;
+        gap: .35rem;
+        flex-wrap: wrap;
+        margin-bottom: 1rem;
+    }
+    .ads-period-tabs a {
+        padding: .4rem .75rem;
+        border-radius: 6px;
+        text-decoration: none;
+        font-size: .85rem;
+        font-weight: 600;
+        background: #e2e8f0;
+        color: #0f172a;
+    }
+    .ads-period-tabs a.active {
+        background: var(--primary);
+        color: #fff;
+    }
+    .ads-chart {
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 1rem 1rem .75rem;
+        background: #fff;
+        margin-bottom: 1.5rem;
+    }
+    .ads-chart h2 {
+        margin: 0 0 1rem;
+        font-size: 1rem;
+    }
+    .ads-chart-bars {
+        display: flex;
+        align-items: flex-end;
+        gap: 4px;
+        height: 180px;
+        padding-top: .5rem;
+    }
+.ads-chart-bar-wrap {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: .35rem;
+        height: 100%;
+        justify-content: flex-end;
+    }
+    .ads-chart-bar {
+        width: 100%;
+        max-width: 28px;
+        border-radius: 4px 4px 0 0;
+        background: linear-gradient(180deg, var(--secondary), var(--primary));
+        min-height: 2px;
+        transition: height .3s ease;
+    }
+    .ads-chart-bar-label {
+        font-size: .62rem;
+        color: var(--muted);
+        white-space: nowrap;
+    }
+    .ads-section {
+        margin-bottom: 1.5rem;
+    }
+    .ads-section h2 {
+        font-size: 1rem;
+        margin: 0 0 .75rem;
+    }
+    .ads-status {
+        display: inline-block;
+        padding: .15rem .45rem;
+        border-radius: 4px;
+        font-size: .72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+    .ads-status--activa { background: #d4edda; color: #155724; }
+    .ads-status--programada { background: #fff3cd; color: #856404; }
+    .ads-status--finalizada { background: #e2e3e5; color: #383d41; }
+    .ads-status--pausada { background: #fed7d7; color: #c53030; }
+</style>
+{% endblock %}
+
+{% block body %}
+{% include 'admin/ad/_subnav.html.twig' %}
+
+<div class="page-header">
+    <h1>Dashboard de publicidad</h1>
+    <a href="{{ path('admin_ads_new') }}" class="btn btn-primary">Nuevo banner</a>
+</div>
+
+<div class="ads-period-tabs">
+    {% for d in [7, 30, 90] %}
+        <a href="{{ path('admin_ads_dashboard', {days: d}) }}" class="{{ stats.days == d ? 'active' : '' }}">Últimos {{ d }} días</a>
+    {% endfor %}
+</div>
+
+<div class="ads-kpi-grid">
+    <div class="ads-kpi">
+        <p class="ads-kpi-label">Clics en el periodo</p>
+        <p class="ads-kpi-value">{{ stats.totalClicks }}</p>
+        {% set delta = stats.totalClicks - stats.previousClicks %}
+        {% if stats.previousClicks > 0 %}
+            <p class="ads-kpi-hint ads-kpi-trend--{{ delta >= 0 ? 'up' : 'down' }}">
+                {{ delta >= 0 ? '+' : '' }}{{ delta }} vs periodo anterior
+            </p>
+        {% endif %}
+    </div>
+    <div class="ads-kpi">
+        <p class="ads-kpi-label">Clics hoy</p>
+        <p class="ads-kpi-value">{{ stats.clicksToday }}</p>
+    </div>
+    <div class="ads-kpi">
+        <p class="ads-kpi-label">Banners activos</p>
+        <p class="ads-kpi-value">{{ stats.activeBanners }}</p>
+    </div>
+    <div class="ads-kpi">
+        <p class="ads-kpi-label">Campañas con fechas</p>
+        <p class="ads-kpi-value">{{ stats.campaigns|length }}</p>
+    </div>
+</div>
+
+<div class="ads-chart">
+    <h2>Evolución de clics ({{ stats.days }} días)</h2>
+    <div class="ads-chart-bars">
+        {% for point in stats.dailySeries %}
+            <div class="ads-chart-bar-wrap" title="{{ point.date }}: {{ point.clicks }} clics">
+                <div class="ads-chart-bar" style="height: {{ (point.clicks / stats.maxDailyClicks * 100)|round(1) }}%"></div>
+                <span class="ads-chart-bar-label">{{ point.label }}</span>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="ads-section">
+    <h2>Rendimiento por banner</h2>
+    {% if stats.bannerStats is empty %}
+        <p class="hint">No hay banners configurados.</p>
+    {% else %}
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Banner</th>
+                <th>Ubicación</th>
+                <th>Clics (periodo)</th>
+                <th>Clics (total)</th>
+                <th>Estado</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for row in stats.bannerStats %}
+            {% set banner = row.banner %}
+            <tr>
+                <td><strong>{{ banner.name }}</strong></td>
+                <td>{{ banner.placement.label }}</td>
+                <td><strong>{{ row.clicksPeriod }}</strong></td>
+                <td>{{ row.clicksTotal }}</td>
+                <td>
+                    {% if banner.isActive and banner.isScheduledNow() %}
+                        <span class="badge badge-published">Activo</span>
+                    {% else %}
+                        <span class="badge badge-draft">Inactivo</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <a href="{{ path('admin_ads_edit', {id: banner.id}) }}" class="btn btn-secondary btn-sm">Editar</a>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+</div>
+
+<div class="ads-section">
+    <h2>Campañas (banners con ventana de fechas)</h2>
+    {% if stats.campaigns is empty %}
+        <p class="hint">Configura fechas de inicio o fin en un banner para ver campañas aquí.</p>
+    {% else %}
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Campaña</th>
+                <th>Inicio</th>
+                <th>Fin</th>
+                <th>Estado</th>
+                <th>Clics en campaña</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for row in stats.campaigns %}
+            {% set banner = row.banner %}
+            <tr>
+                <td><strong>{{ banner.name }}</strong></td>
+                <td>{{ banner.startsAt ? banner.startsAt|date('d/m/Y H:i') : '—' }}</td>
+                <td>{{ banner.endsAt ? banner.endsAt|date('d/m/Y H:i') : '—' }}</td>
+                <td><span class="ads-status ads-status--{{ row.status }}">{{ row.status }}</span></td>
+                <td><strong>{{ row.clicksInCampaign }}</strong></td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,107 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}Publicidad{% endblock %}
+
+{% block body %}
+{% include 'admin/ad/_subnav.html.twig' %}
+
+<div class="page-header">
+    <h1>Banners</h1>
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+        <a href="{{ path('admin_ads_dashboard') }}" class="btn btn-secondary">Dashboard</a>
+        <a href="{{ path('admin_ads_new') }}" class="btn btn-primary">Nuevo banner</a>
+    </div>
+</div>
+<p class="hint">Asigna cada banner a una o varias ubicaciones. Para aparecer a la derecha de las noticias usa <strong>Noticia — columna derecha</strong>.</p>
+
+{% if banners is empty %}
+    <div class="empty-panel">
+        <p>No hay banners configurados.</p>
+        <a href="{{ path('admin_ads_new') }}" class="btn btn-secondary">Crear primer banner</a>
+    </div>
+{% else %}
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>Nombre</th>
+            <th>Tipo</th>
+            <th>Ubicación</th>
+            <th>Segmentación</th>
+            <th>Formato</th>
+            <th>Clics</th>
+            <th>Estado</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for banner in banners %}
+        <tr>
+            <td><strong>{{ banner.name }}</strong></td>
+            <td>{{ banner.resolveCreativeType().label }}</td>
+            <td>
+                <div style="display:flex;flex-wrap:wrap;gap:.3rem">
+                    {% for placement in banner.placements %}
+                        <span class="tag">{{ placement.label }}</span>
+                    {% endfor %}
+                </div>
+            </td>
+            <td>
+                {% if banner.isGloballyTargeted %}
+                    <span class="hint">Todas</span>
+                {% else %}
+                    <div style="display:flex;flex-wrap:wrap;gap:.3rem">
+                        {% for category in categories|default([]) %}
+                            {% if category.id in banner.categoryIds %}
+                                <span class="tag">{{ category.name }}</span>
+                            {% endif %}
+                        {% endfor %}
+                        {% for tag in tags|default([]) %}
+                            {% if tag.id in banner.tagIds %}
+                                <span class="tag">#{{ tag.name }}</span>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </td>
+            <td>{{ banner.format.label }}</td>
+            <td><strong>{{ banner.clickCount }}</strong></td>
+            <td>
+                {% if banner.isActive and banner.isScheduledNow() %}
+                    <span class="badge badge-published">Activo</span>
+                {% else %}
+                    <span class="badge badge-draft">Inactivo</span>
+                {% endif %}
+            </td>
+            <td class="table-actions">
+                <a href="{{ path('admin_ads_edit', {id: banner.id}) }}" class="btn btn-secondary btn-sm">Editar</a>
+                <form class="inline-form" method="post" action="{{ path('admin_ads_delete', {id: banner.id}) }}" onsubmit="return confirm('¿Eliminar este banner?')">
+                    <input type="hidden" name="_token" value="{{ csrf_token('delete_ad' ~ banner.id) }}">
+                    <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
+                </form>
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+<div class="hint-box" style="margin-top:1.5rem">
+    <strong>Ubicaciones disponibles:</strong>
+    {% for groupName in placementGroups|default([]) %}
+        {% set groupItems = placements|filter(p => p.group == groupName) %}
+        {% if groupItems is not empty %}
+            <div style="margin-top:.65rem">
+                <div style="font-size:.75rem;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--admin-muted);margin-bottom:.35rem">{{ groupName }}</div>
+                {% for placement in groupItems %}
+                    <span class="tag">{{ placement.label }}</span>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endfor %}
+    {% if placementGroups is not defined %}
+        {% for placement in placements %}
+            <span class="tag">{{ placement.label }}</span>
+        {% endfor %}
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

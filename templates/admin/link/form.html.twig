@@ -1,0 +1,77 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}{{ link ? 'Editar enlace' : 'Nuevo enlace' }}{% endblock %}
+
+{% block body %}
+<h1>{{ link ? 'Editar enlace' : 'Nuevo enlace' }}</h1>
+
+{% set fd = formData|default({}) %}
+{% set titleVal = fd.title|default(link ? link.title : '') %}
+{% set urlVal = fd.url|default(link ? link.url : '') %}
+{% set logoVal = fd.logoUrl|default(link ? link.logoUrl : '') %}
+{% set groupVal = fd.group|default(link ? link.group.value : 'interest') %}
+{% set sortVal = fd.sortOrder|default(link ? link.sortOrder : 0) %}
+{% set enabledVal = fd.isEnabled is defined ? fd.isEnabled : (link ? link.isEnabled : true) %}
+{% set footerVal = fd.showInFooter is defined ? fd.showInFooter : (link ? link.showInFooter : true) %}
+{% set sidebarVal = fd.showInSidebar is defined ? fd.showInSidebar : (link ? link.showInSidebar : false) %}
+
+<form method="post" action="{{ link ? path('admin_links_edit', {id: link.id}) : path('admin_links_new') }}">
+    <input type="hidden" name="_token" value="{{ csrf_token('link_form') }}">
+
+    <div class="field">
+        <label for="group">Tipo *</label>
+        <select id="group" name="group" required>
+            {% for g in groups %}
+                <option value="{{ g.value }}" {{ groupVal == g.value ? 'selected' : '' }}>{{ g.label }}</option>
+            {% endfor %}
+        </select>
+        <p class="hint"><strong>Otros medios:</strong> franja de grupo bajo el pie (logos/nombres de periódicos del grupo). <strong>Enlaces de interés:</strong> recursos útiles en la zona superior del footer.</p>
+    </div>
+
+    <div class="field">
+        <label for="title">Título *</label>
+        <input type="text" id="title" name="title" required value="{{ titleVal }}"
+               class="{{ errors.title is defined ? 'error' : '' }}">
+        {% if errors.title is defined %}<div class="error-msg">{{ errors.title }}</div>{% endif %}
+    </div>
+
+    <div class="field">
+        <label for="url">URL *</label>
+        <input type="url" id="url" name="url" required value="{{ urlVal }}"
+               class="{{ errors.url is defined ? 'error' : '' }}" placeholder="https://…">
+        {% if errors.url is defined %}<div class="error-msg">{{ errors.url }}</div>{% endif %}
+    </div>
+
+    <div class="field">
+        <label for="logoUrl">URL del logo (opcional)</label>
+        <input type="url" id="logoUrl" name="logoUrl" value="{{ logoVal }}"
+               class="{{ errors.logoUrl is defined ? 'error' : '' }}"
+               placeholder="https://… o /media/sites/…">
+        <p class="hint">Recomendado para «Otros medios». Puedes copiar la URL desde la biblioteca de medios.</p>
+        {% if errors.logoUrl is defined %}<div class="error-msg">{{ errors.logoUrl }}</div>{% endif %}
+    </div>
+
+    <div class="field">
+        <label for="sortOrder">Orden</label>
+        <input type="number" id="sortOrder" name="sortOrder" value="{{ sortVal }}" min="0" max="999">
+    </div>
+
+    <div class="checkbox-row field">
+        <input type="checkbox" id="isEnabled" name="isEnabled" value="1" {{ enabledVal ? 'checked' : '' }}>
+        <label for="isEnabled">Visible (activo)</label>
+    </div>
+    <div class="checkbox-row field">
+        <input type="checkbox" id="showInFooter" name="showInFooter" value="1" {{ footerVal ? 'checked' : '' }}>
+        <label for="showInFooter">Mostrar en el pie de página</label>
+    </div>
+    <div class="checkbox-row field">
+        <input type="checkbox" id="showInSidebar" name="showInSidebar" value="1" {{ sidebarVal ? 'checked' : '' }}>
+        <label for="showInSidebar">Mostrar en barra lateral (noticias y portada)</label>
+    </div>
+
+    <div class="actions">
+        <a href="{{ path('admin_links_index') }}" class="btn btn-secondary">Cancelar</a>
+        <button type="submit" class="btn btn-primary">Guardar</button>
+    </div>
+</form>
+{% endblock %}

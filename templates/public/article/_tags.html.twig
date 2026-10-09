@@ -1,0 +1,12 @@
+{% if article.tags is not empty %}
+    <div class="article-tags" aria-label="Etiquetas">
+        <span class="article-tags-label">Etiquetas</span>
+        <ul class="article-tags-list">
+            {% for tag in article.tags|sort((a, b) => a.name <=> b.name) %}
+                <li>
+                    <a href="{{ path('public_tag_show', {slug: tag.slug}) }}" class="article-tag">{{ tag.name }}</a>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+{% endif %}

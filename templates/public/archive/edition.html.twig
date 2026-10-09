@@ -1,0 +1,68 @@
+{% extends 'public/layout.html.twig' %}
+
+{% block title %}Edición {{ editionDate|date('d/m/Y') }} — {{ site.name }}{% endblock %}
+
+{% block body %}
+<div class="archive-layout">
+    <div class="archive-main">
+        {% include 'public/_partials/breadcrumb.html.twig' with {
+            crumbs: isToday
+                ? [{ label: 'Edición' }]
+                : [
+                    { label: 'Edición', path: path('public_edition') },
+                    { label: editionDate|date('d/m/Y') },
+                ]
+        } %}
+        <header class="archive-page-head">
+            <div class="archive-page-head-row">
+                <div>
+                    <h1>Edición del día</h1>
+                    <p class="archive-page-intro">
+                        {% if isToday %}
+                            Noticias publicadas hoy en {{ site.name }}.
+                        {% else %}
+                            Noticias publicadas el {{ editionDate|date('d/m/Y') }} en {{ site.name }}.
+                        {% endif %}
+                    </p>
+                </div>
+                {% if editionPdfUrl is defined and articles is not empty %}
+                    <a href="{{ editionPdfUrl }}" class="edition-pdf-btn" target="_blank" rel="noopener" download>
+                        Descargar periódico en PDF
+                    </a>
+                {% endif %}
+            </div>
+        </header>
+
+        {% if activeDates is not empty %}
+            <div class="edition-quick-dates" aria-label="Días con edición de la última semana">
+                <span class="edition-quick-label">Última semana:</span>
+                {% for dayIso in activeDates %}
+                    <a href="{{ path('public_edition_date', {date: dayIso}) }}"
+                       class="edition-quick-date{{ dayIso == editionDateIso ? ' is-active' : '' }}">
+                        {{ dayIso|date('d/m') }}
+                    </a>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% if articles is empty %}
+            <p class="archive-empty">No hay noticias publicadas en esta fecha. Selecciona otro día en el calendario superior.</p>
+        {% else %}
+            <p class="archive-results-count">{{ total }} noticia{{ total != 1 ? 's' : '' }} en esta edición</p>
+            <div class="archive-story-list">
+                {% include 'public/archive/_article_items.html.twig' with { articles: articles, page: page } %}
+            </div>
+
+            {% include 'public/_partials/pagination.html.twig' with {
+                route: paginationRoute,
+                routeParams: paginationParams,
+                page: page,
+                totalPages: totalPages,
+                totalArticles: total,
+            } only %}
+        {% endif %}
+    </div>
+
+    {% include 'public/archive/_sidebar.html.twig' %}
+</div>
+{% endblock %}

@@ -1,0 +1,47 @@
+{% extends 'install/layout.html.twig' %}
+
+{% block title %}Resumen{% endblock %}
+
+{% block steps %}
+<div class="steps">
+    <div class="step done">Inicio</div>
+    <div class="step done">Periódico</div>
+    <div class="step done">Apariencia</div>
+    <div class="step done">Administrador</div>
+    <div class="step active">Finalizar</div>
+</div>
+{% endblock %}
+
+{% block body %}
+<h2>Resumen de la instalación</h2>
+<dl style="margin:0 0 1.5rem">
+    <dt><strong>Periódico</strong></dt>
+    <dd>{{ data.name }} (<code>{{ data.code }}</code>)</dd>
+    <dt style="margin-top:.75rem"><strong>Dominio</strong></dt>
+    <dd>{{ data.domain }}</dd>
+    <dt style="margin-top:.75rem"><strong>Idioma / zona</strong></dt>
+    <dd>{{ data.locale }} · {{ data.timezone }}</dd>
+    <dt style="margin-top:.75rem"><strong>Colores</strong></dt>
+    <dd>
+        <span style="display:inline-block;width:1rem;height:1rem;background:{{ data.primaryColor }};vertical-align:middle;border-radius:2px"></span>
+        {{ data.primaryColor }}
+        &nbsp;
+        <span style="display:inline-block;width:1rem;height:1rem;background:{{ data.secondaryColor }};vertical-align:middle;border-radius:2px"></span>
+        {{ data.secondaryColor }}
+    </dd>
+    {% if data.tagline %}
+    <dt style="margin-top:.75rem"><strong>Descripción</strong></dt>
+    <dd>{{ data.tagline }}</dd>
+    {% endif %}
+    <dt style="margin-top:.75rem"><strong>Administrador</strong></dt>
+    <dd>{{ data.adminName }} &lt;{{ data.adminEmail }}&gt;</dd>
+</dl>
+<p class="hint">Al confirmar se creará la base de datos del periódico y se guardará la configuración inicial.</p>
+<form method="post" action="{{ path('install_finalizar') }}">
+    <input type="hidden" name="_token" value="{{ csrf_token('install_finalize') }}">
+    <div class="actions">
+        <a href="{{ path('install_admin') }}" class="btn btn-secondary">Atrás</a>
+        <button type="submit" class="btn btn-primary">Instalar MyMediaCMS</button>
+    </div>
+</form>
+{% endblock %}

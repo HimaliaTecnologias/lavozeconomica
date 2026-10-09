@@ -1,0 +1,42 @@
+<form class="newsletter-form" method="post" action="{{ path('public_newsletter_subscribe') }}">
+    <input type="hidden" name="_token" value="{{ csrf_token('newsletter_subscribe') }}">
+    <input type="text" name="website" value="" tabindex="-1" autocomplete="off" class="newsletter-honeypot" aria-hidden="true">
+
+    <div class="newsletter-form-fields">
+        <div class="newsletter-form-row">
+            <label for="newsletter-email{{ id_suffix|default('') }}">Tu correo</label>
+            <input type="email" id="newsletter-email{{ id_suffix|default('') }}" name="email" required placeholder="nombre@ejemplo.com">
+        </div>
+
+        <div class="newsletter-form-row">
+            <label for="newsletter-frequency{{ id_suffix|default('') }}">Periodicidad</label>
+            <select id="newsletter-frequency{{ id_suffix|default('') }}" name="frequency">
+                <option value="daily">Diario</option>
+                <option value="weekly" selected>Semanal</option>
+            </select>
+        </div>
+    </div>
+
+    {% if categories is not empty %}
+        <div class="newsletter-form-row">
+            <span class="newsletter-categories-label">Secciones de interés</span>
+            <div class="newsletter-categories">
+                {% for cat in categories %}
+                    <label class="newsletter-cat-check">
+                        <input type="checkbox" name="categoryIds[]" value="{{ cat.id }}">
+                        <span>{{ cat.name }}</span>
+                    </label>
+                    {% for child in cat.children %}
+                        <label class="newsletter-cat-check newsletter-cat-check--child">
+                            <input type="checkbox" name="categoryIds[]" value="{{ child.id }}">
+                            <span>{{ child.name }}</span>
+                        </label>
+                    {% endfor %}
+                {% endfor %}
+            </div>
+            <p class="hint">Si no marcas ninguna, recibirás lo más destacado de todas las secciones.</p>
+        </div>
+    {% endif %}
+
+    <button type="submit" class="newsletter-submit">Suscribirme al boletín</button>
+</form>

@@ -1,0 +1,34 @@
+{% if article is defined %}
+<article class="portada-hero portada-hero--magazine category-lead-hero">
+    <div class="portada-hero-media-wrap">
+        <a href="{{ path('public_article_show', {slug: article.slug}) }}" class="portada-hero-media portada-hero-media--magazine">
+            {% set leadImg = article_usable_featured(article) %}
+            {% if leadImg %}
+                {{ seo_article_image(leadImg, article.title, {loading: 'eager', fetchpriority: 'high'}) }}
+            {% else %}
+                <div class="portada-hero-media-placeholder">{{ site.name }}</div>
+            {% endif %}
+            <div class="portada-hero-overlay"></div>
+        </a>
+        <div class="portada-hero-footer">
+            <div class="portada-hero-content">
+                {% if sectionName is defined and sectionName %}
+                    <span class="cat-pill portada-hero-cat">{{ sectionName }}</span>
+                {% elseif article.category %}
+                    <a href="{{ path('public_category_show', {slug: article.category.slug}) }}" class="cat-pill portada-hero-cat">{{ article.category.name }}</a>
+                {% endif %}
+                <h2 class="portada-hero-title">
+                    <a href="{{ path('public_article_show', {slug: article.slug}) }}">{{ article.title }}</a>
+                </h2>
+                {% set leadText = article.lead ?: article.subtitle %}
+                {% if leadText %}
+                    <p class="portada-hero-lead">{{ leadText|length > 220 ? leadText|slice(0, 217) ~ '…' : leadText }}</p>
+                {% endif %}
+                {% if article.publishedAt %}
+                    <div class="meta-line portada-hero-meta">{{ article.publishedAt|date('d/m/Y H:i') }} · {{ article.viewCount }} lecturas</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</article>
+{% endif %}

@@ -1,0 +1,12 @@
+{% extends 'public/layout.html.twig' %}
+
+{% block title %}{{ article.title }} — {{ site.name }}{% endblock %}
+
+{% block body %}
+{% include 'public/article/layouts/' ~ layout.articleTemplate ~ '.html.twig' %}
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="/js/article-category-feed.js?v=2" defer></script>
+<script src="/js/article-share.js" defer></script>
+{% endblock %}

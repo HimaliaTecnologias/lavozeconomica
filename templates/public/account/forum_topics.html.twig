@@ -1,0 +1,31 @@
+{% extends 'public/account/_layout.html.twig' %}
+{% set accountPageTitle = 'Temas del foro' %}
+
+{% block account_content %}
+<h2>Temas que has iniciado</h2>
+
+{% if topics is empty %}
+    <p class="account-empty">No has abierto ningún tema en el foro. <a href="{{ path('public_forum_new') }}">Crear un tema</a></p>
+{% else %}
+    <ul class="account-list">
+        {% for topic in topics %}
+            <li class="account-list-item">
+                <div class="account-list-meta">
+                    {{ topic.createdAt|date('d/m/Y H:i') }}
+                    · {{ topic.replyCount }} respuesta{{ topic.replyCount != 1 ? 's' : '' }}
+                    {% if topic.isHidden %}<span class="account-badge">Oculto por moderación</span>{% endif %}
+                    {% if topic.isLocked %}<span class="account-badge account-badge--muted">Cerrado</span>{% endif %}
+                </div>
+                <h3>
+                    {% if topic.isHidden %}
+                        {{ topic.title }}
+                    {% else %}
+                        <a href="{{ path('public_forum_show', {slug: topic.slug}) }}">{{ topic.title }}</a>
+                    {% endif %}
+                </h3>
+                <p class="account-list-excerpt">{{ topic.body|striptags|length > 180 ? topic.body|striptags|slice(0, 177) ~ '…' : topic.body|striptags }}</p>
+            </li>
+        {% endfor %}
+    </ul>
+{% endif %}
+{% endblock %}

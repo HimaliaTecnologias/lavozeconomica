@@ -1,0 +1,181 @@
+{% extends 'admin/layout.html.twig' %}
+{% import 'admin/_icons.html.twig' as icons %}
+
+{% block title %}Inteligencia artificial{% endblock %}
+
+{% block body %}
+{% include 'admin/_page_header.html.twig' with {
+    title: 'Inteligencia artificial',
+    subtitle: 'API key de OpenAI, modelo y prompt genérico para mejorar noticias.',
+    breadcrumbs: [
+        { label: 'Panel', url: path('admin_dashboard') },
+        { label: 'Configuración', url: path('admin_settings_index') },
+        { label: 'IA' },
+    ],
+} %}
+
+{% include 'admin/settings/_subnav.html.twig' %}
+
+{% if config.isConfigured %}
+    <div class="flash flash-success" style="margin-bottom:1rem">
+        OpenAI está disponible{% if config.hasOpenaiApiKey %} con la clave guardada en este periódico{% elseif config.envKeyAvailable %} mediante <code>OPENAI_API_KEY</code> del servidor{% endif %}.
+    </div>
+{% else %}
+    <div class="flash flash-error" style="margin-bottom:1rem">
+        Todavía no hay API key. Sin ella no se pueden generar textos de IA.
+    </div>
+{% endif %}
+
+<form method="post" action="{{ path('admin_settings_ai') }}" class="settings-form">
+    <input type="hidden" name="_token" value="{{ csrf_token('settings_ai') }}">
+
+    <section class="settings-panel" style="margin-bottom:1.25rem">
+        <header class="settings-panel-head">
+            <div>
+                <h2>Credenciales OpenAI</h2>
+                <p>Una sola clave para todo el periódico. Tiene prioridad sobre las claves antiguas de cada módulo.</p>
+            </div>
+        </header>
+
+        <div class="field">
+            <label for="openaiApiKey">API key *</label>
+            <input type="password" id="openaiApiKey" name="openaiApiKey" value=""
+                   class="{{ errors.openaiApiKey is defined ? 'error' : '' }}" autocomplete="new-password"
+                   placeholder="{{ config.hasOpenaiApiKey ? '••••••••  (configurada — dejar vacío para mantener)' : 'sk-…' }}">
+            {% if errors.openaiApiKey is defined %}<div class="error-msg">{{ errors.openaiApiKey }}</div>{% endif %}
+            <p class="hint">
+                {% if config.hasOpenaiApiKey %}
+                    Ya hay una clave guardada. Déjala vacía si no quieres cambiarla.
+                {% elseif config.envKeyAvailable %}
+                    También puedes dejarla vacía y usar <code>OPENAI_API_KEY</code> del entorno del servidor.
+                {% else %}
+                    Pega aquí tu clave de <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">platform.openai.com</a>.
+                {% endif %}
+            </p>
+        </div>
+
+        {% if config.hasOpenaiApiKey %}
+            <div class="checkbox-row field">
+                <input type="checkbox" id="clearApiKey" name="clearApiKey" value="1">
+                <label for="clearApiKey">Eliminar la API key guardada en este periódico</label>
+            </div>
+        {% endif %}
+
+        <div class="field">
+            <label for="model">Modelo</label>
+            <select id="model" name="model">
+                {% for option in modelOptions %}
+                    <option value="{{ option }}" {{ (data.model|default(config.model)) == option ? 'selected' : '' }}>{{ option }}</option>
+                {% endfor %}
+            </select>
+            <p class="hint">Usado en comentarios de tiempo, bolsa, horóscopo y mejora de noticias. Recomendado: <code>gpt-4o-mini</code>.</p>
+        </div>
+    </section>
+
+    <section class="settings-panel" style="margin-bottom:1.25rem">
+        <header class="settings-panel-head">
+            <div>
+                <h2>Prompt de mejora de noticias</h2>
+                <p>Instrucciones genéricas que usa el botón «Mejorar con IA» del editor de cada noticia. Puedes adaptar tono, estilo o restricciones del medio.</p>
+            </div>
+        </header>
+
+        <div class="field">
+            <label for="articleImprovePrompt">Prompt del sistema</label>
+            <textarea id="articleImprovePrompt" name="articleImprovePrompt" rows="14"
+                      class="{{ errors.articleImprovePrompt is defined ? 'error' : '' }}"
+                      style="font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.85rem;line-height:1.45">{{ data.articleImprovePrompt|default(config.articleImprovePrompt) }}</textarea>
+            {% if errors.articleImprovePrompt is defined %}<div class="error-msg">{{ errors.articleImprovePrompt }}</div>{% endif %}
+            <p class="hint">
+                Es el mensaje de sistema enviado a OpenAI. El título, subtítulo, entradilla y cuerpo actuales se envían aparte como mensaje de usuario.
+                Si lo dejas vacío al guardar, se restaura el prompt por defecto. Debe pedir respuesta en JSON con <code>title</code>, <code>subtitle</code>, <code>lead</code> y <code>bodyHtml</code>.
+            </p>
+            <p class="hint">
+                <button type="button" class="btn btn-secondary btn-sm" id="restore-default-improve-prompt">Restaurar prompt por defecto</button>
+            </p>
+        </div>
+    </section>
+
+    <section class="settings-panel" style="margin-bottom:1.25rem">
+        <header class="settings-panel-head">
+            <div>
+                <h2>Dónde se usa</h2>
+                <p>Activa o desactiva la IA en cada sección desde su propia pantalla.</p>
+            </div>
+        </header>
+        <div class="settings-list">
+            <a class="settings-row" href="{{ path('admin_settings_weather') }}">
+                <span class="settings-row-icon settings-card-icon--blue">{{ icons.weather() }}</span>
+                <span class="settings-row-body">
+                    <strong>El tiempo</strong>
+                    <span>Pronóstico editorial generado por IA.</span>
+                </span>
+                {% if weather.aiSummaryEnabled %}
+                    <span class="settings-row-meta status-pill status-on">IA on</span>
+                {% else %}
+                    <span class="settings-row-meta status-pill status-off">IA off</span>
+                {% endif %}
+                <span class="settings-row-go" aria-hidden="true">→</span>
+            </a>
+            <a class="settings-row" href="{{ path('admin_settings_markets') }}">
+                <span class="settings-row-icon settings-card-icon--amber">{{ icons.ads() }}</span>
+                <span class="settings-row-body">
+                    <strong>Bolsa</strong>
+                    <span>Comentario de mercados con IA.</span>
+                </span>
+                {% if markets.aiSummaryEnabled %}
+                    <span class="settings-row-meta status-pill status-on">IA on</span>
+                {% else %}
+                    <span class="settings-row-meta status-pill status-off">IA off</span>
+                {% endif %}
+                <span class="settings-row-go" aria-hidden="true">→</span>
+            </a>
+            <a class="settings-row" href="{{ path('admin_settings_horoscope') }}">
+                <span class="settings-row-icon settings-card-icon--violet">{{ icons.articles() }}</span>
+                <span class="settings-row-body">
+                    <strong>Horóscopo</strong>
+                    <span>Textos diarios generados con OpenAI.</span>
+                </span>
+                {% if horoscope.aiEnabled %}
+                    <span class="settings-row-meta status-pill status-on">IA on</span>
+                {% else %}
+                    <span class="settings-row-meta status-pill status-off">IA off</span>
+                {% endif %}
+                <span class="settings-row-go" aria-hidden="true">→</span>
+            </a>
+            <div class="settings-row" style="cursor:default">
+                <span class="settings-row-icon settings-card-icon--blue">{{ icons.articles() }}</span>
+                <span class="settings-row-body">
+                    <strong>Editor de noticias</strong>
+                    <span>Botón «Mejorar con IA» en cada noticia (usa el prompt de arriba).</span>
+                </span>
+                {% if config.isConfigured %}
+                    <span class="settings-row-meta status-pill status-on">Disponible</span>
+                {% else %}
+                    <span class="settings-row-meta status-pill status-off">Sin clave</span>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+
+    <div class="actions">
+        <a href="{{ path('admin_settings_index') }}" class="btn btn-secondary">Volver</a>
+        <button type="submit" class="btn btn-primary">Guardar IA</button>
+    </div>
+</form>
+
+<script>
+(function () {
+    const btn = document.getElementById('restore-default-improve-prompt');
+    const field = document.getElementById('articleImprovePrompt');
+    const defaultPrompt = {{ defaultArticleImprovePrompt|json_encode|raw }};
+    if (!btn || !field) return;
+    btn.addEventListener('click', function () {
+        if (field.value.trim() !== '' && !confirm('¿Sustituir el prompt actual por el valor por defecto?')) {
+            return;
+        }
+        field.value = defaultPrompt;
+    });
+})();
+</script>
+{% endblock %}

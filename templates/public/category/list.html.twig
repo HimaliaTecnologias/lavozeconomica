@@ -1,0 +1,61 @@
+{% include 'public/category/_header.html.twig' %}
+
+{% if articles is empty %}
+    <div class="category-empty-state">
+        <p>No hay noticias en esta sección.</p>
+        <a href="{{ path('home') }}" class="category-empty-link">Volver a la portada</a>
+    </div>
+{% else %}
+    <div class="category-layout">
+        <div class="category-main">
+            <header class="category-list-head">
+                <h2 class="section-label">Noticias de {{ category.name }}</h2>
+            </header>
+            <div class="more-stories category-more-stories more-stories--full">
+                {% for article in articles %}
+                    <article class="more-story more-story--row">
+                        <a href="{{ path('public_article_show', {slug: article.slug}) }}" class="more-story-thumb">
+                            {% set img = article_usable_featured(article) %}
+                            {% if img %}{{ seo_article_image(img, article.title) }}{% else %}<span class="story-card-media-placeholder" aria-hidden="true">{{ site.name }}</span>{% endif %}
+                        </a>
+                        <div class="more-story-body">
+                            <h4><a href="{{ path('public_article_show', {slug: article.slug}) }}">{{ article.title }}</a></h4>
+                            <div class="meta-line">{{ article.publishedAt|date('d/m/Y H:i') }} · {{ article.viewCount }} lecturas</div>
+                            {% set excerpt = article.lead ?: article.subtitle %}
+                            {% if excerpt %}<p>{{ excerpt|length > 140 ? excerpt|slice(0, 137) ~ '…' : excerpt }}</p>{% endif %}
+                        </div>
+                    </article>
+                {% endfor %}
+            </div>
+            {% include 'public/_partials/pagination.html.twig' with {
+                route: 'public_category_show',
+                pagedRoute: 'public_category_show_paged',
+                routeParams: { slug: category.slug },
+                page: page,
+                totalPages: totalPages,
+                totalArticles: totalArticles,
+            } %}
+        </div>
+        <aside class="article-sidebar category-sidebar">
+            {% include 'public/_partials/ad_slot.html.twig' with { placement: 'category_sidebar', categoryId: category.id } only %}
+            {% include 'public/_partials/ad_slot.html.twig' with { placement: 'sidebar_top', categoryId: category.id } only %}
+            {% include 'public/_partials/popular_sidebar.html.twig' with {
+                articles: popularInCategory|default([]),
+                limit: layout.sidebarPopularCount|default(5),
+                categoryIds: categoryIds|default([]),
+                period: popularPeriod|default('week'),
+                title: 'Más vistas',
+            } %}
+            {% include 'public/_partials/ad_slot.html.twig' with { placement: 'sidebar_between_lists', categoryId: category.id } only %}
+            {% include 'public/_partials/latest_sidebar.html.twig' with {
+                articles: latestOverall|default([]),
+                limit: layout.sidebarLatestCount|default(5),
+                title: 'Últimas del periódico',
+            } %}
+            {% include 'public/_partials/ad_slot.html.twig' with { placement: 'sidebar_bottom', categoryId: category.id } only %}
+            {% include 'public/_partials/sidebar_links.html.twig' %}
+        </aside>
+    </div>
+{% endif %}
+
+{% include 'public/_partials/content_modules.html.twig' with { surface: 'category' } %}

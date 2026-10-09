@@ -1,0 +1,40 @@
+{% if latestNews is not empty or interestNews is not empty %}
+<div class="community-news-below">
+    {% if latestNews is not empty %}
+        <section class="community-news-band" aria-labelledby="community-latest-news-title">
+            <div class="community-news-band-head">
+                <h2 id="community-latest-news-title">Últimas noticias</h2>
+                <a href="{{ path('home') }}" class="community-news-band-more">Ver portada →</a>
+            </div>
+            <div class="community-news-grid">
+                {% for article in latestNews %}
+                    {% include 'public/_partials/story_card.html.twig' with {
+                        article: article,
+                        grid_card: true,
+                        section_card: true,
+                        show_meta: true,
+                    } %}
+                {% endfor %}
+            </div>
+        </section>
+    {% endif %}
+
+    {% if interestNews is not empty %}
+        <section class="community-news-band community-news-band--interest" aria-labelledby="community-interest-news-title">
+            <div class="community-news-band-head">
+                <h2 id="community-interest-news-title">Más noticias de interés</h2>
+            </div>
+            <div class="community-news-grid">
+                {% for article in interestNews %}
+                    {% include 'public/_partials/story_card.html.twig' with {
+                        article: article,
+                        grid_card: true,
+                        section_card: true,
+                        show_meta: true,
+                    } %}
+                {% endfor %}
+            </div>
+        </section>
+    {% endif %}
+</div>
+{% endif %}

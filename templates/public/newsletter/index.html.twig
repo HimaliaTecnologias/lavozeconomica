@@ -1,0 +1,41 @@
+{% extends 'public/layout.html.twig' %}
+
+{% block title %}Boletín — {{ site.name }}{% endblock %}
+
+{% block body %}
+<div class="archive-layout newsletter-layout">
+    <div class="archive-main">
+        <div class="newsletter-page">
+            {% include 'public/_partials/breadcrumb.html.twig' with {
+                crumbs: [{ label: 'Boletín' }]
+            } %}
+
+            <header class="newsletter-page-head">
+                <h1>Boletín de noticias</h1>
+                <p class="newsletter-intro">Recibe en tu correo las principales noticias de {{ site.name }}. Elige las secciones que te interesan y con qué frecuencia quieres el resumen.</p>
+            </header>
+
+            {% include 'public/_partials/ad_slot.html.twig' with { placement: 'category_sidebar' } only %}
+
+            <div class="newsletter-page-card">
+                {% include 'public/newsletter/_form.html.twig' with { categories: categories, id_suffix: '-page' } %}
+            </div>
+        </div>
+    </div>
+
+    {% if sidebarArticles is defined and sidebarArticles is not empty %}
+        <aside class="article-sidebar">
+            {% include 'public/_partials/ad_slot.html.twig' with { placement: 'sidebar_top' } only %}
+            <div class="sidebar-block">
+                <p class="sidebar-label">Lo último</p>
+                <div class="sidebar-list">
+                    {% for article in sidebarArticles %}
+                        {% include 'public/_partials/sidebar_story.html.twig' with { article: article } %}
+                    {% endfor %}
+                </div>
+            </div>
+            {% include 'public/_partials/sidebar_links.html.twig' %}
+        </aside>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,47 @@
+{% if article.poll %}
+    {% set poll = article.poll %}
+    {% set totalVotes = poll.totalVotes %}
+    {% set canVote = poll.isOpen() and not pollVoted|default(false) %}
+    {% set showResults = not canVote or poll.isShowResultsBeforeVote() %}
+
+    <section class="article-poll" aria-labelledby="poll-heading-{{ poll.id }}">
+        <p class="article-poll-label" id="poll-heading-{{ poll.id }}">Encuesta</p>
+        <h2 class="article-poll-question">{{ poll.question }}</h2>
+
+        {% if showResults %}
+            <div class="article-poll-results">
+                {% for option in poll.options %}
+                    {% set pct = totalVotes > 0 ? (option.voteCount * 100 / totalVotes) : 0 %}
+                    <div class="article-poll-result">
+                        <div class="article-poll-result-head">
+                            <span>{{ option.label }}</span>
+                            <span>{{ option.voteCount }} · {{ pct|number_format(0) }}%</span>
+                        </div>
+                        <div class="article-poll-bar" role="presentation">
+                            <span style="width: {{ pct }}%"></span>
+                        </div>
+                    </div>
+                {% endfor %}
+                <p class="article-poll-meta">{{ totalVotes }} votos{% if not poll.isOpen() %} · Encuesta cerrada{% endif %}</p>
+            </div>
+        {% endif %}
+
+        {% if canVote %}
+            <form class="article-poll-form" method="post" action="{{ path('public_poll_vote', {id: poll.id}) }}">
+                <input type="hidden" name="_token" value="{{ csrf_token('poll_vote' ~ poll.id) }}">
+                <input type="hidden" name="returnUrl" value="{{ path('public_article_show', {slug: article.slug}) }}">
+                <fieldset class="article-poll-options">
+                    {% for option in poll.options %}
+                        <label class="article-poll-option">
+                            <input type="radio" name="optionId" value="{{ option.id }}" required>
+                            <span>{{ option.label }}</span>
+                        </label>
+                    {% endfor %}
+                </fieldset>
+                <button type="submit" class="article-poll-submit">Votar</button>
+            </form>
+        {% elseif pollVoted|default(false) and poll.isOpen() %}
+            <p class="article-poll-thanks">Ya has votado en esta encuesta.</p>
+        {% endif %}
+    </section>
+{% endif %}

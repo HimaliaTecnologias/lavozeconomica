@@ -1,0 +1,83 @@
+{% extends 'public/layout.html.twig' %}
+
+{% block title %}{{ seoTitle|default('Avisos') }}{% endblock %}
+
+{% block body %}
+<div class="community-layout community-layout--full">
+    <nav class="article-breadcrumb community-breadcrumb">
+        <a href="{{ path('home') }}">Portada</a>
+        · {% if activeCategory %}
+            <a href="{{ path('public_classifieds') }}">Avisos</a>
+            · {{ activeCategory.name }}
+        {% else %}
+            Avisos
+        {% endif %}
+    </nav>
+
+    <header class="category-header community-page-head">
+        <h1 class="category-title">
+            {% if activeCategory %}
+                {{ activeCategory.name }}
+            {% else %}
+                Avisos y compra-venta
+            {% endif %}
+        </h1>
+        <p class="category-description">
+            {% if activeCategory and activeCategory.description %}
+                {{ activeCategory.description }}
+            {% else %}
+                Anuncios de lectores: ventas, compras, avisos y servicios en {{ site.name }}.
+            {% endif %}
+        </p>
+        <div class="community-page-head-actions">
+            {% if app.user %}
+                <a href="{{ path('public_classifieds_new', activeCategory ? {categoria: activeCategory.id} : {}) }}" class="community-action-btn community-action-btn--primary">Publicar anuncio</a>
+            {% else %}
+                <a href="{{ path('cuenta_login') }}" class="community-action-btn community-action-btn--primary">Entrar para publicar</a>
+            {% endif %}
+        </div>
+    </header>
+
+    {% include 'public/_partials/community_category_nav.html.twig' with {
+        categories: categories,
+        activeCategory: activeCategory,
+        allRoute: path('public_classifieds'),
+        categoryRoute: 'public_classifieds_category',
+        navLabel: 'Categorías de avisos',
+    } only %}
+
+    {% if ads is empty %}
+        <div class="community-empty-panel">
+            <p>No hay anuncios en esta categoría todavía.</p>
+            {% if app.user %}
+                <a href="{{ path('public_classifieds_new', activeCategory ? {categoria: activeCategory.id} : {}) }}" class="community-action-btn">Publica el primero</a>
+            {% else %}
+                <p class="community-login-hint"><a href="{{ path('cuenta_register') }}">Regístrate</a> para publicar anuncios.</p>
+            {% endif %}
+        </div>
+    {% else %}
+        <p class="archive-results-count">{{ ads|length }} anuncio{{ ads|length != 1 ? 's' : '' }}</p>
+        <div class="classified-grid classified-grid--full">
+            {% for ad in ads %}
+                <article class="classified-card classified-card--{{ ad.category ? ad.category.slug : 'default' }}">
+                    <a href="{{ path('public_classifieds_show', {slug: ad.slug}) }}" class="classified-card-link">
+                        {% if ad.category %}
+                            <span class="classified-badge">{{ ad.category.name }}</span>
+                        {% endif %}
+                        <h2 class="classified-card-title">{{ ad.title }}</h2>
+                        {% if ad.priceLabel %}
+                            <p class="classified-card-price">{{ ad.priceLabel }}</p>
+                        {% endif %}
+                        <footer class="classified-card-meta">
+                            <span>{{ ad.userName }}</span>
+                            <time>{{ ad.createdAt|date('d/m/Y') }}</time>
+                        </footer>
+                    </a>
+                </article>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    {% include 'public/_partials/community_related_news.html.twig' %}
+</div>
+{% endblock %}

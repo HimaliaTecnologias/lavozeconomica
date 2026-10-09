@@ -1,0 +1,3 @@
+# Cache pools live in config/packages/framework.yaml.
+# Adapter: CACHE_APP_ADAPTER (redis_tag_aware | filesystem_tag_aware).
+# Kept so Symfony Flex does not recreate an empty filesystem-only cache recipe.

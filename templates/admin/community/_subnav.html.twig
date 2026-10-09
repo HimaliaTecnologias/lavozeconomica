@@ -1,0 +1,11 @@
+{% set route = app.request.attributes.get('_route') %}
+<nav class="admin-subnav community-subnav" aria-label="Comunidad">
+    <a href="{{ path('admin_community_classifieds') }}" class="{{ route starts with 'admin_community_classified' ? 'active' : '' }}">Avisos</a>
+    <a href="{{ path('admin_community_classified_categories') }}" class="{{ route starts with 'admin_community_classified_categor' ? 'active' : '' }}">Categorías de avisos</a>
+    <a href="{{ path('admin_community_forum') }}" class="{{ route == 'admin_community_forum' or route starts with 'admin_community_topic' or route starts with 'admin_community_post' ? 'active' : '' }}">Foro</a>
+    <a href="{{ path('admin_community_forum_categories') }}" class="{{ route starts with 'admin_community_forum_categor' ? 'active' : '' }}">Categorías del foro</a>
+    {% if admin_can('settings') %}
+        <a href="{{ path('admin_settings_classifieds') }}">Ajustes avisos</a>
+        <a href="{{ path('admin_settings_forum') }}">Ajustes foro</a>
+    {% endif %}
+</nav>

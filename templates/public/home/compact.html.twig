@@ -1,0 +1,55 @@
+{% if articles is not empty %}
+    {% set hero = articles[0] %}
+
+    <div class="home-layout home-layout--compact">
+        <div class="home-main">
+            <article class="compact-hero">
+                <div class="compact-hero-text">
+                    {% if hero.category %}
+                        <a href="{{ path('public_category_show', {slug: hero.category.slug}) }}" class="cat-pill cat-pill--muted">{{ hero.category.name }}</a>
+                    {% endif %}
+                    <h2><a href="{{ path('public_article_show', {slug: hero.slug}) }}">{{ hero.title }}</a></h2>
+                    {% set heroLead = hero.lead ?: hero.subtitle %}
+                    {% if heroLead %}
+                        <p class="compact-hero-lead">{{ heroLead|length > 160 ? heroLead|slice(0, 157) ~ '…' : heroLead }}</p>
+                    {% endif %}
+                    {% if hero.publishedAt %}
+                        <div class="meta-line">{{ hero.publishedAt|date('d/m/Y H:i') }}</div>
+                    {% endif %}
+                    {% include 'public/_partials/home_related_links.html.twig' with {
+                        article: hero,
+                        modifier: ' home-related-links--compact',
+                        limit: 3,
+                    } %}
+                </div>
+                <a href="{{ path('public_article_show', {slug: hero.slug}) }}" class="compact-hero-thumb">
+                    {% set heroImg = article_usable_featured(hero) %}
+                    {% if heroImg %}
+                        {{ seo_article_image(heroImg, hero.title, {loading: 'eager', fetchpriority: 'high'}) }}
+                    {% endif %}
+                </a>
+            </article>
+
+            {% include 'public/_partials/ad_slot.html.twig' with { placement: 'home_below_hero' } only %}
+
+            {% if categorySections|default([]) is not empty %}
+                {% for section in categorySections %}
+                    {% include 'public/_partials/home_category_section.html.twig' with { section: section } %}
+                {% endfor %}
+            {% endif %}
+
+            {% include 'public/_partials/home_latest_news.html.twig' %}
+
+            {% include 'public/_partials/ad_slot.html.twig' with { placement: 'home_mid_content' } only %}
+            {% include 'public/_partials/home_links_strip.html.twig' %}
+        </div>
+
+        <aside class="home-aside article-sidebar" aria-label="Publicidad y destacados">
+            {% include 'public/_partials/home_sidebar.html.twig' %}
+        </aside>
+    </div>
+{% else %}
+    <div class="empty-state">
+        <p><strong>No hay noticias publicadas todavía.</strong></p>
+    </div>
+{% endif %}

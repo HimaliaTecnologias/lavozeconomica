@@ -1,0 +1,14 @@
+<aside class="article-sidebar games-sidebar">
+    {% include 'public/_partials/sidebar_ad_stack.html.twig' with {
+        placements: ['games_sidebar', 'sidebar_top', 'category_sidebar']
+    } only %}
+    {% include 'public/_partials/latest_sidebar.html.twig' with {
+        articles: latestArticles|default([]),
+        limit: layout.sidebarLatestCount|default(5),
+        title: 'Lo último',
+    } %}
+    {% include 'public/_partials/sidebar_ad_stack.html.twig' with {
+        placements: ['sidebar_bottom']
+    } only %}
+    {% include 'public/_partials/sidebar_links.html.twig' %}
+</aside>

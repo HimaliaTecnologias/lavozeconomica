@@ -1,0 +1,75 @@
+{% extends 'public/layout.html.twig' %}
+
+{% block title %}{{ seoTitle|default('Publicar anuncio') }}{% endblock %}
+
+{% block body %}
+<div class="community-layout community-layout--full">
+    <nav class="article-breadcrumb community-breadcrumb">
+        <a href="{{ path('home') }}">Portada</a>
+        · <a href="{{ path('public_classifieds') }}">Avisos</a>
+        · Publicar
+    </nav>
+
+    <div class="community-form-panel community-form-panel--wide">
+        <header class="community-form-panel-head">
+            <h1>Publicar anuncio</h1>
+            <p class="community-page-lead">Solo usuarios registrados pueden publicar. El anuncio caduca en 60 días.</p>
+        </header>
+
+        <form method="post" class="community-form" action="{{ path('public_classifieds_new') }}">
+            <input type="hidden" name="_token" value="{{ csrf_token('classified_create') }}">
+
+            <div class="community-field">
+                <label for="categoryId">Categoría</label>
+                <select id="categoryId" name="categoryId" required>
+                    <option value="">— Selecciona categoría —</option>
+                    {% for category in categories %}
+                        <option value="{{ category.id }}" {{ formData.categoryId == category.id ? 'selected' : '' }}>{{ category.name }}</option>
+                    {% endfor %}
+                </select>
+                {% if errors.categoryId is defined %}<p class="community-error">{{ errors.categoryId }}</p>{% endif %}
+            </div>
+
+            <div class="community-field">
+                <label for="title">Título</label>
+                <input type="text" id="title" name="title" maxlength="200" required value="{{ formData.title }}" placeholder="Ej. Bicicleta de montaña en buen estado">
+                {% if errors.title is defined %}<p class="community-error">{{ errors.title }}</p>{% endif %}
+            </div>
+
+            <div class="community-field community-field--editor">
+                <label for="body">Descripción</label>
+                <textarea id="body" name="body" class="simple-wysiwyg" data-editor-height="240" maxlength="5000" required placeholder="Describe el artículo, condiciones, ubicación…">{{ formData.body }}</textarea>
+                {% if errors.body is defined %}<p class="community-error">{{ errors.body }}</p>{% endif %}
+            </div>
+
+            <div class="community-field">
+                <label for="priceLabel">Precio <span class="community-optional">(opcional)</span></label>
+                <input type="text" id="priceLabel" name="priceLabel" maxlength="80" placeholder="Ej. 150 €, A convenir" value="{{ formData.priceLabel }}">
+                {% if errors.priceLabel is defined %}<p class="community-error">{{ errors.priceLabel }}</p>{% endif %}
+            </div>
+
+            <div class="community-field-row">
+                <div class="community-field">
+                    <label for="contactPhone">Teléfono <span class="community-optional">(opcional)</span></label>
+                    <input type="text" id="contactPhone" name="contactPhone" maxlength="40" value="{{ formData.contactPhone }}">
+                    {% if errors.contactPhone is defined %}<p class="community-error">{{ errors.contactPhone }}</p>{% endif %}
+                </div>
+                <div class="community-field">
+                    <label for="contactEmail">Email de contacto <span class="community-optional">(opcional)</span></label>
+                    <input type="email" id="contactEmail" name="contactEmail" maxlength="180" value="{{ formData.contactEmail }}">
+                    {% if errors.contactEmail is defined %}<p class="community-error">{{ errors.contactEmail }}</p>{% endif %}
+                </div>
+            </div>
+
+            <div class="community-form-actions">
+                <button type="submit" class="community-action-btn community-action-btn--primary">Publicar anuncio</button>
+                <a href="{{ path('public_classifieds') }}" class="community-action-btn">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+{% include 'public/_partials/simple_wysiwyg_assets.html.twig' %}
+{% endblock %}

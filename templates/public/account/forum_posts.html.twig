@@ -1,0 +1,28 @@
+{% extends 'public/account/_layout.html.twig' %}
+{% set accountPageTitle = 'Respuestas en foro' %}
+
+{% block account_content %}
+<h2>Respuestas en el foro</h2>
+
+{% if posts is empty %}
+    <p class="account-empty">No has respondido en ningún tema. <a href="{{ path('public_forum') }}">Explorar el foro</a></p>
+{% else %}
+    <ul class="account-list">
+        {% for post in posts %}
+            <li class="account-list-item">
+                <div class="account-list-meta">
+                    {{ post.createdAt|date('d/m/Y H:i') }}
+                    · en
+                    {% if post.topic.isHidden %}
+                        {{ post.topic.title }}
+                    {% else %}
+                        <a href="{{ path('public_forum_show', {slug: post.topic.slug}) }}">{{ post.topic.title }}</a>
+                    {% endif %}
+                    {% if post.isHidden %}<span class="account-badge">Oculto</span>{% endif %}
+                </div>
+                <p class="account-list-excerpt">{{ post.body|striptags|length > 220 ? post.body|striptags|slice(0, 217) ~ '…' : post.body|striptags }}</p>
+            </li>
+        {% endfor %}
+    </ul>
+{% endif %}
+{% endblock %}

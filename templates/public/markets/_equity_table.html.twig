@@ -1,0 +1,47 @@
+{% set equities = board.equitiesForMarket(market) %}
+{% if equities is not empty %}
+<section class="markets-equity-table-wrap" aria-label="{{ title }}">
+    <div class="markets-equity-head">
+        <h2 class="section-label">{{ title }}</h2>
+        {% set equitySentiment = board.equitySentiment(market) %}
+        <p class="markets-sentiment markets-sentiment--compact" aria-label="Resumen {{ title }}">
+            <span class="markets-sentiment-pill market-up">{{ equitySentiment.up }} ▲</span>
+            <span class="markets-sentiment-pill market-down">{{ equitySentiment.down }} ▼</span>
+            {% if equitySentiment.flat > 0 %}
+                <span class="markets-sentiment-pill market-flat">{{ equitySentiment.flat }} =</span>
+            {% endif %}
+        </p>
+    </div>
+    <p class="markets-equity-note">{{ subtitle }}</p>
+    <div class="markets-detail-table-scroll">
+        <table class="markets-detail-table markets-equity-table">
+            <thead>
+                <tr>
+                    <th>Valor</th>
+                    <th>Ticker</th>
+                    <th>Último</th>
+                    <th>Variación</th>
+                    <th>%</th>
+                    <th>Mín.</th>
+                    <th>Máx.</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for equity in equities %}
+                    <tr class="{{ market_change_class(equity.change) }}">
+                        <td>
+                            <span class="markets-table-name">{{ equity.name }}</span>
+                        </td>
+                        <td class="markets-table-ticker">{{ equity.ticker }}</td>
+                        <td class="markets-table-num">{{ market_format_price(equity.price, equity.currency) }}</td>
+                        <td class="markets-table-num">{{ market_format_change(equity.change, equity.currency) }}</td>
+                        <td class="markets-table-num markets-table-pct">{{ market_format_change_percent(equity.changePercent) }}</td>
+                        <td class="markets-table-num">{{ market_format_price(equity.dayLow, equity.currency) }}</td>
+                        <td class="markets-table-num">{{ market_format_price(equity.dayHigh, equity.currency) }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endif %}

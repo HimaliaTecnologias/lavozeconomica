@@ -1,0 +1,98 @@
+{% extends 'public/layout.html.twig' %}
+
+{% block title %}{{ seoTitle|default(topic.title) }}{% endblock %}
+
+{% block body %}
+<div class="community-layout community-layout--full">
+    <nav class="article-breadcrumb community-breadcrumb">
+        <a href="{{ path('home') }}">Portada</a>
+        · <a href="{{ path('public_forum') }}">Foro</a>
+        {% if topic.category %}
+            · <a href="{{ path('public_forum_category', {categorySlug: topic.category.slug}) }}">{{ topic.category.name }}</a>
+        {% endif %}
+        · {{ topic.title|slice(0, 48) }}{% if topic.title|length > 48 %}…{% endif %}
+    </nav>
+
+    {% include 'public/_partials/community_category_nav.html.twig' with {
+        categories: categories,
+        activeCategory: topic.category,
+        allRoute: path('public_forum'),
+        categoryRoute: 'public_forum_category',
+        navLabel: 'Categorías del foro',
+    } only %}
+
+    <article class="forum-thread-panel forum-thread-panel--full">
+        <header class="forum-thread-head">
+            <div class="forum-thread-badges">
+                {% if topic.category %}
+                    <a href="{{ path('public_forum_category', {categorySlug: topic.category.slug}) }}" class="community-category-pill community-category-pill--link">{{ topic.category.name }}</a>
+                {% endif %}
+                {% if topic.isPinned %}<span class="forum-status forum-status--pin">Fijado</span>{% endif %}
+                {% if topic.isLocked %}<span class="forum-status forum-status--lock">Cerrado</span>{% endif %}
+            </div>
+            <h1>{{ topic.title }}</h1>
+            <p class="forum-thread-meta">Abierto por <strong>{{ topic.userName }}</strong> · {{ topic.createdAt|date('d/m/Y H:i') }}</p>
+        </header>
+
+        <div class="forum-message forum-message--opening">
+            <div class="forum-avatar" aria-hidden="true">{{ topic.userName|slice(0, 1)|upper }}</div>
+            <div class="forum-message-content">
+                <header class="forum-message-head">
+                    <strong>{{ topic.userName }}</strong>
+                    <time>{{ topic.createdAt|date('d/m/Y H:i') }}</time>
+                    <span class="forum-message-role">Mensaje inicial</span>
+                </header>
+                <div class="forum-message-body community-prose">{{ topic.body|community_rich_text }}</div>
+            </div>
+        </div>
+
+        {% if posts is not empty %}
+            <h2 class="forum-replies-title">{{ posts|length }} respuesta{{ posts|length != 1 ? 's' : '' }}</h2>
+            <ul class="forum-replies">
+                {% for post in posts %}
+                    <li class="forum-message">
+                        <div class="forum-avatar" aria-hidden="true">{{ post.userName|slice(0, 1)|upper }}</div>
+                        <div class="forum-message-content">
+                            <header class="forum-message-head">
+                                <strong>{{ post.userName }}</strong>
+                                <time>{{ post.createdAt|date('d/m/Y H:i') }}</time>
+                            </header>
+                            <div class="forum-message-body community-prose">{{ post.body|community_rich_text }}</div>
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        {% if topic.isLocked %}
+            <div class="community-notice community-notice--muted">
+                Este tema está cerrado y no admite nuevas respuestas.
+            </div>
+        {% elseif app.user %}
+            <section class="forum-reply-panel">
+                <h2>Responder</h2>
+                <form method="post" action="{{ path('public_forum_reply', {slug: topic.slug}) }}" class="community-form">
+                    <input type="hidden" name="_token" value="{{ csrf_token('forum_reply_' ~ topic.slug) }}">
+                    <div class="community-field community-field--editor">
+                        <label for="body">Tu mensaje</label>
+                        <textarea id="body" name="body" class="simple-wysiwyg" data-editor-height="180" maxlength="4000" required placeholder="Escribe tu respuesta…"></textarea>
+                    </div>
+                    <button type="submit" class="community-action-btn community-action-btn--primary">Publicar respuesta</button>
+                </form>
+            </section>
+        {% else %}
+            <p class="community-login-hint community-notice">
+                <a href="{{ path('cuenta_login') }}">Inicia sesión</a> o <a href="{{ path('cuenta_register') }}">regístrate</a> para responder en este tema.
+            </p>
+        {% endif %}
+    </article>
+
+    {% include 'public/_partials/community_related_news.html.twig' %}
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+{% if app.user and not topic.isLocked %}
+{% include 'public/_partials/simple_wysiwyg_assets.html.twig' %}
+{% endif %}
+{% endblock %}

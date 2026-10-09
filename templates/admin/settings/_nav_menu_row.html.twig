@@ -1,0 +1,45 @@
+{% macro menu_row(index, item, menuTypes, categories, pages, area) %}
+<tr class="nav-menu-row" data-area="{{ area }}">
+    <td>
+        <input type="checkbox" name="{{ area }}[{{ index }}][enabled]" value="1" {{ item.enabled|default(false) ? 'checked' : '' }}>
+    </td>
+    <td>
+        <input type="hidden" name="{{ area }}[{{ index }}][id]" value="{{ item.id|default('') }}">
+        <select name="{{ area }}[{{ index }}][type]" class="nav-menu-type">
+            {% for type in menuTypes %}
+                <option value="{{ type.value }}" {{ item.type|default('') == type.value ? 'selected' : '' }}>{{ type.label() }}</option>
+            {% endfor %}
+        </select>
+    </td>
+    <td>
+        <input type="text" name="{{ area }}[{{ index }}][label]" value="{{ item.label|default('') }}" placeholder="Texto en menú (opcional)">
+    </td>
+    <td class="nav-menu-extra">
+        <select name="{{ area }}[{{ index }}][categoryId]" class="nav-menu-category" {{ item.type|default('') == 'category' ? '' : 'hidden' }}>
+            <option value="">— Categoría —</option>
+            {% for cat in categories %}
+                <option value="{{ cat.id }}" {{ item.categoryId|default('') == cat.id ? 'selected' : '' }}>{{ cat.name }}</option>
+                {% for child in cat.children %}
+                    <option value="{{ child.id }}" {{ item.categoryId|default('') == child.id ? 'selected' : '' }}>— {{ child.name }}</option>
+                {% endfor %}
+            {% endfor %}
+        </select>
+        <select name="{{ area }}[{{ index }}][pageSlug]" class="nav-menu-page" {{ item.type|default('') == 'page' ? '' : 'hidden' }}>
+            <option value="">— Página —</option>
+            {% for slug, page in pages %}
+                <option value="{{ slug }}" {{ item.pageSlug|default('') == slug ? 'selected' : '' }}>{{ page.title }}</option>
+            {% endfor %}
+        </select>
+        <input type="url" name="{{ area }}[{{ index }}][url]" value="{{ item.url|default('') }}" placeholder="https://…" class="nav-menu-url" {{ item.type|default('') == 'custom' ? '' : 'hidden' }}>
+    </td>
+    <td>
+        <input type="number" name="{{ area }}[{{ index }}][sortOrder]" value="{{ item.sortOrder|default(0) }}" min="0" step="10" class="nav-menu-order">
+    </td>
+    <td>
+        <input type="checkbox" name="{{ area }}[{{ index }}][openInNewTab]" value="1" {{ item.openInNewTab|default(false) ? 'checked' : '' }}>
+    </td>
+    <td>
+        <button type="button" class="btn btn-secondary btn-sm nav-menu-remove" aria-label="Eliminar">✕</button>
+    </td>
+</tr>
+{% endmacro %}

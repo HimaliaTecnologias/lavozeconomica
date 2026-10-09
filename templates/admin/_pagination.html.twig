@@ -1,0 +1,48 @@
+{% macro admin_pagination(route, routeParams, page, totalPages, total, perPage) %}
+    <nav class="admin-pagination" aria-label="Paginación">
+        <div class="admin-pagination-summary">
+            <strong>{{ total }}</strong> noticia{{ total != 1 ? 's' : '' }}
+            {% if totalPages > 1 %}
+                · página <strong>{{ page }}</strong> de <strong>{{ totalPages }}</strong>
+            {% endif %}
+            {% if perPage is defined %}
+                · {{ perPage }} por página
+            {% endif %}
+        </div>
+
+        {% if totalPages > 1 %}
+            <div class="admin-pagination-controls">
+                {% if page > 1 %}
+                    <a
+                        href="{{ page == 2 ? path(route, routeParams) : path(route, routeParams|merge({page: page - 1})) }}"
+                        class="btn btn-secondary btn-sm"
+                        rel="prev"
+                    >Anterior</a>
+                {% endif %}
+
+                <div class="admin-pagination-pages">
+                    {% for p in 1..totalPages %}
+                        {% if p == page %}
+                            <span class="admin-pagination-current" aria-current="page">{{ p }}</span>
+                        {% elseif p == 1 or p == totalPages or (p >= page - 2 and p <= page + 2) %}
+                            <a
+                                href="{{ p == 1 ? path(route, routeParams) : path(route, routeParams|merge({page: p})) }}"
+                                class="admin-pagination-link"
+                            >{{ p }}</a>
+                        {% elseif p == page - 3 or p == page + 3 %}
+                            <span class="admin-pagination-ellipsis" aria-hidden="true">…</span>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+
+                {% if page < totalPages %}
+                    <a
+                        href="{{ path(route, routeParams|merge({page: page + 1})) }}"
+                        class="btn btn-secondary btn-sm"
+                        rel="next"
+                    >Siguiente</a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </nav>
+{% endmacro %}

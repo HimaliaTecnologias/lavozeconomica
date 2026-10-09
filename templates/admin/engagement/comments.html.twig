@@ -1,0 +1,67 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}Comentarios{% endblock %}
+
+{% block body %}
+{% include 'admin/_page_header.html.twig' with {
+    title: 'Comentarios',
+    subtitle: 'Modera los comentarios publicados en las noticias.',
+    breadcrumbs: [
+        { label: 'Panel', url: path('admin_dashboard') },
+        { label: 'Comentarios' },
+    ],
+} only %}
+
+{% if comments is empty %}
+    <div class="empty-panel">No hay comentarios todavía.</div>
+{% else %}
+<div class="table-responsive">
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>Noticia</th>
+            <th>Usuario</th>
+            <th>Comentario</th>
+            <th>Fecha</th>
+            <th>Estado</th>
+            <th class="col-actions"></th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for comment in comments %}
+        <tr class="{{ comment.isHidden ? 'row-muted' : '' }}">
+            <td data-label="Noticia">
+                <a href="{{ path('admin_articles_edit', {id: comment.article.id}) }}">{{ comment.article.title|slice(0, 48) }}{% if comment.article.title|length > 48 %}…{% endif %}</a>
+            </td>
+            <td data-label="Usuario">{{ comment.userName }}</td>
+            <td data-label="Comentario">{{ comment.body|slice(0, 120) }}{% if comment.body|length > 120 %}…{% endif %}</td>
+            <td class="col-date" data-label="Fecha">{{ comment.createdAt|date('d/m/Y H:i') }}</td>
+            <td data-label="Estado">
+                {% if comment.isHidden %}
+                    <span class="status-badge status-badge--archived">Oculto</span>
+                {% else %}
+                    <span class="status-badge status-badge--published">Visible</span>
+                {% endif %}
+            </td>
+            <td class="col-actions">
+                <div class="table-actions">
+                {% if comment.isHidden %}
+                <form class="inline-form" method="post" action="{{ path('admin_engagement_comment_restore', {id: comment.id}) }}">
+                    <input type="hidden" name="_token" value="{{ csrf_token('restore_comment' ~ comment.id) }}">
+                    <button type="submit" class="btn btn-secondary btn-sm">Restaurar</button>
+                </form>
+                {% else %}
+                <form class="inline-form" method="post" action="{{ path('admin_engagement_comment_hide', {id: comment.id}) }}">
+                    <input type="hidden" name="_token" value="{{ csrf_token('hide_comment' ~ comment.id) }}">
+                    <button type="submit" class="btn btn-danger btn-sm">Ocultar</button>
+                </form>
+                {% endif %}
+                </div>
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+</div>
+{% endif %}
+{% endblock %}

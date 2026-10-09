@@ -1,0 +1,61 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}Foro — ajustes{% endblock %}
+
+{% block body %}
+{% include 'admin/_page_header.html.twig' with {
+    title: 'Foro (activar sección)',
+    subtitle: 'Enciende o apaga /foro en la web pública. La moderación está en Comunidad → Foro.',
+    breadcrumbs: [
+        { label: 'Panel', url: path('admin_dashboard') },
+        { label: 'Configuración', url: path('admin_settings_index') },
+        { label: 'Foro' },
+    ],
+} %}
+
+{% include 'admin/settings/_subnav.html.twig' %}
+
+<div class="settings-panel" style="max-width:40rem">
+    <div class="settings-panel-head">
+        <div>
+            <h2>Sección pública</h2>
+            <p>Solo controla si los lectores ven el foro. No gestiona temas.</p>
+        </div>
+    </div>
+    <form method="post" action="{{ path('admin_settings_forum') }}" style="padding:1.15rem 1.2rem">
+        <input type="hidden" name="_token" value="{{ csrf_token('settings_forum') }}">
+        <div class="checkbox-row field">
+            <input type="checkbox" id="enabled" name="enabled" value="1" {{ (data.enabled|default(config.enabled)) ? 'checked' : '' }}>
+            <label for="enabled">Activar foro de la comunidad en <code>/foro</code></label>
+        </div>
+        <div class="actions" style="margin-top:1rem">
+            <button type="submit" class="btn btn-primary">Guardar</button>
+        </div>
+    </form>
+</div>
+
+<div class="settings-panel" style="max-width:40rem;margin-top:1.25rem">
+    <div class="settings-panel-head">
+        <div>
+            <h2>Gestión</h2>
+            <p>Moderar temas y categorías.</p>
+        </div>
+    </div>
+    <div class="settings-list settings-list--compact">
+        <a class="settings-row" href="{{ path('admin_community_forum') }}">
+            <span class="settings-row-body">
+                <strong>Moderar foro</strong>
+                <span>Temas, respuestas, ocultar o bloquear.</span>
+            </span>
+            <span class="settings-row-go">→</span>
+        </a>
+        <a class="settings-row" href="{{ path('admin_community_forum_categories') }}">
+            <span class="settings-row-body">
+                <strong>Categorías del foro</strong>
+                <span>Crear y ordenar áreas de debate.</span>
+            </span>
+            <span class="settings-row-go">→</span>
+        </a>
+    </div>
+</div>
+{% endblock %}

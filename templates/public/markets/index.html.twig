@@ -1,0 +1,146 @@
+{% extends 'public/layout.html.twig' %}
+
+{% block title %}Bolsa y mercados — {{ site.name }}{% endblock %}
+
+{% block body %}
+<div class="markets-layout">
+    <div class="markets-main">
+        <div class="markets-page">
+            {% include 'public/_partials/breadcrumb.html.twig' with {
+                crumbs: [{ label: 'Bolsa' }]
+            } %}
+            <header class="markets-page-head">
+                <h1>Bolsa</h1>
+                <p class="markets-page-meta">
+                    Índices principales
+                    {% if board %}
+                        <span class="markets-page-meta-sep">·</span>
+                        Actualizado {{ board.fetchedAt|date('d/m/Y H:i') }}
+                    {% endif %}
+                </p>
+                {% if board and board.indices is not empty %}
+                    <p class="markets-sentiment" aria-label="Resumen del mercado">
+                        <span class="markets-sentiment-pill market-up">{{ sentiment.up }} en alza</span>
+                        <span class="markets-sentiment-pill market-down">{{ sentiment.down }} en baja</span>
+                        {% if sentiment.flat > 0 %}
+                            <span class="markets-sentiment-pill market-flat">{{ sentiment.flat }} planos</span>
+                        {% endif %}
+                    </p>
+                {% endif %}
+            </header>
+
+            {% include 'public/_partials/ad_slot.html.twig' with { placement: 'category_sidebar' } only %}
+
+            {% if board and board.indices is not empty %}
+                {% if headline %}
+                    <section class="markets-current-card {{ market_change_class(headline.change) }}" aria-label="{{ headline.name }}">
+                        <div class="markets-current-main">
+                            <div class="markets-current-copy">
+                                <p class="markets-current-label">Índice destacado</p>
+                                <h2 class="markets-current-name">{{ headline.name }}</h2>
+                                <p class="markets-current-price">{{ market_format_price(headline.price, headline.currency) }}</p>
+                                <p class="markets-current-change">
+                                    <span>{{ market_format_change(headline.change, headline.currency) }}</span>
+                                    <span>{{ market_format_change_percent(headline.changePercent) }}</span>
+                                </p>
+                                {% if headline.exchangeName %}
+                                    <p class="markets-current-exchange">{{ headline.exchangeName }}</p>
+                                {% endif %}
+                            </div>
+                            <div class="markets-current-chart">
+                                {% include 'public/markets/_sparkline.html.twig' with { index: headline } only %}
+                            </div>
+                        </div>
+                        {% if headline.dayHigh is not null or headline.dayLow is not null or headline.previousClose is not null %}
+                            <dl class="markets-current-range">
+                                {% if headline.dayLow is not null %}
+                                    <div><dt>Mín.</dt><dd>{{ market_format_price(headline.dayLow, headline.currency) }}</dd></div>
+                                {% endif %}
+                                {% if headline.dayHigh is not null %}
+                                    <div><dt>Máx.</dt><dd>{{ market_format_price(headline.dayHigh, headline.currency) }}</dd></div>
+                                {% endif %}
+                                {% if headline.previousClose is not null %}
+                                    <div><dt>Cierre ant.</dt><dd>{{ market_format_price(headline.previousClose, headline.currency) }}</dd></div>
+                                {% endif %}
+                            </dl>
+                        {% endif %}
+                    </section>
+                {% endif %}
+
+                {% for region in ['spain', 'europe', 'usa'] %}
+                    {% set regionIndices = board.forRegion(region) %}
+                    {% if regionIndices is not empty %}
+                        <section class="markets-region" aria-label="{{ market_region_label(region) }}">
+                            <h2 class="section-label">{{ market_region_label(region) }}</h2>
+                            <div class="markets-index-grid">
+                                {% for index in regionIndices %}
+                                    {% include 'public/markets/_index_card.html.twig' with { index: index } only %}
+                                {% endfor %}
+                            </div>
+                        </section>
+                    {% endif %}
+                {% endfor %}
+
+                {% include 'public/markets/_equity_table.html.twig' with {
+                    board: board,
+                    market: 'ibex35',
+                    title: 'IBEX 35 · por empresa',
+                    subtitle: 'Cotizaciones de los valores del IBEX 35, ordenadas por variación del día.',
+                } only %}
+
+                {% include 'public/markets/_equity_table.html.twig' with {
+                    board: board,
+                    market: 'continuo',
+                    title: 'Mercado Continuo · destacados',
+                    subtitle: 'Selección de valores del Mercado Continuo español fuera del IBEX 35.',
+                } only %}
+
+                {% include 'public/markets/_detail_table.html.twig' with { board: board } only %}
+            {% else %}
+                <p class="markets-empty">No hay cotizaciones disponibles en este momento. Inténtalo más tarde.</p>
+            {% endif %}
+
+            <aside class="markets-disclaimer">
+                <p>Los datos se obtienen de fuentes públicas y pueden tener retraso respecto al mercado en tiempo real. No constituyen recomendación de inversión.</p>
+            </aside>
+
+            {% if economyArticles is not empty %}
+                <section class="markets-latest-news">
+                    <div class="markets-latest-head">
+                        <h2 class="section-label">Economía y mercados</h2>
+                        <a href="{{ path('home') }}" class="section-more">Ver portada</a>
+                    </div>
+                    <div class="story-grid story-grid--section">
+                        {% for article in economyArticles|slice(0, 4) %}
+                            {% include 'public/_partials/story_card.html.twig' with {
+                                article: article,
+                                show_meta: true,
+                                show_excerpt: true,
+                            } %}
+                        {% endfor %}
+                    </div>
+                </section>
+            {% endif %}
+
+            {% if board and board.indices is not empty %}
+                {% include 'public/markets/_ai_summary.html.twig' with { aiSummary: aiSummary } only %}
+            {% endif %}
+        </div>
+    </div>
+
+    <aside class="article-sidebar">
+        {% include 'public/_partials/sidebar_ad_stack.html.twig' with {
+            placements: ['markets_sidebar', 'sidebar_top', 'category_sidebar']
+        } only %}
+        {% include 'public/_partials/latest_sidebar.html.twig' with {
+            articles: sidebarArticles|default([]),
+            limit: layout.sidebarLatestCount|default(5),
+            title: 'Lo último',
+        } %}
+        {% include 'public/_partials/sidebar_ad_stack.html.twig' with {
+            placements: ['sidebar_bottom']
+        } only %}
+        {% include 'public/_partials/sidebar_links.html.twig' %}
+    </aside>
+</div>
+{% endblock %}

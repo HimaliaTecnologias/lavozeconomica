@@ -1,0 +1,142 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}HimtecMedia{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .settings-subnav { display: flex; gap: .5rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
+    .settings-subnav a { padding: .4rem .75rem; border-radius: 6px; background: #edf2f7; text-decoration: none; color: var(--text); font-size: .9rem; font-weight: 600; }
+    .settings-subnav a.active { background: var(--primary); color: #fff; }
+    .checkbox-row { display: flex; align-items: center; gap: .5rem; margin-bottom: 1rem; }
+    .checkbox-row input { width: auto; }
+    .info-box {
+        background: #ebf8ff;
+        border: 1px solid #bee3f8;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        font-size: .9rem;
+    }
+    .info-box code { background: #fff; padding: .1rem .3rem; border-radius: 3px; }
+    .status-panel {
+        background: #fafafa;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    .status-panel dl { margin: 0; display: grid; grid-template-columns: 140px 1fr; gap: .35rem .75rem; font-size: .9rem; }
+    .status-panel dt { color: var(--muted); font-weight: 600; }
+    .status-panel dd { margin: 0; }
+</style>
+{% endblock %}
+
+{% block body %}
+<h1>Ingesta HimtecMedia</h1>
+{% include 'admin/settings/_subnav.html.twig' %}
+
+<div class="info-box">
+    <strong>¿Cómo funciona?</strong> Usa la URL del <strong>backend</strong> HimtecMedia (puerto <code>8001</code>), no la del frontend Next.js (<code>3000</code>).
+    Desde Docker usa <code>http://host.docker.internal:8001/api/public/medios/2/news</code> (sustituye <code>2</code> por el ID de tu medio en HimtecMedia).
+    La respuesta debe incluir un array <code>noticias</code> con <code>id</code>, <code>titular</code> y <code>contenido</code>.
+    <br><br>
+    <strong>Si ves «Couldn't connect to server»:</strong>
+    <ol style="margin:.5rem 0 0 1.25rem;padding:0">
+        <li>Arranca HimtecMedia: <code>cd ../himtecnews && docker compose up -d</code></li>
+        <li>Comprueba en el host: <code>curl http://localhost:8001/health</code> → debe devolver <code>200</code></li>
+        <li>Desde MyMediaCMS: <code>docker exec mymediacms-php-1 curl -s http://host.docker.internal:8001/health</code></li>
+        <li>Si falla, recrea los contenedores PHP: <code>docker compose up -d --force-recreate php worker scheduler</code></li>
+    </ol>
+</div>
+
+{% set values = formData ?? {
+    enabled: config.enabled,
+    jsonUrl: config.jsonUrl,
+    apiKey: '',
+    intervalMinutes: config.intervalMinutes,
+    publishStaggerMinutes: config.publishStaggerMinutes
+} %}
+{% set hasApiKey = config.hasApiKey %}
+
+<form method="post" action="{{ path('admin_settings_ingest') }}">
+    <input type="hidden" name="_token" value="{{ csrf_token('settings_ingest') }}">
+
+    <div class="checkbox-row">
+        <input type="checkbox" id="enabled" name="enabled" value="1" {{ values.enabled ? 'checked' : '' }}>
+        <label for="enabled" style="margin:0;font-weight:600">Activar ingesta automática</label>
+    </div>
+
+    <div class="field">
+        <label for="jsonUrl">URL del JSON *</label>
+        <input type="url" id="jsonUrl" name="jsonUrl" value="{{ values.jsonUrl }}"
+               placeholder="http://host.docker.internal:8001/api/public/medios/2/news"
+               class="{{ errors.jsonUrl is defined ? 'error' : '' }}">
+        {% if errors.jsonUrl is defined %}<div class="error-msg">{{ errors.jsonUrl }}</div>{% endif %}
+    </div>
+
+    <div class="field">
+        <label for="apiKey">API Key *</label>
+        <input type="password" id="apiKey" name="apiKey" value="{{ values.apiKey }}"
+               placeholder="{{ hasApiKey ? '••••••••  (configurada — dejar vacío para mantener)' : 'Tu API Key de HimtecMedia' }}"
+               autocomplete="off"
+               class="{{ errors.apiKey is defined ? 'error' : '' }}">
+        {% if errors.apiKey is defined %}<div class="error-msg">{{ errors.apiKey }}</div>{% endif %}
+        <div class="hint">Se envía en la cabecera <code>X-API-Key</code> en cada descarga.</div>
+    </div>
+
+    <div class="field">
+        <label for="intervalMinutes">Periodicidad de actualización</label>
+        <select id="intervalMinutes" name="intervalMinutes" class="{{ errors.intervalMinutes is defined ? 'error' : '' }}">
+            {% for minutes, label in intervalOptions %}
+                <option value="{{ minutes }}" {{ values.intervalMinutes == minutes ? 'selected' : '' }}>{{ label }}</option>
+            {% endfor %}
+        </select>
+        {% if errors.intervalMinutes is defined %}<div class="error-msg">{{ errors.intervalMinutes }}</div>{% endif %}
+        <div class="hint">El planificador del servidor ejecuta la comprobación cada minuto.</div>
+    </div>
+
+    <div class="field">
+        <label for="publishStaggerMinutes">Publicación escalonada</label>
+        <select id="publishStaggerMinutes" name="publishStaggerMinutes" class="{{ errors.publishStaggerMinutes is defined ? 'error' : '' }}">
+            {% for minutes, label in staggerOptions %}
+                <option value="{{ minutes }}" {{ values.publishStaggerMinutes == minutes ? 'selected' : '' }}>{{ label }}</option>
+            {% endfor %}
+        </select>
+        {% if errors.publishStaggerMinutes is defined %}<div class="error-msg">{{ errors.publishStaggerMinutes }}</div>{% endif %}
+        <div class="hint">
+            Opcional. Si eliges un intervalo, la primera noticia nueva se publica al instante y el resto se programa cada X minutos
+            (si ya hay noticias en cola, se añaden a continuación). El planificador las va publicando solas.
+        </div>
+    </div>
+
+    <div class="actions">
+        <a href="{{ path('admin_settings_index') }}" class="btn btn-secondary">Volver</a>
+        <button type="submit" class="btn btn-primary">Guardar configuración</button>
+    </div>
+</form>
+
+{% if config.lastFetchedAt or config.lastFetchStatus %}
+<div class="status-panel" style="margin-top:1.5rem">
+    <h2 style="font-size:1rem;margin:0 0 .75rem">Estado de la última ingesta</h2>
+    <dl>
+        {% if config.lastFetchedAt %}
+        <dt>Última ejecución</dt>
+        <dd>{{ config.lastFetchedAt|date('d/m/Y H:i:s') }}</dd>
+        {% endif %}
+        <dt>Resultado</dt>
+        <dd>{{ config.lastFetchStatus ?: '—' }}</dd>
+        <dt>Nuevas / Duplicadas</dt>
+        <dd>{{ config.lastFetchCount }} / {{ config.lastFetchDuplicates }}</dd>
+    </dl>
+    <p style="margin:.75rem 0 0"><a href="{{ path('admin_ingest_history') }}">Ver historial de importaciones →</a></p>
+</div>
+{% endif %}
+
+<form method="post" action="{{ path('admin_settings_ingest_fetch') }}" style="margin-top:1rem">
+    <input type="hidden" name="_token" value="{{ csrf_token('settings_ingest_fetch') }}">
+    <button type="submit" class="btn btn-secondary" {{ (values.jsonUrl is empty and config.jsonUrl is empty) or (not hasApiKey and values.apiKey is empty) ? 'disabled' : '' }}>
+        Ejecutar ingesta ahora
+    </button>
+    <span class="hint" style="margin-left:.5rem">Descarga el JSON y procesa las historias. Si hay publicación escalonada, solo la primera sale al momento.</span>
+</form>
+{% endblock %}

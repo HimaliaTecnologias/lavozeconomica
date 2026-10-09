@@ -1,0 +1,7 @@
+{% extends 'public/layout.html.twig' %}
+
+{% block title %}{{ seoTitle|default((site ? site.name : 'La Voz Económica') ~ ' — Portada') }}{% endblock %}
+
+{% block body %}
+{% include 'public/home/' ~ (layout.homeTemplate|default('classic')) ~ '.html.twig' %}
+{% endblock %}

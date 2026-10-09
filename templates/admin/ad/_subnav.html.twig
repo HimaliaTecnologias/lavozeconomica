@@ -1,0 +1,4 @@
+<nav class="admin-subnav admin-subnav--ads">
+    <a href="{{ path('admin_ads_dashboard') }}" class="{{ app.request.attributes.get('_route') == 'admin_ads_dashboard' ? 'active' : '' }}">Dashboard</a>
+    <a href="{{ path('admin_ads_index') }}" class="{{ app.request.attributes.get('_route') in ['admin_ads_index', 'admin_ads_new', 'admin_ads_edit'] ? 'active' : '' }}">Banners</a>
+</nav>

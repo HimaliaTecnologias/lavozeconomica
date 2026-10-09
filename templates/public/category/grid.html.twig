@@ -1,0 +1,50 @@
+{% include 'public/category/_header.html.twig' %}
+
+{% if articles is empty %}
+    <div class="category-empty-state">
+        <p>No hay noticias en esta sección.</p>
+        <a href="{{ path('home') }}" class="category-empty-link">Volver a la portada</a>
+    </div>
+{% else %}
+    <div class="category-layout">
+        <div class="category-main">
+            <header class="category-list-head">
+                <h2 class="section-label">Noticias de {{ category.name }}</h2>
+            </header>
+            <div class="story-grid story-grid--4 category-story-grid">
+                {% for article in articles %}
+                    {% include 'public/_partials/story_card.html.twig' with { article: article, show_meta: true, show_excerpt: true } %}
+                {% endfor %}
+            </div>
+            {% include 'public/_partials/pagination.html.twig' with {
+                route: 'public_category_show',
+                pagedRoute: 'public_category_show_paged',
+                routeParams: { slug: category.slug },
+                page: page,
+                totalPages: totalPages,
+                totalArticles: totalArticles,
+            } %}
+        </div>
+        <aside class="article-sidebar category-sidebar">
+            {% include 'public/_partials/ad_slot.html.twig' with { placement: 'category_sidebar', categoryId: category.id } only %}
+            {% include 'public/_partials/ad_slot.html.twig' with { placement: 'sidebar_top', categoryId: category.id } only %}
+            {% include 'public/_partials/popular_sidebar.html.twig' with {
+                articles: popularInCategory|default([]),
+                limit: layout.sidebarPopularCount|default(5),
+                categoryIds: categoryIds|default([]),
+                period: popularPeriod|default('week'),
+                title: 'Más vistas',
+            } %}
+            {% include 'public/_partials/ad_slot.html.twig' with { placement: 'sidebar_between_lists', categoryId: category.id } only %}
+            {% include 'public/_partials/latest_sidebar.html.twig' with {
+                articles: latestOverall|default([]),
+                limit: layout.sidebarLatestCount|default(5),
+                title: 'Últimas del periódico',
+            } %}
+            {% include 'public/_partials/ad_slot.html.twig' with { placement: 'sidebar_bottom', categoryId: category.id } only %}
+            {% include 'public/_partials/sidebar_links.html.twig' %}
+        </aside>
+    </div>
+{% endif %}
+
+{% include 'public/_partials/content_modules.html.twig' with { surface: 'category' } %}

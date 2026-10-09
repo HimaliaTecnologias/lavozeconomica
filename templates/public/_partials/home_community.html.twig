@@ -1,0 +1,13 @@
+{% if classifiedsNav.enabled or forumNav.enabled %}
+<div class="sidebar-block home-community-block">
+    <p class="sidebar-label">Comunidad</p>
+    <ul class="home-community-links">
+        {% if classifiedsNav.enabled %}
+            <li><a href="{{ path('public_classifieds') }}">{{ classifiedsNav.label }}</a></li>
+        {% endif %}
+        {% if forumNav.enabled %}
+            <li><a href="{{ path('public_forum') }}">{{ forumNav.label }}</a></li>
+        {% endif %}
+    </ul>
+</div>
+{% endif %}

@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="es">
+{% set theme = theme|default({}) %}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{{ site ? site.name : 'La Voz Económica' }}{% endblock %}</title>
+    {% include 'public/_partials/seo.html.twig' %}
+    {% set faviconHref = theme.faviconUrl|default('') %}
+    {% if faviconHref is empty %}
+        {% set faviconHref = theme.logoMarkUrl|default('/favicon.svg') %}
+    {% endif %}
+    {% if faviconHref is empty %}
+        {% set faviconHref = '/favicon.svg' %}
+    {% endif %}
+    {% if faviconHref ends with '.svg' %}
+        <link rel="icon" href="{{ faviconHref }}" type="image/svg+xml" sizes="any">
+    {% elseif faviconHref ends with '.ico' %}
+        <link rel="icon" href="{{ faviconHref }}" type="image/x-icon" sizes="any">
+    {% else %}
+        <link rel="icon" href="{{ faviconHref }}" type="image/png" sizes="any">
+    {% endif %}
+    <link rel="apple-touch-icon" href="{{ faviconHref }}">
+    <link rel="shortcut icon" href="{{ faviconHref }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="{{ theme.googleFontsUrl|default('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap') }}" rel="stylesheet">
+    <link rel="stylesheet" href="/css/newspaper.css?v=73">
+    <style>
+        :root {
+            --color-primary: {{ theme.primaryColor|default('#b91c1c') }};
+            --color-secondary: {{ theme.secondaryColor|default('#7f1d1d') }};
+            --paper: {{ theme.backgroundColor|default('#ffffff') }};
+            --paper-muted: {{ theme.surfaceColor|default('#f4f4f4') }};
+            --ink: {{ theme.textColor|default('#111111') }};
+            --ink-soft: {{ theme.headingColor|default('#333333') }};
+            --ink-muted: {{ theme.textMutedColor|default('#666666') }};
+            --line: {{ theme.borderColor|default('#d8d8d8') }};
+            --line-dark: {{ theme.topBarColor|default('#1a1a1a') }};
+            --topbar-fg: {{ theme.topBarFg|default('#ffffff') }};
+            --footer-bg: {{ theme.footerColor|default('#12151c') }};
+            --footer-fg: {{ theme.footerFg|default('#ffffff') }};
+            --nav-bar-bg: {{ theme.navBarColorResolved|default('#ffffff') }};
+            --nav-bar-fg: {{ theme.navBarFg|default('#111111') }};
+            --nav-accent: {{ theme.navColorResolved|default(theme.primaryColor|default('#b91c1c')) }};
+            --link-color: {{ theme.linkColorResolved|default(theme.primaryColor|default('#b91c1c')) }};
+            --serif: {{ theme.headingFontFamily|default('"Inter", system-ui, sans-serif')|raw }};
+            --sans: {{ theme.bodyFontFamily|default('"Inter", system-ui, sans-serif')|raw }};
+            --body-serif: {{ theme.articleFontFamily|default('"Source Sans 3", system-ui, sans-serif')|raw }};
+        }
+    </style>
+    {% include 'public/_partials/analytics_head.html.twig' %}
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+{% if previewMode is defined and previewMode %}
+<div class="preview-banner" role="status">
+    <strong>Vista previa</strong> — Esta noticia aún no está publicada en la web.
+    {% if article.id and can_edit_articles() %}
+        <a href="{{ path('admin_articles_edit', {id: article.id}) }}">Volver al editor</a>
+    {% endif %}
+</div>
+{% endif %}
+{% if can_edit_articles() and article is defined and article.id and not (previewMode is defined and previewMode) %}
+<a href="{{ path('admin_articles_edit', {id: article.id}) }}" class="admin-edit-chip" title="Editar en el panel">
+    ✎ Editar noticia
+</a>
+{% endif %}
+<div class="top-bar" data-tone="{{ theme.topBarTone|default('dark') }}">
+    <div class="top-bar-inner">
+        <div class="top-bar-start">
+            <span class="top-bar-date">{{ "now"|date('d/m/Y') }}</span>
+            {% if weatherNav.enabled %}
+                <a href="{{ path('public_weather') }}" class="top-bar-weather">
+                    El tiempo · {{ weatherNav.label }}{% if weatherNav.temp is not null %} · {{ weatherNav.temp }}°C{% endif %}
+                </a>
+                {% if weatherNav.sponsor %}
+                    <span class="top-bar-sponsor">
+                        <span class="top-bar-sponsor-label">Patrocina</span>
+                        {% if weatherNav.sponsorUrl %}
+                            <a href="{{ weatherNav.sponsorUrl }}" class="top-bar-sponsor-link" target="_blank" rel="noopener sponsored">{{ weatherNav.sponsor }}</a>
+                        {% else %}
+                            <span class="top-bar-sponsor-name">{{ weatherNav.sponsor }}</span>
+                        {% endif %}
+                    </span>
+                {% endif %}
+            {% endif %}
+            {% include 'public/_partials/top_bar_media.html.twig' %}
+            {% if horoscopeNav.enabled %}
+                <a href="{{ path('public_horoscope') }}" class="top-bar-horoscope">
+                    {{ horoscopeNav.label }}{% if horoscopeNav.headline %} · {{ horoscopeNav.headline|length > 28 ? horoscopeNav.headline|slice(0, 25) ~ '…' : horoscopeNav.headline }}{% endif %}
+                </a>
+            {% endif %}
+        </div>
+
+        <nav class="top-bar-center" aria-label="Servicios">
+            {% if gamesNav.enabled %}
+                <a href="{{ path('public_games') }}" class="top-bar-community top-bar-games-link">{{ gamesNav.label }}</a>
+            {% endif %}
+            {% if classifiedsNav.enabled %}
+                <a href="{{ path('public_classifieds') }}" class="top-bar-community">{{ classifiedsNav.label }}</a>
+            {% endif %}
+            {% if forumNav.enabled %}
+                <a href="{{ path('public_forum') }}" class="top-bar-community">{{ forumNav.label }}</a>
+            {% endif %}
+            <a href="{{ path('public_page_show', {slug: 'contacto'}) }}" class="top-bar-community">Contacto</a>
+            {% if marketsNav.enabled %}
+                <a href="{{ path('public_markets') }}" class="top-bar-community top-bar-markets-link{% if marketsNav.changePercent is not null %} {{ marketsNav.changePercent > 0 ? 'market-up' : (marketsNav.changePercent < 0 ? 'market-down' : '') }}{% endif %}">
+                    Bolsa{% if marketsNav.changePercent is not null %} · {{ marketsNav.changePercent > 0 ? '+' : '' }}{{ marketsNav.changePercent|number_format(2, ',', '.') }}%{% endif %}
+                </a>
+            {% endif %}
+        </nav>
+
+        <div class="top-bar-end">
+            {% include 'public/_partials/top_bar_edition.html.twig' with {
+                editionDateIso: app.request.attributes.get('_route') in ['public_edition', 'public_edition_date']
+                    ? (app.request.attributes.get('date') ?? app.request.query.get('fecha') ?? 'now'|date('Y-m-d'))
+                    : 'now'|date('Y-m-d'),
+                minDateIso: '',
+                maxDateIso: 'now'|date('Y-m-d'),
+            } only %}
+        </div>
+    </div>
+</div>
+
+<header class="masthead">
+    <div class="masthead-inner">
+        {% if theme.logoUrl|default('') %}
+            <div class="site-logo site-logo--image">
+                <a href="{{ path('home') }}">
+                    {{ seo_img(theme.logoUrl, site.name, {class: 'site-logo-img', loading: 'eager', fetchpriority: 'high'}) }}
+                </a>
+            </div>
+        {% elseif theme.logoMarkUrl|default('') %}
+            <div class="site-logo site-logo--image site-logo--mark">
+                <a href="{{ path('home') }}">
+                    {{ seo_img(theme.logoMarkUrl, site.name, {class: 'site-logo-img site-logo-img--mark', loading: 'eager', fetchpriority: 'high'}) }}
+                </a>
+                <span class="site-logo-text">{{ site.name }}</span>
+            </div>
+        {% else %}
+            <h1 class="site-logo">
+                <a href="{{ path('home') }}">{{ site ? site.name : 'MyMediaCMS' }}</a>
+            </h1>
+        {% endif %}
+        {% if theme and theme.tagline %}
+            <p class="site-tagline">{{ theme.tagline }}</p>
+        {% endif %}
+    </div>
+</header>
+
+<div class="masthead-tools-wrap">
+    <div class="masthead-tools-inner archive-tools">
+        {% include 'public/_partials/archive_tools.html.twig' with {
+            searchQuery: app.request.attributes.get('_route') in ['public_search', 'public_search_paged'] ? app.session.get('archive_search_q', '') : '',
+        } only %}
+        {% include 'public/_partials/masthead_account.html.twig' %}
+    </div>
+</div>
+
+<nav class="main-nav" data-main-nav data-tone="{{ theme.navBarTone|default('light') }}">
+    <div class="main-nav-bar">
+        <button type="button"
+                class="main-nav-toggle"
+                data-main-nav-toggle
+                aria-expanded="false"
+                aria-controls="main-nav-panel">
+            <span class="main-nav-toggle-icon" aria-hidden="true">
+                <span></span><span></span><span></span>
+            </span>
+            <span class="main-nav-toggle-label">Menú</span>
+        </button>
+        <span class="main-nav-bar-hint" aria-hidden="true">Secciones</span>
+    </div>
+    <div class="main-nav-inner" id="main-nav-panel" data-main-nav-panel>
+        {% include 'public/_partials/main_nav.html.twig' %}
+    </div>
+</nav>
+
+{% include 'public/_partials/ad_slot.html.twig' with { placement: 'header_below_nav' } only %}
+
+<main class="wrap">
+    {% for message in app.flashes('success') %}
+        <div class="flash flash-success">{{ message }}</div>
+    {% endfor %}
+    {% for message in app.flashes('error') %}
+        <div class="flash flash-error">{{ message }}</div>
+    {% endfor %}
+    {% block body %}{% endblock %}
+</main>
+
+{% include 'public/_partials/ad_slot.html.twig' with { placement: 'footer_above' } only %}
+
+{% include 'public/_partials/footer.html.twig' %}
+{% include 'public/_partials/analytics_body.html.twig' %}
+{% if topBarMediaSlides|length > 1 %}
+<script src="/js/top-bar-rotator.js" defer></script>
+{% endif %}
+<script src="/js/popular-sidebar.js" defer></script>
+<script src="/js/main-nav.js" defer></script>
+{% block extra_scripts %}{% endblock %}
+</body>
+</html>

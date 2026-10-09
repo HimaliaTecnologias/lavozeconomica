@@ -1,0 +1,24 @@
+{% extends 'public/account/_layout.html.twig' %}
+{% set accountPageTitle = 'Comentarios' %}
+
+{% block account_content %}
+<h2>Comentarios en noticias</h2>
+
+{% if comments is empty %}
+    <p class="account-empty">No has comentado ninguna noticia todavía.</p>
+{% else %}
+    <ul class="account-list">
+        {% for comment in comments %}
+            <li class="account-list-item">
+                <div class="account-list-meta">
+                    {{ comment.createdAt|date('d/m/Y H:i') }}
+                    · en
+                    <a href="{{ path('public_article_show', {slug: comment.article.slug}) }}">{{ comment.article.title }}</a>
+                    {% if comment.isHidden %}<span class="account-badge">Oculto</span>{% endif %}
+                </div>
+                <p class="account-list-excerpt">{{ comment.body|striptags|length > 220 ? comment.body|striptags|slice(0, 217) ~ '…' : comment.body|striptags }}</p>
+            </li>
+        {% endfor %}
+    </ul>
+{% endif %}
+{% endblock %}

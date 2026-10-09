@@ -1,0 +1,67 @@
+{% extends 'public/layout.html.twig' %}
+
+{% block title %}{{ tag.name }}{% if page > 1 %} — página {{ page }}{% endif %} — {{ site.name }}{% endblock %}
+
+{% block body %}
+<div class="category-header">
+    <div class="article-breadcrumb">
+        <a href="{{ path('home') }}">Portada</a>
+        · <span>Etiqueta</span>
+    </div>
+    <h1 class="category-title">{{ tag.name }}</h1>
+    <p class="category-description">
+        {% if totalArticles > 0 %}
+            {{ totalArticles }} noticia{{ totalArticles == 1 ? '' : 's' }} con esta etiqueta
+        {% else %}
+            No hay noticias con esta etiqueta
+        {% endif %}
+    </p>
+</div>
+
+{% if articles is empty %}
+    <div class="empty-state"><p>No hay noticias con esta etiqueta.</p></div>
+{% else %}
+    <div class="category-layout">
+        <div class="category-main">
+            <div class="more-stories more-stories--full">
+                {% for article in articles %}
+                    <article class="more-story">
+                        <a href="{{ path('public_article_show', {slug: article.slug}) }}" class="more-story-thumb">
+                            {% set img = article_usable_featured(article) %}
+                            {% if img %}{{ seo_article_image(img, article.title) }}{% else %}<span class="story-card-media-placeholder" aria-hidden="true">{{ site.name }}</span>{% endif %}
+                        </a>
+                        <div>
+                            <h4><a href="{{ path('public_article_show', {slug: article.slug}) }}">{{ article.title }}</a></h4>
+                            <div class="meta-line">{{ article.publishedAt|date('d/m/Y H:i') }} · {{ article.viewCount }} lecturas</div>
+                            {% set excerpt = article.lead ?: article.subtitle %}
+                            {% if excerpt %}<p>{{ excerpt|length > 120 ? excerpt|slice(0, 117) ~ '…' : excerpt }}</p>{% endif %}
+                        </div>
+                    </article>
+                {% endfor %}
+            </div>
+            {% include 'public/_partials/pagination.html.twig' with {
+                route: 'public_tag_show',
+                pagedRoute: 'public_tag_show_paged',
+                routeParams: { slug: tag.slug },
+                page: page,
+                totalPages: totalPages,
+                totalArticles: totalArticles,
+            } %}
+        </div>
+        <aside class="article-sidebar">
+            {% include 'public/_partials/ad_slot.html.twig' with { placement: 'category_sidebar', tagIds: [tag.id] } only %}
+            {% if latestOverall is not empty %}
+                <div class="sidebar-block">
+                    <h3 class="sidebar-title">Últimas noticias</h3>
+                    <ul class="sidebar-list">
+                        {% for item in latestOverall %}
+                            <li><a href="{{ path('public_article_show', {slug: item.slug}) }}">{{ item.title }}</a></li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+            {% include 'public/_partials/sidebar_links.html.twig' %}
+        </aside>
+    </div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,33 @@
+{% extends 'public/account/_layout.html.twig' %}
+{% set accountPageTitle = 'Mis anuncios' %}
+
+{% block account_content %}
+<h2>Anuncios clasificados</h2>
+
+{% if ads is empty %}
+    <p class="account-empty">No has publicado anuncios. <a href="{{ path('public_classifieds_new') }}">Publicar un aviso</a></p>
+{% else %}
+    <ul class="account-list">
+        {% for ad in ads %}
+            <li class="account-list-item">
+                <div class="account-list-meta">
+                    {{ ad.createdAt|date('d/m/Y H:i') }}
+                    {% if ad.expiresAt %}· caduca {{ ad.expiresAt|date('d/m/Y') }}{% endif %}
+                    {% if ad.isHidden %}<span class="account-badge">Oculto</span>{% endif %}
+                </div>
+                <h3>
+                    {% if ad.isHidden %}
+                        {{ ad.title }}
+                    {% else %}
+                        <a href="{{ path('public_classifieds_show', {slug: ad.slug}) }}">{{ ad.title }}</a>
+                    {% endif %}
+                </h3>
+                {% if ad.priceLabel %}
+                    <div class="account-list-meta">{{ ad.priceLabel }}</div>
+                {% endif %}
+                <p class="account-list-excerpt">{{ ad.body|striptags|length > 180 ? ad.body|striptags|slice(0, 177) ~ '…' : ad.body|striptags }}</p>
+            </li>
+        {% endfor %}
+    </ul>
+{% endif %}
+{% endblock %}

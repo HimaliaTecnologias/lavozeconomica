@@ -1,0 +1,7 @@
+{% if articles is not empty %}
+    {% for item in articles %}
+        {% include 'public/_partials/sidebar_story.html.twig' with { article: item } only %}
+    {% endfor %}
+{% else %}
+    <p class="popular-sidebar-empty">No hay artículos destacados en este periodo.</p>
+{% endif %}

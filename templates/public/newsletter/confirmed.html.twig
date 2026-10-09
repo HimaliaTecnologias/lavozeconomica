@@ -1,0 +1,23 @@
+{% extends 'public/layout.html.twig' %}
+
+{% block title %}Suscripción confirmada — {{ site.name }}{% endblock %}
+
+{% block body %}
+<div class="archive-layout newsletter-layout">
+    <div class="archive-main">
+        <div class="newsletter-page newsletter-page--status">
+            {% include 'public/_partials/breadcrumb.html.twig' with {
+                crumbs: [
+                    { label: 'Boletín', path: path('public_newsletter_index') },
+                    { label: 'Confirmada' },
+                ]
+            } %}
+            <header class="newsletter-page-head">
+                <h1>Suscripción confirmada</h1>
+                <p class="newsletter-intro">Tu correo está activo en nuestro boletín. Recibirás las noticias según la periodicidad que elegiste.</p>
+            </header>
+            <p><a href="{{ path('home') }}">Volver a la portada</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,93 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}Plantillas de maquetación{% endblock %}
+
+{% block body %}
+<h1>Plantillas de maquetación</h1>
+<p class="hint">Define el formato visual de la portada, las secciones y el detalle de noticia.</p>
+
+{% include 'admin/settings/_subnav.html.twig' %}
+
+<form method="post" action="{{ path('admin_settings_layout') }}">
+    <input type="hidden" name="_token" value="{{ csrf_token('settings_layout') }}">
+
+    <div class="field">
+        <label for="homeTemplate">Portada</label>
+        <select id="homeTemplate" name="homeTemplate" class="{{ errors.homeTemplate is defined ? 'error' : '' }}">
+            {% for template in homeTemplates %}
+                <option value="{{ template.value }}" {{ data.homeTemplate == template.value ? 'selected' : '' }}>{{ template.label }}</option>
+            {% endfor %}
+        </select>
+        {% if errors.homeTemplate is defined %}<div class="error-msg">{{ errors.homeTemplate }}</div>{% endif %}
+        <p class="hint">Clásica: hero editorial + secciones. Revista: portada visual amplia. Compacta: listado rápido.</p>
+    </div>
+
+    <div class="field">
+        <label for="categoryTemplate">Páginas de categoría</label>
+        <select id="categoryTemplate" name="categoryTemplate" class="{{ errors.categoryTemplate is defined ? 'error' : '' }}">
+            {% for template in categoryTemplates %}
+                <option value="{{ template.value }}" {{ data.categoryTemplate == template.value ? 'selected' : '' }}>{{ template.label }}</option>
+            {% endfor %}
+        </select>
+        {% if errors.categoryTemplate is defined %}<div class="error-msg">{{ errors.categoryTemplate }}</div>{% endif %}
+    </div>
+
+    <div class="field">
+        <label for="articleTemplate">Detalle de noticia</label>
+        <select id="articleTemplate" name="articleTemplate" class="{{ errors.articleTemplate is defined ? 'error' : '' }}">
+            {% for template in articleTemplates %}
+                <option value="{{ template.value }}" {{ data.articleTemplate == template.value ? 'selected' : '' }}>{{ template.label }}</option>
+            {% endfor %}
+        </select>
+        {% if errors.articleTemplate is defined %}<div class="error-msg">{{ errors.articleTemplate }}</div>{% endif %}
+    </div>
+
+    <div class="field">
+        <label for="homeCategoryArticlesCount">Secciones de categoría en portada</label>
+        <select id="homeCategoryArticlesCount" name="homeCategoryArticlesCount" class="{{ errors.homeCategoryArticlesCount is defined ? 'error' : '' }}">
+            {% for n in [2, 3, 4] %}
+                <option value="{{ n }}" {{ data.homeCategoryArticlesCount == n ? 'selected' : '' }}>{{ n }} noticias por sección</option>
+            {% endfor %}
+        </select>
+        {% if errors.homeCategoryArticlesCount is defined %}<div class="error-msg">{{ errors.homeCategoryArticlesCount }}</div>{% endif %}
+        <p class="hint">Número de noticias y columnas en cada bloque de categoría de la portada (Destacadas y secciones por categoría).</p>
+    </div>
+
+    <div class="field">
+        <label for="relatedArticlesCount">«Te puede interesar» en noticias</label>
+        <select id="relatedArticlesCount" name="relatedArticlesCount" class="{{ errors.relatedArticlesCount is defined ? 'error' : '' }}">
+            {% for n in [4, 6, 8] %}
+                <option value="{{ n }}" {{ data.relatedArticlesCount == n ? 'selected' : '' }}>{{ n }} noticias</option>
+            {% endfor %}
+        </select>
+        {% if errors.relatedArticlesCount is defined %}<div class="error-msg">{{ errors.relatedArticlesCount }}</div>{% endif %}
+        <p class="hint">Número de noticias en «Te puede interesar» (rejilla de hasta 4 columnas).</p>
+    </div>
+
+    <div class="field">
+        <label for="sidebarPopularCount">«Más vistas» (columna derecha)</label>
+        <select id="sidebarPopularCount" name="sidebarPopularCount" class="{{ errors.sidebarPopularCount is defined ? 'error' : '' }}">
+            {% for n in sidebarCountOptions %}
+                <option value="{{ n }}" {{ data.sidebarPopularCount|default(5) == n ? 'selected' : '' }}>{{ n }} noticias</option>
+            {% endfor %}
+        </select>
+        {% if errors.sidebarPopularCount is defined %}<div class="error-msg">{{ errors.sidebarPopularCount }}</div>{% endif %}
+        <p class="hint">Máximo de noticias en el bloque «Más vistas» del lateral (portada, noticias, categorías, archivo…).</p>
+    </div>
+
+    <div class="field">
+        <label for="sidebarLatestCount">«Últimas noticias» (columna derecha)</label>
+        <select id="sidebarLatestCount" name="sidebarLatestCount" class="{{ errors.sidebarLatestCount is defined ? 'error' : '' }}">
+            {% for n in sidebarCountOptions %}
+                <option value="{{ n }}" {{ data.sidebarLatestCount|default(5) == n ? 'selected' : '' }}>{{ n }} noticias</option>
+            {% endfor %}
+        </select>
+        {% if errors.sidebarLatestCount is defined %}<div class="error-msg">{{ errors.sidebarLatestCount }}</div>{% endif %}
+        <p class="hint">Máximo de noticias en el bloque «Últimas» del lateral (noticias, categorías, archivo, pasatiempos…).</p>
+    </div>
+
+    <div class="actions">
+        <button type="submit" class="btn btn-primary">Guardar plantillas</button>
+    </div>
+</form>
+{% endblock %}

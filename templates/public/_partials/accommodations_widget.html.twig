@@ -1,0 +1,8 @@
+{% if accommodations is defined and accommodations.isVisible %}
+<section class="accommodations-widget article-section-block" aria-label="{{ accommodations.title }}">
+    <p class="section-label">{{ accommodations.title }}</p>
+    <div class="accommodations-widget-body">
+        {{ accommodations.renderedHtml|raw }}
+    </div>
+</section>
+{% endif %}

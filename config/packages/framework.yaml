@@ -1,0 +1,65 @@
+framework:
+    secret: '%env(APP_SECRET)%'
+    http_method_override: false
+    handle_all_throwables: true
+    # Este Docker es el sitio público. Si queda en true (default con debug/dev),
+    # Symfony manda X-Robots-Tag: noindex y Google no indexa.
+    disallow_search_engine_index: false
+    php_errors:
+        log: true
+
+    session:
+        handler_id: null
+        cookie_secure: auto
+        cookie_samesite: lax
+        save_path: '%kernel.cache_dir%/sessions'
+
+    trusted_proxies: ['127.0.0.1', 'REMOTE_ADDR']
+    trusted_headers: ['x-forwarded-for', 'x-forwarded-host', 'x-forwarded-proto', 'x-forwarded-port']
+
+    cache:
+        prefix_seed: mymediacms
+        # Adapter: config/packages/cache_adapter.php (CACHE_APP_ADAPTER).
+        default_redis_provider: '%env(default:redis.url.fallback:REDIS_URL)%'
+        pools:
+            cache.public_articles:
+                adapter: cache.app
+                default_lifetime: 90
+            doctrine.result_cache_pool:
+                adapter: cache.app
+            doctrine.system_cache_pool:
+                adapter: cache.system
+
+    messenger:
+        failure_transport: failed
+        transports:
+            # Con Redis: redis://host:6379/messages (+ options stream abajo).
+            # Sin Redis: sync:// (procesa en la misma petición; no hace falta worker).
+            async_high:
+                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+                options:
+                    stream: messages_high
+                retry_strategy:
+                    max_retries: 3
+                    multiplier: 2
+            async_low:
+                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+                options:
+                    stream: messages_low
+                retry_strategy:
+                    max_retries: 3
+            failed:
+                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+                options:
+                    stream: messages_failed
+        default_bus: messenger.bus.default
+        buses:
+            messenger.bus.default: []
+
+when@test:
+    framework:
+        test: true
+        session:
+            storage_factory_id: session.storage.factory.mock_file
+        cache:
+            app: cache.adapter.array

@@ -1,0 +1,144 @@
+{% set badges = admin_nav_badges() %}
+{% import 'admin/_icons.html.twig' as icons %}
+
+<aside class="admin-sidebar" id="admin-sidebar" aria-label="Navegación principal">
+    <div class="admin-sidebar-brand">
+        <a href="{{ path('admin_dashboard') }}" class="admin-sidebar-logo">
+            <span class="admin-sidebar-mark">M</span>
+            <span class="admin-sidebar-brand-text">
+                <strong>MyMediaCMS</strong>
+                {% if site is defined %}
+                    <small>{{ site.name }}</small>
+                {% endif %}
+            </span>
+        </a>
+        {% if can_edit_articles_only() %}
+            <span class="admin-role-badge admin-role-badge--sidebar">Redactor</span>
+        {% endif %}
+    </div>
+
+    <nav class="admin-sidebar-nav">
+        <p class="admin-sidebar-section">Editorial</p>
+        {% if admin_can('dashboard') %}
+            <a href="{{ path('admin_dashboard') }}" class="admin-sidebar-link {{ app.request.attributes.get('_route') == 'admin_dashboard' ? 'is-active' : '' }}">
+                <span class="admin-icon-wrap">{{ icons.dashboard() }}</span>
+                <span>Panel</span>
+            </a>
+            <a href="{{ path('admin_search_logs') }}" class="admin-sidebar-link {{ app.request.attributes.get('_route') starts with 'admin_search_logs' ? 'is-active' : '' }}">
+                <span class="admin-icon-wrap">{{ icons.search() }}</span>
+                <span>Búsquedas</span>
+            </a>
+        {% endif %}
+        {% if admin_can('articles') %}
+            <a href="{{ path('admin_articles_index') }}" class="admin-sidebar-link {{ app.request.attributes.get('_route') starts with 'admin_articles' ? 'is-active' : '' }}">
+                <span class="admin-icon-wrap">{{ icons.articles() }}</span>
+                <span>Noticias</span>
+                {% if badges.draft_articles > 0 %}<span class="nav-badge">{{ badges.draft_articles }}</span>{% endif %}
+            </a>
+        {% endif %}
+        {% if admin_can('media') %}
+            <a href="{{ path('admin_media_index') }}" class="admin-sidebar-link {{ app.request.attributes.get('_route') starts with 'admin_media' ? 'is-active' : '' }}">
+                <span class="admin-icon-wrap">{{ icons.media() }}</span>
+                <span>Biblioteca</span>
+            </a>
+        {% endif %}
+        {% if admin_can('comments') %}
+            <a href="{{ path('admin_engagement_comments') }}" class="admin-sidebar-link {{ app.request.attributes.get('_route') starts with 'admin_engagement' ? 'is-active' : '' }}">
+                <span class="admin-icon-wrap">{{ icons.articles() }}</span>
+                <span>Comentarios</span>
+                {% if badges.comments > 0 %}<span class="nav-badge">{{ badges.comments }}</span>{% endif %}
+            </a>
+        {% endif %}
+        {% if admin_can('community') %}
+            <p class="admin-sidebar-section">Comunidad</p>
+            <a href="{{ path('admin_community_classifieds') }}" class="admin-sidebar-link {{ app.request.attributes.get('_route') starts with 'admin_community_classified' ? 'is-active' : '' }}">
+                <span class="admin-icon-wrap">{{ icons.newsletter() }}</span>
+                <span>Avisos</span>
+            </a>
+            <a href="{{ path('admin_community_forum') }}" class="admin-sidebar-link {{ app.request.attributes.get('_route') starts with 'admin_community_forum' or app.request.attributes.get('_route') starts with 'admin_community_topic' or app.request.attributes.get('_route') starts with 'admin_community_post' ? 'is-active' : '' }}">
+                <span class="admin-icon-wrap">{{ icons.users() }}</span>
+                <span>Foro</span>
+            </a>
+        {% endif %}
+        {% if admin_can('categories') %}
+            <a href="{{ path('admin_categories_index') }}" class="admin-sidebar-link {{ app.request.attributes.get('_route') starts with 'admin_categories' ? 'is-active' : '' }}">
+                <span class="admin-icon-wrap">{{ icons.categories() }}</span>
+                <span>Categorías</span>
+            </a>
+        {% endif %}
+        {% if admin_can('polls') %}
+            <a href="{{ path('admin_polls_index') }}" class="admin-sidebar-link {{ app.request.attributes.get('_route') starts with 'admin_polls' ? 'is-active' : '' }}">
+                <span class="admin-icon-wrap">{{ icons.polls() }}</span>
+                <span>Encuestas</span>
+            </a>
+        {% endif %}
+        {% if admin_can('galleries') %}
+            <a href="{{ path('admin_galleries_index') }}" class="admin-sidebar-link {{ app.request.attributes.get('_route') starts with 'admin_galleries' ? 'is-active' : '' }}">
+                <span class="admin-icon-wrap">{{ icons.galleries() }}</span>
+                <span>Galerías</span>
+            </a>
+        {% endif %}
+
+        {% if admin_can('ads') %}
+            <p class="admin-sidebar-section">Monetización</p>
+            <a href="{{ path('admin_ads_index') }}" class="admin-sidebar-link {{ app.request.attributes.get('_route') starts with 'admin_ads' ? 'is-active' : '' }}">
+                <span class="admin-icon-wrap">{{ icons.ads() }}</span>
+                <span>Publicidad</span>
+            </a>
+        {% endif %}
+
+        {% if admin_can('ingest') or admin_can('newsletter') %}
+            <p class="admin-sidebar-section">Distribución</p>
+            {% if admin_can('ingest') %}
+                <a href="{{ path('admin_ingest_index') }}" class="admin-sidebar-link {{ app.request.attributes.get('_route') starts with 'admin_ingest' ? 'is-active' : '' }}">
+                    <span class="admin-icon-wrap">{{ icons.ingest() }}</span>
+                    <span>Ingesta</span>
+                    {% if badges.ingest_pending > 0 %}<span class="nav-badge nav-badge--alert">{{ badges.ingest_pending }}</span>{% endif %}
+                </a>
+            {% endif %}
+            {% if admin_can('newsletter') %}
+                <a href="{{ path('admin_newsletter_index') }}" class="admin-sidebar-link {{ app.request.attributes.get('_route') starts with 'admin_newsletter' ? 'is-active' : '' }}">
+                    <span class="admin-icon-wrap">{{ icons.newsletter() }}</span>
+                    <span>Boletín</span>
+                </a>
+            {% endif %}
+        {% endif %}
+
+        {% if admin_can('users') or admin_can('settings') or admin_can('links') %}
+            <p class="admin-sidebar-section">Sitio</p>
+            {% if admin_can('users') %}
+                <a href="{{ path('admin_users_index') }}" class="admin-sidebar-link {{ app.request.attributes.get('_route') starts with 'admin_users' ? 'is-active' : '' }}">
+                    <span class="admin-icon-wrap">{{ icons.users() }}</span>
+                    <span>Usuarios</span>
+                </a>
+            {% endif %}
+            {% if admin_can('settings') %}
+                <a href="{{ path('admin_settings_index') }}" class="admin-sidebar-link {{ app.request.attributes.get('_route') starts with 'admin_settings' ? 'is-active' : '' }}">
+                    <span class="admin-icon-wrap">{{ icons.settings() }}</span>
+                    <span>Configuración</span>
+                </a>
+            {% endif %}
+            {% if admin_can('links') %}
+                <a href="{{ path('admin_links_index') }}" class="admin-sidebar-link {{ app.request.attributes.get('_route') starts with 'admin_links' ? 'is-active' : '' }}">
+                    <span class="admin-icon-wrap">{{ icons.links() }}</span>
+                    <span>Enlaces</span>
+                </a>
+            {% endif %}
+        {% endif %}
+    </nav>
+
+    <div class="admin-sidebar-footer">
+        <button type="button" class="admin-sidebar-link admin-sidebar-link--muted admin-theme-toggle" id="admin-theme-toggle" aria-label="Cambiar tema">
+            <span class="admin-icon-wrap">🌙</span>
+            <span>Modo oscuro</span>
+        </button>
+        <a href="{{ path('home') }}" class="admin-sidebar-link admin-sidebar-link--muted" target="_blank" rel="noopener">
+            <span class="admin-icon-wrap">{{ icons.external() }}</span>
+            <span>Ver web pública</span>
+        </a>
+        <a href="{{ path('logout') }}" class="admin-sidebar-link admin-sidebar-link--muted">
+            <span class="admin-icon-wrap">{{ icons.logout() }}</span>
+            <span>Cerrar sesión</span>
+        </a>
+    </div>
+</aside>

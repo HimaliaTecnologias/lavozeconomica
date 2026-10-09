@@ -1,0 +1,188 @@
+{% extends 'admin/layout.html.twig' %}
+{% import 'admin/settings/_nav_menu_row.html.twig' as navRow %}
+
+{% block title %}Menús del periódico{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .settings-subnav { display: flex; gap: .5rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
+    .settings-subnav a { padding: .4rem .75rem; border-radius: 6px; background: #edf2f7; text-decoration: none; color: var(--text); font-size: .9rem; font-weight: 600; }
+    .settings-subnav a.active { background: var(--primary); color: #fff; }
+    .nav-menu-section { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+    .nav-menu-section h2 { font-size: 1.05rem; margin: 0 0 .35rem; }
+    .nav-menu-table { width: 100%; border-collapse: collapse; margin-top: .75rem; }
+    .nav-menu-table th, .nav-menu-table td { padding: .45rem .35rem; border-bottom: 1px solid var(--border); vertical-align: middle; font-size: .88rem; }
+    .nav-menu-table th { text-align: left; font-size: .78rem; text-transform: uppercase; color: var(--text-muted); }
+    .nav-menu-table input[type="text"], .nav-menu-table input[type="url"], .nav-menu-table select, .nav-menu-table input[type="number"] {
+        width: 100%; max-width: 100%; font-size: .88rem;
+    }
+    .nav-menu-order { max-width: 4.5rem; }
+    .nav-menu-extra { min-width: 180px; }
+    .nav-menu-actions { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .65rem; }
+</style>
+{% endblock %}
+
+{% block body %}
+<h1>Menús del periódico</h1>
+<p class="hint">Configura el menú principal de la cabecera y las columnas de enlaces del pie. Las categorías del bloque «Categorías del menú» son las marcadas como visibles en navegación en <a href="{{ path('admin_categories_index') }}">Categorías</a>.</p>
+{% include 'admin/settings/_subnav.html.twig' %}
+
+<form method="post" action="{{ path('admin_settings_navigation') }}" id="nav-menu-form">
+    <input type="hidden" name="_token" value="{{ csrf_token('settings_navigation') }}">
+
+    <section class="nav-menu-section">
+        <h2>Menú principal (cabecera)</h2>
+        <p class="hint">Portada, edición, buscar, tiempo, bolsa, cuenta de usuario, etc.</p>
+        <table class="nav-menu-table">
+            <thead>
+                <tr>
+                    <th>Activo</th>
+                    <th>Tipo</th>
+                    <th>Texto</th>
+                    <th>Destino</th>
+                    <th>Orden</th>
+                    <th>Nueva pestaña</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody id="main-items-body">
+                {% for index, item in config.mainItems %}
+                    {{ navRow.menu_row(index, item, menuTypes, categories, pages, 'mainItems') }}
+                {% endfor %}
+            </tbody>
+        </table>
+        <div class="nav-menu-actions">
+            <button type="button" class="btn btn-secondary btn-sm" data-add-row="mainItems">+ Añadir entrada</button>
+            <button type="button" class="btn btn-secondary btn-sm" data-reset-default="mainItems">Restaurar menú por defecto</button>
+        </div>
+    </section>
+
+    <section class="nav-menu-section">
+        <h2>Pie — columna «Secciones»</h2>
+        <table class="nav-menu-table">
+            <thead>
+                <tr>
+                    <th>Activo</th>
+                    <th>Tipo</th>
+                    <th>Texto</th>
+                    <th>Destino</th>
+                    <th>Orden</th>
+                    <th>Nueva pestaña</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody id="footer-section-items-body">
+                {% for index, item in config.footerSectionItems %}
+                    {{ navRow.menu_row(index, item, menuTypes, categories, pages, 'footerSectionItems') }}
+                {% endfor %}
+            </tbody>
+        </table>
+        <div class="nav-menu-actions">
+            <button type="button" class="btn btn-secondary btn-sm" data-add-row="footerSectionItems">+ Añadir entrada</button>
+            <button type="button" class="btn btn-secondary btn-sm" data-reset-default="footerSectionItems">Restaurar por defecto</button>
+        </div>
+    </section>
+
+    <section class="nav-menu-section">
+        <h2>Pie — El periódico</h2>
+        <p class="hint">Columna «El periódico» y barra legal inferior del pie (quiénes somos, contacto, legal…).</p>
+        <table class="nav-menu-table">
+            <thead>
+                <tr>
+                    <th>Activo</th>
+                    <th>Tipo</th>
+                    <th>Texto</th>
+                    <th>Destino</th>
+                    <th>Orden</th>
+                    <th>Nueva pestaña</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody id="footer-legal-items-body">
+                {% for index, item in config.footerLegalItems %}
+                    {{ navRow.menu_row(index, item, menuTypes, categories, pages, 'footerLegalItems') }}
+                {% endfor %}
+            </tbody>
+        </table>
+        <div class="nav-menu-actions">
+            <button type="button" class="btn btn-secondary btn-sm" data-add-row="footerLegalItems">+ Añadir entrada</button>
+            <button type="button" class="btn btn-secondary btn-sm" data-reset-default="footerLegalItems">Restaurar por defecto</button>
+        </div>
+    </section>
+
+    <div class="nav-menu-actions" style="margin-top:1.5rem">
+        <button type="submit" class="btn btn-primary">Guardar menús</button>
+    </div>
+</form>
+
+<template id="nav-menu-row-template">
+    {{ navRow.menu_row('__INDEX__', {enabled: true, type: 'custom', sortOrder: 100}, menuTypes, categories, pages, '__AREA__') }}
+</template>
+
+<script>
+(function () {
+    const defaults = {{ defaults|json_encode|raw }};
+
+    function tbodyForArea(area) {
+        if (area === 'mainItems') return document.getElementById('main-items-body');
+        if (area === 'footerSectionItems') return document.getElementById('footer-section-items-body');
+        return document.getElementById('footer-legal-items-body');
+    }
+
+    function bindRow(row) {
+        const typeSelect = row.querySelector('.nav-menu-type');
+        const category = row.querySelector('.nav-menu-category');
+        const page = row.querySelector('.nav-menu-page');
+        const url = row.querySelector('.nav-menu-url');
+        const syncFields = () => {
+            const type = typeSelect.value;
+            category.hidden = type !== 'category';
+            page.hidden = type !== 'page';
+            url.hidden = type !== 'custom';
+        };
+        typeSelect.addEventListener('change', syncFields);
+        syncFields();
+        row.querySelector('.nav-menu-remove')?.addEventListener('click', () => row.remove());
+    }
+
+    document.querySelectorAll('.nav-menu-row').forEach(bindRow);
+
+    document.querySelectorAll('[data-add-row]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const area = btn.getAttribute('data-add-row');
+            const tbody = tbodyForArea(area);
+            const index = tbody.querySelectorAll('.nav-menu-row').length;
+            const html = document.getElementById('nav-menu-row-template').innerHTML
+                .replace(/__INDEX__/g, String(index))
+                .replace(/__AREA__/g, area);
+            tbody.insertAdjacentHTML('beforeend', html);
+            const row = tbody.lastElementChild;
+            if (row) bindRow(row);
+        });
+    });
+
+    document.querySelectorAll('[data-reset-default]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const area = btn.getAttribute('data-reset-default');
+            const key = area === 'mainItems' ? 'main' : (area === 'footerSectionItems' ? 'footerSections' : 'footerLegal');
+            const tbody = tbodyForArea(area);
+            tbody.innerHTML = '';
+            defaults[key].forEach((item, index) => {
+                const html = document.getElementById('nav-menu-row-template').innerHTML
+                    .replace(/__INDEX__/g, String(index))
+                    .replace(/__AREA__/g, area);
+                tbody.insertAdjacentHTML('beforeend', html);
+                const row = tbody.lastElementChild;
+                if (!row) return;
+                row.querySelector('.nav-menu-type').value = item.type;
+                row.querySelector('input[name*="[label]"]').value = item.label || '';
+                row.querySelector('input[name*="[id]"]').value = item.id;
+                row.querySelector('.nav-menu-order').value = item.sortOrder;
+                if (item.pageSlug) row.querySelector('.nav-menu-page').value = item.pageSlug;
+                bindRow(row);
+            });
+        });
+    });
+})();
+</script>
+{% endblock %}

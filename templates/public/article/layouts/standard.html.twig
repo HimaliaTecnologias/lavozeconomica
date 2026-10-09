@@ -1,0 +1,108 @@
+<div class="article-layout">
+    <div class="article-main">
+        <a href="{{ path('home') }}" class="back-link">← Portada</a>
+
+        <div class="article-breadcrumb">
+            <a href="{{ path('home') }}">Portada</a>
+            {% if article.category %}
+                · <a href="{{ path('public_category_show', {slug: article.category.slug}) }}">{{ article.category.name }}</a>
+            {% endif %}
+        </div>
+
+        <h1 class="article-headline">{{ article.title }}</h1>
+
+        {% if article.subtitle %}
+            <p class="article-subhead">{{ article.subtitle }}</p>
+        {% elseif article.lead %}
+            <p class="article-subhead">{{ article.lead }}</p>
+        {% endif %}
+
+        <div class="article-meta-bar">
+            {% if article.authorName %}
+                <span class="article-byline">{{ article.authorName }}</span>
+            {% endif %}
+            {% if article.publishedAt %}
+                <span>{{ article.publishedAt|date('d/m/Y') }} · {{ article.publishedAt|date('H:i') }}</span>
+            {% endif %}
+            {% if article.hasAgendaWindow %}
+                <span>Agenda: {{ article.agendaStartsAt|date('d/m H:i') }} – {{ article.agendaEndsAt|date('d/m H:i') }}</span>
+            {% endif %}
+            {% if article.category %}
+                <a href="{{ path('public_category_show', {slug: article.category.slug}) }}">{{ article.category.name }}</a>
+            {% endif %}
+        <span>{{ article.viewCount }} lecturas</span>
+        </div>
+
+        {% include 'public/article/_tags.html.twig' %}
+
+        {% include 'public/article/_share_tools.html.twig' %}
+
+    {% include 'public/_partials/ad_slot.html.twig' with {
+        placement: 'article_above_content',
+        categoryId: article.category ? article.category.id : null,
+        tagIds: article.tags|map(t => t.id),
+    } only %}
+
+    {% include 'public/article/_gallery.html.twig' %}
+
+        {% if article.lead and article.subtitle %}
+            <p class="article-subhead">{{ article.lead }}</p>
+        {% endif %}
+
+        <div class="article-content">{{ article.bodyHtml|seo_enrich_html(article.title)|raw }}</div>
+
+        {% if article.video and not article.videoReplacesFeatured %}
+            {% include 'public/article/_video.html.twig' with { video: article.video, variant: 'inline' } %}
+        {% endif %}
+
+        {% include 'public/article/_poll.html.twig' %}
+
+        {% include 'public/article/_manual_related_section.html.twig' %}
+
+        {% include 'public/article/_category_infinite_feed.html.twig' %}
+
+        {% include 'public/article/_engagement.html.twig' %}
+
+        {% include 'public/_partials/content_modules.html.twig' with { surface: 'article' } %}
+
+        {% include 'public/_partials/ad_slot.html.twig' with {
+            placement: 'article_below_content',
+            categoryId: article.category ? article.category.id : null,
+            tagIds: article.tags|map(t => t.id),
+        } only %}
+    </div>
+
+    <aside class="article-sidebar">
+        {% include 'public/_partials/sidebar_ad_stack.html.twig' with {
+            placements: ['article_sidebar', 'sidebar_top'],
+            categoryId: article.category ? article.category.id : null,
+            tagIds: article.tags|map(t => t.id),
+        } only %}
+        {% include 'public/_partials/popular_sidebar.html.twig' with {
+            articles: popularArticles|default([]),
+            limit: layout.sidebarPopularCount|default(5),
+            excludeId: article.id|default(null),
+            period: popularPeriod|default('week'),
+            title: 'Más vistas',
+        } %}
+
+        {% include 'public/_partials/sidebar_ad_stack.html.twig' with {
+            placements: ['sidebar_between_lists'],
+            categoryId: article.category ? article.category.id : null,
+            tagIds: article.tags|map(t => t.id),
+        } only %}
+
+        {% include 'public/_partials/latest_sidebar.html.twig' with {
+            articles: latestArticles|default([]),
+            limit: layout.sidebarLatestCount|default(5),
+            title: 'Últimas noticias',
+        } %}
+
+        {% include 'public/_partials/sidebar_ad_stack.html.twig' with {
+            placements: ['sidebar_bottom'],
+            categoryId: article.category ? article.category.id : null,
+            tagIds: article.tags|map(t => t.id),
+        } only %}
+        {% include 'public/_partials/sidebar_links.html.twig' %}
+    </aside>
+</div>

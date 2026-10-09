@@ -1,0 +1,43 @@
+{% set type = module.type.value %}
+{% set format = module.format.value %}
+{% set count = module.count %}
+
+{% if type == 'accommodations' %}
+    {% include 'public/_partials/accommodations_widget.html.twig' %}
+
+{% elseif type == 'category_sections' %}
+    {% for section in categorySections|default([]) %}
+        {% if format == 'lead_stack' or format == 'default' %}
+            {% include 'public/_partials/home_category_section.html.twig' with { section: section } %}
+        {% else %}
+            {% include 'public/_partials/content_module_articles.html.twig' with {
+                articles: section.articles|default([]),
+                title: section.category.name,
+                format: format,
+                moduleId: 'mod-' ~ surface ~ '-cat-' ~ section.category.slug,
+            } %}
+        {% endif %}
+    {% endfor %}
+
+{% elseif type == 'related' or type == 'popular' or type == 'latest' %}
+    {% if type == 'related' %}
+        {% set articles = relatedArticles|default([]) %}
+        {% set title = 'Te puede interesar' %}
+    {% elseif type == 'popular' %}
+        {% set articles = popularArticles|default([]) %}
+        {% set title = 'Más vistas' %}
+    {% else %}
+        {% set articles = latestArticles|default([]) %}
+        {% set title = 'Últimas noticias' %}
+    {% endif %}
+
+    {% set items = articles|slice(0, count > 0 ? count : 4) %}
+    {% if items is not empty %}
+        {% include 'public/_partials/content_module_articles.html.twig' with {
+            articles: items,
+            title: title,
+            format: format,
+            moduleId: 'mod-' ~ surface ~ '-' ~ type,
+        } %}
+    {% endif %}
+{% endif %}

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0"
+     xmlns:atom="http://www.w3.org/2005/Atom"
+     xmlns:content="http://purl.org/rss/1.0/modules/content/"
+     xmlns:dc="http://purl.org/dc/elements/1.1/"
+     xmlns:media="http://search.yahoo.com/mrss/">
+    <channel>
+        <title>{{ channelTitle|e }}</title>
+        <link>{{ channelLink|e }}</link>
+        <description>{{ channelDescription|e }}</description>
+        <language>es-es</language>
+        <lastBuildDate>{{ lastBuildDate|e }}</lastBuildDate>
+        <atom:link href="{{ feedUrl|e }}" rel="self" type="application/rss+xml"/>
+        {% for item in items %}
+        <item>
+            <title>{{ item.title|e }}</title>
+            <link>{{ item.link|e }}</link>
+            <guid isPermaLink="true">{{ item.link|e }}</guid>
+            <pubDate>{{ item.pubDate|e }}</pubDate>
+            {% if item.author %}
+            <dc:creator>{{ item.author|e }}</dc:creator>
+            {% endif %}
+            {% if item.category %}
+            <category>{{ item.category|e }}</category>
+            {% endif %}
+            <description><![CDATA[{{ item.description|raw }}]]></description>
+            {% if item.image %}
+            <enclosure url="{{ item.image|e }}" type="{{ item.imageType|default('image/jpeg')|e }}" length="0"/>
+            <media:content url="{{ item.image|e }}" medium="image"/>
+            {% endif %}
+        </item>
+        {% endfor %}
+    </channel>
+</rss>

@@ -1,0 +1,10 @@
+{% if topBarMediaSlides|length > 1 %}
+    <div class="top-bar-rotator" data-interval="6000" aria-live="polite">
+        {% for slide in topBarMediaSlides %}
+            <a href="{{ slide.url }}" class="top-bar-rotator-item {{ slide.cssClass }}{{ loop.first ? ' is-active' : '' }}">{{ slide.label }}</a>
+        {% endfor %}
+    </div>
+{% elseif topBarMediaSlides|length == 1 %}
+    {% set slide = topBarMediaSlides[0] %}
+    <a href="{{ slide.url }}" class="{{ slide.cssClass }}">{{ slide.label }}</a>
+{% endif %}

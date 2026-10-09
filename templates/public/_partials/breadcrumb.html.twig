@@ -1,0 +1,10 @@
+<nav class="article-breadcrumb{{ breadcrumbClass|default('') != '' ? ' ' ~ breadcrumbClass : '' }}" aria-label="Miga de pan">
+    <a href="{{ path('home') }}">Portada</a>
+    {% for crumb in crumbs|default([]) %}
+        · {% if crumb.path is defined and crumb.path %}
+            <a href="{{ crumb.path }}">{{ crumb.label }}</a>
+        {% else %}
+            {{ crumb.label|default(crumb) }}
+        {% endif %}
+    {% endfor %}
+</nav>

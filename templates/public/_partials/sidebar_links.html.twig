@@ -1,0 +1,30 @@
+{% if siteLinks.sidebarOtherMedia is not empty or siteLinks.sidebarInterest is not empty %}
+<div class="sidebar-block sidebar-links-block">
+    {% if siteLinks.sidebarOtherMedia is not empty %}
+        <p class="sidebar-label">Otros medios</p>
+        <ul class="sidebar-links-list sidebar-links-list--media">
+            {% for link in siteLinks.sidebarOtherMedia %}
+                <li>
+                    <a href="{{ link.url }}" target="_blank" rel="noopener noreferrer">
+                        {% if link.logoUrl %}
+                            {{ seo_img(link.logoUrl, link.title, {class: 'sidebar-link-logo'}) }}
+                        {% endif %}
+                        <span>{{ link.title }}</span>
+                    </a>
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    {% if siteLinks.sidebarInterest is not empty %}
+        <p class="sidebar-label">Enlaces de interés</p>
+        <ul class="sidebar-links-list">
+            {% for link in siteLinks.sidebarInterest %}
+                <li>
+                    <a href="{{ link.url }}" target="_blank" rel="noopener noreferrer">{{ link.title }}</a>
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+</div>
+{% endif %}

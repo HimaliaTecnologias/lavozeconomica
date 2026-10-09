@@ -1,0 +1,106 @@
+parameters:
+    .container.dumper.inline_factories: true
+    env(IMAGE_ENHANCER_URL): ''
+    env(RECAPTCHA_SITE_KEY): ''
+    env(RECAPTCHA_SECRET_KEY): ''
+    env(INGEST_API_KEY): ''
+    env(OPENAI_API_KEY): ''
+    env(NEWSLETTER_FROM): ''
+    env(PUBLIC_BASE_URL): 'https://www.lavozeconomica.com'
+    env(DEFAULT_URI): 'https://www.lavozeconomica.com'
+    env(DEFAULT_SITE_CODE): 'lavoz-economica'
+    env(PROVISION_DB_HOST): 'mysql'
+    env(PROVISION_DB_USER): 'mymedia'
+    env(PROVISION_DB_PASSWORD): 'mymedia_secret'
+    env(PROVISION_DB_ROOT_USER): 'root'
+    env(PROVISION_DB_ROOT_PASSWORD): 'root_secret'
+    # Redis opcional: ver CACHE_APP_ADAPTER / MESSENGER_TRANSPORT_DSN en .env.example.
+    env(MESSENGER_TRANSPORT_DSN): 'sync://'
+    # Fallback Docker-first (servicio compose "redis"). Si PHP corre en el host, define REDIS_URL.
+    redis.url.fallback: 'redis://redis:6379'
+    article_image.min_width_featured: 1200
+    article_image.min_height_featured: 675
+    article_image.min_width_gallery: 900
+    article_image.min_height_gallery: 500
+    article_image.jpeg_quality: 92
+
+when@prod:
+    imports:
+        - { resource: packages/prod/*.yaml, ignore_errors: not_found }
+
+when@test:
+    imports:
+        - { resource: packages/test/*.yaml }
+
+when@dev:
+    imports:
+        - { resource: packages/dev/*.yaml }
+
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+
+    # Fallback sin Redis: mismo contrato tag-aware que RedisTagAwareAdapter (PublicArticleCache).
+    cache.adapter.filesystem_tag_aware:
+        class: Symfony\Component\Cache\Adapter\FilesystemTagAwareAdapter
+        abstract: true
+        autoconfigure: false
+        arguments:
+            - '' # namespace
+            - 0 # default lifetime
+            - '%kernel.share_dir%/pools/app'
+            - '@?cache.default_marshaller'
+        calls:
+            - setLogger: ['@?logger']
+        tags:
+            - { name: cache.pool, clearer: cache.default_clearer, reset: reset }
+            - { name: monolog.logger, channel: cache }
+
+    App\:
+        resource: '../src/'
+        exclude:
+            - '../src/DependencyInjection/'
+            - '../src/Entity/'
+            - '../src/Kernel.php'
+
+    App\Seo\PublicUrlFactory:
+        arguments:
+            $publicBaseUrl: '%env(PUBLIC_BASE_URL)%'
+
+    App\Core\Site\SiteContextResolver:
+        arguments:
+            $platformEntityManager: '@doctrine.orm.platform_entity_manager'
+            $defaultSiteCode: '%env(DEFAULT_SITE_CODE)%'
+            $publicBaseUrl: '%env(PUBLIC_BASE_URL)%'
+
+    App\Core\Site\SiteConnectionManager:
+        arguments:
+            $platformEntityManager: '@doctrine.orm.platform_entity_manager'
+
+    App\Editorial\ArticleImageQualityPolicy:
+        arguments:
+            $minWidthFeatured: '%article_image.min_width_featured%'
+            $minHeightFeatured: '%article_image.min_height_featured%'
+            $minWidthGallery: '%article_image.min_width_gallery%'
+            $minHeightGallery: '%article_image.min_height_gallery%'
+
+    App\Editorial\ArticleImageEnhancementService:
+        arguments:
+            $jpegQuality: '%article_image.jpeg_quality%'
+
+    App\Editorial\MediaEnhancementService:
+        arguments:
+            $jpegQuality: '%article_image.jpeg_quality%'
+
+    App\Editorial\EditionNewspaperPdfGenerator:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+
+    App\Editorial\Pdf\EditionPdfImageStore:
+        arguments:
+            $publicDir: '%kernel.project_dir%/public'
+
+    App\Editorial\Pdf\TypstCompiler:
+        arguments:
+            $typstBinary: 'typst'

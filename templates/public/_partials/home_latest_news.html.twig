@@ -1,0 +1,47 @@
+{% if latestNewsBlocks is defined and latestNewsBlocks is not empty %}
+<section class="home-section home-latest" id="ultimas-noticias">
+    <header class="home-section-head">
+        <h2 class="home-section-title">Últimas noticias</h2>
+        <a href="{{ path('public_edition') }}" class="home-section-more">Ver edición →</a>
+    </header>
+
+    <div class="home-latest-grid">
+        {% for block in latestNewsBlocks %}
+            {% set article = block.article %}
+            <article class="home-latest-card">
+                <a href="{{ path('public_article_show', {slug: article.slug}) }}" class="home-latest-media">
+                    {% set img = article_usable_featured(article) %}
+                    {% if img %}
+                        {{ seo_article_image(img, article.title) }}
+                    {% endif %}
+                </a>
+                <div class="home-latest-body">
+                    {% if article.category %}
+                        <a href="{{ path('public_category_show', {slug: article.category.slug}) }}" class="cat-pill">{{ article.category.name }}</a>
+                    {% endif %}
+                    <h3 class="home-latest-title">
+                        <a href="{{ path('public_article_show', {slug: article.slug}) }}">{{ article.title }}</a>
+                    </h3>
+                    {% set excerpt = article.lead ?: article.subtitle %}
+                    {% if excerpt %}
+                        <p class="home-latest-excerpt">{{ excerpt|length > 180 ? excerpt|slice(0, 177) ~ '…' : excerpt }}</p>
+                    {% endif %}
+                    <div class="meta-line">
+                        {% if article.publishedAt %}{{ article.publishedAt|date('d/m/Y H:i') }}{% endif %}
+                        {% if article.viewCount > 0 %} · {{ article.viewCount }} lecturas{% endif %}
+                    </div>
+                </div>
+
+                {% if block.related is not empty or (homeRelatedById is defined and block.article.id and attribute(homeRelatedById, block.article.id)|default([]) is not empty) %}
+                    {% include 'public/_partials/home_related_links.html.twig' with {
+                        article: block.article,
+                        related: block.related,
+                        modifier: ' home-related-links--card',
+                        limit: 3,
+                    } %}
+                {% endif %}
+            </article>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}

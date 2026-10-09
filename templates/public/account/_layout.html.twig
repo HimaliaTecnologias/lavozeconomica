@@ -1,0 +1,81 @@
+{% extends 'public/layout.html.twig' %}
+
+{% block title %}{{ accountPageTitle|default('Mi cuenta') }} — {{ site.name }}{% endblock %}
+
+{% block body %}
+<div class="account-page">
+    {% include 'public/account/_breadcrumb.html.twig' with {
+        breadcrumbCurrent: accountActiveSection == 'cuenta_profile' ? '' : (accountPageTitle|default('')),
+    } only %}
+
+    <header class="account-page-head">
+        <div>
+            <h1>{{ accountPageTitle|default('Mi cuenta') }}</h1>
+            <p class="account-page-lead">Gestiona tu participación en {{ site.name }}.</p>
+        </div>
+        <div class="account-page-user">
+            <strong>{{ accountUser.name }}</strong>
+            <span>{{ roleLabel }}</span>
+        </div>
+    </header>
+
+    <div class="account-page-grid{% if latestNews is not empty %} account-page-grid--with-rail{% endif %}">
+        <aside class="account-nav-panel" aria-label="Área de cuenta">
+            <div class="account-user-chip">
+                <strong>{{ accountUser.name }}</strong>
+                <span>{{ accountUser.email }}</span>
+            </div>
+            <nav>
+                <ul class="account-nav">
+                    <li><a href="{{ path('cuenta_profile') }}" class="{{ accountActiveSection == 'cuenta_profile' ? 'is-active' : '' }}">Resumen</a></li>
+                    <li><a href="{{ path('cuenta_forum_topics') }}" class="{{ accountActiveSection == 'cuenta_forum_topics' ? 'is-active' : '' }}">Temas del foro</a></li>
+                    <li><a href="{{ path('cuenta_forum_posts') }}" class="{{ accountActiveSection == 'cuenta_forum_posts' ? 'is-active' : '' }}">Respuestas en foro</a></li>
+                    <li><a href="{{ path('cuenta_comments') }}" class="{{ accountActiveSection == 'cuenta_comments' ? 'is-active' : '' }}">Comentarios en noticias</a></li>
+                    <li><a href="{{ path('cuenta_classifieds') }}" class="{{ accountActiveSection == 'cuenta_classifieds' ? 'is-active' : '' }}">Mis anuncios</a></li>
+                    <li><a href="{{ path('cuenta_password') }}" class="{{ accountActiveSection == 'cuenta_password' ? 'is-active' : '' }}">Cambiar contraseña</a></li>
+                    {% if canAccessAdmin %}
+                        <li><a href="{{ path('admin_dashboard') }}">Panel editorial</a></li>
+                    {% endif %}
+                    <li><a href="{{ path('logout') }}" class="account-nav-logout">Cerrar sesión</a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <div class="account-main-panel">
+            {% block account_content %}{% endblock %}
+        </div>
+
+        {% if latestNews is not empty %}
+            <aside class="account-news-rail article-sidebar" aria-label="Últimas noticias">
+                <div class="sidebar-block">
+                    <p class="sidebar-label">Últimas noticias</p>
+                    <div class="sidebar-list">
+                        {% for article in latestNews %}
+                            {% include 'public/_partials/sidebar_story.html.twig' with { article: article } %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </aside>
+        {% endif %}
+    </div>
+
+    {% if interestNews is not empty %}
+        <section class="account-interest-band" aria-labelledby="account-interest-title">
+            <div class="account-interest-head">
+                <h2 id="account-interest-title">Más noticias de interés</h2>
+                <a href="{{ path('home') }}" class="account-interest-more">Ver portada →</a>
+            </div>
+            <div class="account-interest-grid">
+                {% for article in interestNews %}
+                    {% include 'public/_partials/story_card.html.twig' with {
+                        article: article,
+                        grid_card: true,
+                        section_card: true,
+                        show_meta: true,
+                    } %}
+                {% endfor %}
+            </div>
+        </section>
+    {% endif %}
+</div>
+{% endblock %}

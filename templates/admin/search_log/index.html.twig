@@ -1,0 +1,189 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}Búsquedas{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .search-log-kpis {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: .75rem;
+        margin-bottom: 1.25rem;
+    }
+    .search-log-kpi {
+        background: #f8fafc;
+        border: 1px solid var(--admin-border);
+        border-radius: 12px;
+        padding: 1rem 1.1rem;
+    }
+    .search-log-kpi p {
+        margin: 0;
+    }
+    .search-log-kpi-label {
+        font-size: .72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+        color: var(--admin-muted);
+        margin-bottom: .35rem;
+    }
+    .search-log-kpi-value {
+        font-size: 1.75rem;
+        font-weight: 800;
+        line-height: 1.1;
+    }
+    .search-log-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1.6fr) minmax(16rem, .9fr);
+        gap: 1.25rem;
+        align-items: start;
+    }
+    .search-log-panel {
+        border: 1px solid var(--admin-border);
+        border-radius: 12px;
+        padding: 1rem 1.1rem;
+        background: var(--admin-surface, #fff);
+    }
+    .search-log-panel h2 {
+        margin: 0 0 .85rem;
+        font-size: 1rem;
+    }
+    .search-log-top {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: grid;
+        gap: .45rem;
+    }
+    .search-log-top li {
+        display: flex;
+        justify-content: space-between;
+        gap: .75rem;
+        align-items: baseline;
+        font-size: .9rem;
+    }
+    .search-log-top a {
+        color: inherit;
+        text-decoration: none;
+        font-weight: 600;
+        overflow-wrap: anywhere;
+    }
+    .search-log-top a:hover { color: var(--admin-accent); }
+    .search-log-top span {
+        color: var(--admin-muted);
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+    }
+    @media (max-width: 900px) {
+        .search-log-layout { grid-template-columns: 1fr; }
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+{% include 'admin/_page_header.html.twig' with {
+    title: 'Búsquedas de usuarios',
+    subtitle: 'Consultas realizadas en el buscador público del periódico.',
+    breadcrumbs: [
+        { label: 'Panel', url: path('admin_dashboard') },
+        { label: 'Búsquedas' },
+    ],
+} %}
+
+{% if not schemaReady %}
+    <p class="hint">Aún no está creada la tabla de búsquedas. Ejecuta <code>php bin/console migrate:site --code={{ site.code }}</code> y recarga esta página.</p>
+{% else %}
+<div class="search-log-kpis">
+    <div class="search-log-kpi">
+        <p class="search-log-kpi-label">Hoy</p>
+        <p class="search-log-kpi-value">{{ stats.today }}</p>
+    </div>
+    <div class="search-log-kpi">
+        <p class="search-log-kpi-label">Últimos 7 días</p>
+        <p class="search-log-kpi-value">{{ stats.week }}</p>
+    </div>
+    <div class="search-log-kpi">
+        <p class="search-log-kpi-label">Términos distintos (7 días)</p>
+        <p class="search-log-kpi-value">{{ stats.distinctWeek }}</p>
+    </div>
+</div>
+
+<div class="search-log-layout">
+    <div>
+        <div class="admin-filters">
+            <form method="get" action="{{ path('admin_search_logs') }}" class="admin-filters-form">
+                <div class="admin-filters-row admin-filters-row--toolbar">
+                    <div class="admin-filter-field admin-filter-field--grow">
+                        <label for="search-log-q">Filtrar término</label>
+                        <input id="search-log-q" type="search" name="q" value="{{ query }}" placeholder="Ej. ayuntamiento, fútbol…">
+                    </div>
+                    <div class="admin-filter-actions">
+                        <button type="submit" class="btn btn-primary btn-sm">Buscar</button>
+                        {% if query %}
+                            <a href="{{ path('admin_search_logs') }}" class="btn btn-secondary btn-sm">Limpiar</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        {% if logs is empty %}
+            <p class="hint">Todavía no hay búsquedas registradas{{ query ? ' con ese filtro' : '' }}.</p>
+        {% else %}
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Consulta</th>
+                        <th>Resultados</th>
+                        <th>Fecha</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for log in logs %}
+                    <tr>
+                        <td data-label="Consulta"><strong>{{ log.query }}</strong></td>
+                        <td data-label="Resultados">{{ log.resultsCount }}</td>
+                        <td class="col-date" data-label="Fecha">{{ log.createdAt|date('d/m/Y H:i') }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+
+            {% if totalPages > 1 %}
+                <nav class="admin-pagination" aria-label="Paginación">
+                    <div class="admin-pagination-summary">
+                        <strong>{{ total }}</strong> búsqueda{{ total != 1 ? 's' : '' }}
+                        · página <strong>{{ page }}</strong> de <strong>{{ totalPages }}</strong>
+                    </div>
+                    <div class="admin-pagination-controls">
+                        {% set qParams = query ? {q: query} : {} %}
+                        {% if page > 1 %}
+                            <a href="{{ page == 2 ? path('admin_search_logs', qParams) : path('admin_search_logs_paged', qParams|merge({page: page - 1})) }}" class="btn btn-secondary btn-sm">Anterior</a>
+                        {% endif %}
+                        {% if page < totalPages %}
+                            <a href="{{ path('admin_search_logs_paged', qParams|merge({page: page + 1})) }}" class="btn btn-secondary btn-sm">Siguiente</a>
+                        {% endif %}
+                    </div>
+                </nav>
+            {% endif %}
+        {% endif %}
+    </div>
+
+    <aside class="search-log-panel">
+        <h2>Más buscadas (7 días)</h2>
+        {% if topQueries is empty %}
+            <p class="hint">Aún no hay suficientes búsquedas.</p>
+        {% else %}
+            <ol class="search-log-top">
+                {% for row in topQueries %}
+                    <li>
+                        <a href="{{ path('admin_search_logs', {q: row.query}) }}">{{ row.query }}</a>
+                        <span>{{ row.total }}</span>
+                    </li>
+                {% endfor %}
+            </ol>
+        {% endif %}
+    </aside>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,140 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}Foro{% endblock %}
+
+{% block admin_breadcrumbs %}
+{% import 'admin/_breadcrumbs.html.twig' as breadcrumb %}
+{{ breadcrumb.breadcrumbs([
+    { label: 'Panel', url: path('admin_dashboard') },
+    { label: 'Foro' },
+]) }}
+{% endblock %}
+
+{% block body %}
+{% include 'admin/_page_header.html.twig' with {
+    title: 'Foro de la comunidad',
+    subtitle: 'Temas, respuestas y moderación.',
+    breadcrumbs: [
+        { label: 'Panel', url: path('admin_dashboard') },
+        { label: 'Foro' },
+    ],
+    actions: '<a href="' ~ path('admin_community_forum_categories') ~ '" class="btn btn-secondary btn-sm">Categorías</a>'
+} only %}
+
+{% include 'admin/community/_subnav.html.twig' %}
+
+<section class="dash-panel" style="margin-bottom:1.5rem">
+    <header class="dash-panel-head"><h3>Temas recientes</h3></header>
+    {% if topics is empty %}
+        <p class="hint">Sin temas todavía.</p>
+    {% else %}
+    <div class="table-responsive">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Título</th>
+                <th>Categoría</th>
+                <th>Autor</th>
+                <th>Respuestas</th>
+                <th>Última actividad</th>
+                <th>Estado</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for topic in topics %}
+            <tr class="{{ topic.isHidden ? 'row-muted' : '' }}">
+                <td data-label="Título">
+                    <a href="{{ path('public_forum_show', {slug: topic.slug}) }}" target="_blank" rel="noopener">{{ topic.title|slice(0, 48) }}</a>
+                    {% if topic.isPinned %} <span class="status-badge status-badge--published">Fijado</span>{% endif %}
+                    {% if topic.isLocked %} <span class="status-badge status-badge--archived">Cerrado</span>{% endif %}
+                </td>
+                <td data-label="Categoría">{{ topic.category ? topic.category.name : '—' }}</td>
+                <td data-label="Autor">{{ topic.userName }}</td>
+                <td data-label="Respuestas">{{ topic.replyCount }}</td>
+                <td data-label="Actividad">{{ topic.lastReplyAt|date('d/m/Y H:i') }}</td>
+                <td data-label="Estado">
+                    {% if topic.isHidden %}
+                        <span class="status-badge status-badge--archived">Oculto</span>
+                    {% else %}
+                        <span class="status-badge status-badge--published">Visible</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if topic.isHidden %}
+                    <form class="inline-form" method="post" action="{{ path('admin_community_topic_restore', {id: topic.id}) }}">
+                        <input type="hidden" name="_token" value="{{ csrf_token('restore_topic' ~ topic.id) }}">
+                        <button type="submit" class="btn btn-secondary btn-sm">Restaurar</button>
+                    </form>
+                    {% else %}
+                    <form class="inline-form" method="post" action="{{ path('admin_community_topic_hide', {id: topic.id}) }}">
+                        <input type="hidden" name="_token" value="{{ csrf_token('hide_topic' ~ topic.id) }}">
+                        <button type="submit" class="btn btn-secondary btn-sm">Ocultar</button>
+                    </form>
+                    {% endif %}
+                    {% if topic.isLocked %}
+                    <form class="inline-form" method="post" action="{{ path('admin_community_topic_unlock', {id: topic.id}) }}">
+                        <input type="hidden" name="_token" value="{{ csrf_token('unlock_topic' ~ topic.id) }}">
+                        <button type="submit" class="btn btn-secondary btn-sm">Reabrir</button>
+                    </form>
+                    {% else %}
+                    <form class="inline-form" method="post" action="{{ path('admin_community_topic_lock', {id: topic.id}) }}">
+                        <input type="hidden" name="_token" value="{{ csrf_token('lock_topic' ~ topic.id) }}">
+                        <button type="submit" class="btn btn-secondary btn-sm">Cerrar</button>
+                    </form>
+                    {% endif %}
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    </div>
+    {% endif %}
+</section>
+
+<section class="dash-panel">
+    <header class="dash-panel-head"><h3>Respuestas recientes</h3></header>
+    {% if posts is empty %}
+        <p class="hint">Sin respuestas todavía.</p>
+    {% else %}
+    <div class="table-responsive">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Tema</th>
+                <th>Usuario</th>
+                <th>Mensaje</th>
+                <th>Fecha</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for post in posts %}
+            <tr class="{{ post.isHidden ? 'row-muted' : '' }}">
+                <td data-label="Tema">
+                    <a href="{{ path('public_forum_show', {slug: post.topic.slug}) }}" target="_blank" rel="noopener">{{ post.topic.title|slice(0, 40) }}</a>
+                </td>
+                <td data-label="Usuario">{{ post.userName }}</td>
+                <td data-label="Mensaje">{{ post.body|slice(0, 80) }}{% if post.body|length > 80 %}…{% endif %}</td>
+                <td data-label="Fecha">{{ post.createdAt|date('d/m/Y H:i') }}</td>
+                <td>
+                    {% if post.isHidden %}
+                    <form class="inline-form" method="post" action="{{ path('admin_community_post_restore', {id: post.id}) }}">
+                        <input type="hidden" name="_token" value="{{ csrf_token('restore_post' ~ post.id) }}">
+                        <button type="submit" class="btn btn-secondary btn-sm">Restaurar</button>
+                    </form>
+                    {% else %}
+                    <form class="inline-form" method="post" action="{{ path('admin_community_post_hide', {id: post.id}) }}">
+                        <input type="hidden" name="_token" value="{{ csrf_token('hide_post' ~ post.id) }}">
+                        <button type="submit" class="btn btn-secondary btn-sm">Ocultar</button>
+                    </form>
+                    {% endif %}
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    </div>
+    {% endif %}
+</section>
+{% endblock %}

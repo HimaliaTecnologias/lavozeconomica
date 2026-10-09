@@ -1,0 +1,283 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}Biblioteca de medios{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .media-toolbar {
+        display: flex;
+        gap: .75rem;
+        flex-wrap: wrap;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+    .media-toolbar input[type=search] { max-width: 280px; }
+    .media-grid {
+        display: grid;
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: .75rem;
+    }
+    @media (max-width: 1280px) {
+        .media-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+    }
+    @media (max-width: 1024px) {
+        .media-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    }
+    @media (max-width: 768px) {
+        .media-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+    @media (max-width: 520px) {
+        .media-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    .media-card {
+        border: 1px solid var(--admin-border, var(--border));
+        border-radius: 8px;
+        overflow: hidden;
+        background: #fff;
+        transition: box-shadow .15s;
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+    }
+    .media-card:hover { box-shadow: 0 4px 14px rgba(0,0,0,.08); }
+    .media-card-thumb { display: block; position: relative; }
+    .media-card img {
+        display: block;
+        width: 100%;
+        aspect-ratio: 4/3;
+        object-fit: cover;
+        background: #edf2f7;
+    }
+    .media-status {
+        position: absolute;
+        top: .35rem;
+        left: .35rem;
+        padding: .15rem .4rem;
+        border-radius: 4px;
+        font-size: .65rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        background: rgba(0,0,0,.65);
+        color: #fff;
+    }
+    .media-status.pending, .media-status.processing { background: #d97706; }
+    .media-status.enhanced { background: #15803d; }
+    .media-status.failed { background: #b91c1c; }
+    .media-card-body {
+        padding: .5rem;
+        font-size: .75rem;
+        display: flex;
+        flex-direction: column;
+        gap: .35rem;
+        flex: 1;
+        min-width: 0;
+    }
+    .media-card-body strong {
+        display: block;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .media-card-meta {
+        color: var(--admin-muted, #64748b);
+        font-size: .7rem;
+        line-height: 1.2;
+        min-height: 1em;
+    }
+    .media-card-actions {
+        display: flex;
+        gap: .3rem;
+        margin-top: auto;
+        padding-top: .15rem;
+        justify-content: center;
+        align-items: center;
+    }
+    .media-card-actions form { margin: 0; }
+    .media-icon-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2rem;
+        height: 2rem;
+        padding: 0;
+        border-radius: 7px;
+        border: 1px solid var(--admin-border, #cbd5e1);
+        background: #fff;
+        color: #334155;
+        cursor: pointer;
+        text-decoration: none;
+        flex-shrink: 0;
+        transition: background .12s, border-color .12s, color .12s;
+    }
+    .media-icon-btn:hover {
+        background: #f8fafc;
+        border-color: #94a3b8;
+        color: #0f172a;
+    }
+    .media-icon-btn--manage {
+        color: var(--admin-accent, #1e40af);
+        border-color: color-mix(in srgb, var(--admin-accent, #1e40af) 35%, #cbd5e1);
+    }
+    .media-icon-btn--manage:hover {
+        background: color-mix(in srgb, var(--admin-accent, #1e40af) 10%, #fff);
+        border-color: var(--admin-accent, #1e40af);
+    }
+    .media-icon-btn--danger {
+        color: #b91c1c;
+        border-color: color-mix(in srgb, #b91c1c 30%, #cbd5e1);
+    }
+    .media-icon-btn--danger:hover {
+        background: #fef2f2;
+        border-color: #b91c1c;
+    }
+    .media-icon-btn--pick {
+        width: 100%;
+        height: 2rem;
+        gap: .35rem;
+        font-size: .75rem;
+        font-weight: 700;
+        color: #fff;
+        background: var(--admin-accent, #1e40af);
+        border-color: var(--admin-accent, #1e40af);
+    }
+    .media-icon-btn--pick:hover {
+        color: #fff;
+        filter: brightness(1.05);
+    }
+    .media-icon-btn svg {
+        width: 1rem;
+        height: 1rem;
+        display: block;
+    }
+    .media-pagination {
+        display: flex;
+        gap: .5rem;
+        margin-top: 1rem;
+        align-items: center;
+    }
+    .upload-zone {
+        border: 2px dashed var(--admin-border, var(--border));
+        border-radius: 8px;
+        padding: 1rem;
+        text-align: center;
+        margin-bottom: 1rem;
+        cursor: pointer;
+    }
+    .upload-zone.dragover { border-color: var(--admin-accent, var(--secondary)); background: #ebf8ff; }
+    .media-import-form { margin-bottom: 1rem; }
+</style>
+{% endblock %}
+
+{% block body %}
+{% set headerActions %}
+    {% if not picker %}
+        <a href="{{ path('admin_articles_index') }}" class="btn btn-secondary btn-sm">Volver a noticias</a>
+    {% endif %}
+{% endset %}
+{% include 'admin/_page_header.html.twig' with {
+    title: 'Biblioteca de medios',
+    subtitle: 'Sube, mejora, transforma y anonimiza imágenes. Úsalas en las galerías de noticias.',
+    breadcrumbs: picker ? [] : [
+        { label: 'Panel', url: path('admin_dashboard') },
+        { label: 'Medios' },
+    ],
+    actions: headerActions
+} only %}
+
+<div class="upload-zone" id="media-upload-zone" data-upload-url="{{ path('admin_media_upload') }}" data-csrf="{{ csrf_token('media_upload') }}">
+    <strong>Subir imágenes</strong>
+    <p class="hint" style="margin:.35rem 0 0">Arrastra archivos aquí o haz clic · JPEG, PNG, WebP, GIF · máx. 20 MB</p>
+    <input type="file" id="media-file-input" accept="image/jpeg,image/png,image/webp,image/gif" multiple hidden>
+</div>
+
+<form class="media-toolbar" method="get" action="{{ path('admin_media_index') }}">
+    {% if picker %}<input type="hidden" name="picker" value="1">{% endif %}
+    <input type="search" name="q" value="{{ query }}" placeholder="Buscar por nombre…">
+    <button type="submit" class="btn btn-secondary">Buscar</button>
+    <span class="hint">{{ total }} archivo(s)</span>
+</form>
+{% if unlinkedImages is defined and unlinkedImages > 0 and not picker %}
+    <form class="inline-form media-import-form" method="post" action="{{ path('admin_media_import_from_articles') }}">
+        <input type="hidden" name="_token" value="{{ csrf_token('media_import_articles') }}">
+        <button type="submit" class="btn btn-secondary btn-sm">Importar {{ unlinkedImages }} imagen(es) de noticias</button>
+    </form>
+{% endif %}
+
+{% if mediaItems is empty %}
+    <p class="hint">
+        La biblioteca está vacía.
+        {% if unlinkedImages is defined and unlinkedImages > 0 %}
+            Hay {{ unlinkedImages }} imagen(es) en noticias que se pueden importar.
+        {% else %}
+            Sube la primera imagen.
+        {% endif %}
+    </p>
+{% else %}
+    <div class="media-grid" id="media-grid">
+        {% for item in mediaItems %}
+            <div class="media-card" data-media-id="{{ item.id }}" data-media-url="{{ item.publicPath }}" data-media-alt="{{ item.alt|default('') }}" data-media-caption="{{ item.caption|default('') }}" data-media-title="{{ item.title|default(item.originalFilename) }}">
+                <a href="{{ path('admin_media_show', {id: item.id}) }}" class="media-card-thumb">
+                    <img src="{{ item.publicPath }}" alt="{{ item.alt|default(item.originalFilename) }}" loading="lazy">
+                    <span class="media-status {{ item.enhancementStatus.value }}">{{ item.enhancementStatus.value }}</span>
+                </a>
+                <div class="media-card-body">
+                    <strong title="{{ item.title|default(item.originalFilename) }}">{{ item.title|default(item.originalFilename) }}</strong>
+                    <div class="media-card-meta">
+                        {% if item.width and item.height %}{{ item.width }}×{{ item.height }}{% else %}&nbsp;{% endif %}
+                    </div>
+                    <div class="media-card-actions">
+                        {% if not picker %}
+                            <a href="{{ path('admin_media_show', {id: item.id}) }}"
+                               class="media-icon-btn media-icon-btn--manage"
+                               title="Gestionar"
+                               aria-label="Gestionar {{ item.title|default(item.originalFilename) }}">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                    <circle cx="12" cy="12" r="3"/>
+                                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                                </svg>
+                            </a>
+                            <form method="post" action="{{ path('admin_media_delete', {id: item.id}) }}" onsubmit="return confirm('¿Eliminar este archivo?')">
+                                <input type="hidden" name="_token" value="{{ csrf_token('delete_media' ~ item.id) }}">
+                                <button type="submit"
+                                        class="media-icon-btn media-icon-btn--danger"
+                                        title="Eliminar"
+                                        aria-label="Eliminar {{ item.title|default(item.originalFilename) }}">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                        <polyline points="3 6 5 6 21 6"/>
+                                        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                                        <path d="M10 11v6M14 11v6"/>
+                                        <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                                    </svg>
+                                </button>
+                            </form>
+                        {% else %}
+                            <button type="button" class="media-icon-btn media-icon-btn--pick media-pick-btn" title="Seleccionar" aria-label="Seleccionar">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+                                    <polyline points="20 6 9 17 4 12"/>
+                                </svg>
+                                Seleccionar
+                            </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    {% if totalPages > 1 %}
+        <nav class="media-pagination">
+            {% if page > 1 %}
+                <a href="{{ path('admin_media_index', {q: query, page: page - 1, picker: picker ? 1 : null}) }}" class="btn btn-secondary btn-sm">Anterior</a>
+            {% endif %}
+            <span class="hint">Página {{ page }} de {{ totalPages }}</span>
+            {% if page < totalPages %}
+                <a href="{{ path('admin_media_index', {q: query, page: page + 1, picker: picker ? 1 : null}) }}" class="btn btn-secondary btn-sm">Siguiente</a>
+            {% endif %}
+        </nav>
+    {% endif %}
+{% endif %}
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="/js/admin-media.js?v=6"></script>
+{% endblock %}

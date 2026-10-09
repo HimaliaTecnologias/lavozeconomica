@@ -1,0 +1,162 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}{{ gallery ? 'Editar galería' : 'Nueva galería' }}{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .gallery-form {
+        display: grid;
+        gap: 1rem;
+        max-width: 52rem;
+    }
+    .gallery-form-card {
+        background: #fff;
+        border: 1px solid var(--admin-border);
+        border-radius: var(--admin-radius-sm);
+        padding: 1.15rem 1.25rem 1.3rem;
+    }
+    .gallery-form-card h2 {
+        margin: 0 0 .35rem;
+        font-size: 1rem;
+    }
+    .gallery-form-card > .hint {
+        margin: 0 0 1rem;
+    }
+    .gallery-form-actions {
+        display: flex;
+        gap: .5rem;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        padding-top: .25rem;
+    }
+    .gallery-drop-hint {
+        border: 1px dashed color-mix(in srgb, var(--admin-border) 80%, #94a3b8);
+        border-radius: 10px;
+        padding: 1rem 1.1rem;
+        background: #f8fafc;
+        margin-bottom: .85rem;
+    }
+    .gallery-drop-hint strong {
+        display: block;
+        font-size: .9rem;
+        margin-bottom: .25rem;
+    }
+    .gallery-count {
+        margin-left: auto;
+        font-size: .82rem;
+        color: var(--admin-muted);
+        font-weight: 600;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+{% set fd = formData|default({}) %}
+{% set titleVal = fd.title|default(gallery ? gallery.title : '') %}
+{% set imageCount = 0 %}
+{% if fd.images is defined and fd.images is not empty %}
+    {% set imageCount = fd.images|length %}
+{% elseif gallery and gallery.images is not empty %}
+    {% set imageCount = gallery.images|length %}
+{% else %}
+    {% set imageCount = 1 %}
+{% endif %}
+
+{% set headerActions %}
+    <a href="{{ path('admin_galleries_index') }}" class="btn btn-secondary btn-sm">Volver al listado</a>
+{% endset %}
+{% include 'admin/_page_header.html.twig' with {
+    title: gallery ? 'Editar galería' : 'Nueva galería',
+    subtitle: 'Colección reutilizable de imágenes para asociar a una o varias noticias.',
+    breadcrumbs: [
+        { label: 'Panel', url: path('admin_dashboard') },
+        { label: 'Galerías', url: path('admin_galleries_index') },
+        { label: gallery ? 'Editar' : 'Nueva' },
+    ],
+    actions: headerActions
+} only %}
+
+<form class="gallery-form" method="post" action="{{ gallery ? path('admin_galleries_edit', {id: gallery.id}) : path('admin_galleries_new') }}">
+    <input type="hidden" name="_token" value="{{ csrf_token('gallery_form') }}">
+
+    <section class="gallery-form-card">
+        <h2>Datos de la galería</h2>
+        <p class="hint">El título identifica la galería en el listado y al enlazarla desde una noticia.</p>
+
+        <div class="field">
+            <label for="title">Título *</label>
+            <input type="text" id="title" name="title" value="{{ titleVal }}" required maxlength="255"
+                   placeholder="Ej. Reportaje fotográfico del barrio"
+                   class="{{ errors.title is defined ? 'error' : '' }}">
+            {% if errors.title is defined %}<div class="error-msg">{{ errors.title }}</div>{% endif %}
+        </div>
+    </section>
+
+    <section class="gallery-form-card">
+        <h2>Imágenes</h2>
+        <p class="hint">Añade al menos una. Arrastra el asa ⋮⋮ para reordenar, o usa las flechas.</p>
+        {% if errors.images is defined %}<div class="error-msg" style="margin-bottom:.75rem">{{ errors.images }}</div>{% endif %}
+
+        <div class="gallery-drop-hint">
+            <strong>Cómo añadir fotos</strong>
+            <span class="hint" style="margin:0;display:block">Haz clic en la miniatura o en «Biblioteca», sube un archivo, o arrastra una imagen sobre la previsualización.</span>
+        </div>
+
+        <div id="gallery-editor" class="gallery-editor" data-gallery-editor data-field-prefix="images"
+             data-upload-url="{{ path('admin_media_upload') }}"
+             data-upload-csrf="{{ csrf_token('media_upload') }}">
+            <div id="gallery-rows" data-gallery-rows>
+                {% if fd.images is defined and fd.images is not empty %}
+                    {% for row in fd.images %}
+                        {% include 'admin/article/_gallery_row.html.twig' with { index: loop.index0, row: row, img: null, namePrefix: 'images' } %}
+                    {% endfor %}
+                {% elseif gallery and gallery.images is not empty %}
+                    {% for img in gallery.images %}
+                        {% include 'admin/article/_gallery_row.html.twig' with { index: loop.index0, row: null, img: img, namePrefix: 'images' } %}
+                    {% endfor %}
+                {% else %}
+                    {% include 'admin/article/_gallery_row.html.twig' with { index: 0, row: null, img: null, namePrefix: 'images' } %}
+                {% endif %}
+            </div>
+
+            <div class="gallery-toolbar">
+                <button type="button" class="btn btn-secondary btn-sm" data-action="add-row">+ Añadir imagen</button>
+                <span class="gallery-count" data-gallery-count>{{ imageCount }} imagen{{ imageCount == 1 ? '' : 'es' }}</span>
+            </div>
+
+            <template data-gallery-row-template>
+                {% include 'admin/article/_gallery_row.html.twig' with { index: '__INDEX__', row: null, img: null, is_template: true, namePrefix: 'images' } %}
+            </template>
+        </div>
+    </section>
+
+    <div class="gallery-form-actions">
+        <a href="{{ path('admin_galleries_index') }}" class="btn btn-secondary">Cancelar</a>
+        <button type="submit" class="btn btn-primary">{{ gallery ? 'Guardar cambios' : 'Crear galería' }}</button>
+    </div>
+</form>
+
+{% include 'admin/_media_picker_modal.html.twig' %}
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="/js/admin-media.js?v=6"></script>
+<script>
+(function () {
+    var root = document.getElementById('gallery-editor');
+    var countEl = document.querySelector('[data-gallery-count]');
+    if (!root || !countEl) return;
+
+    function refreshCount() {
+        var n = root.querySelectorAll('[data-gallery-row]').length;
+        countEl.textContent = n + (n === 1 ? ' imagen' : ' imágenes');
+    }
+
+    root.addEventListener('click', function (e) {
+        if (e.target.closest('[data-action="add-row"], [data-action="remove-row"]')) {
+            setTimeout(refreshCount, 0);
+        }
+    });
+})();
+</script>
+{% endblock %}

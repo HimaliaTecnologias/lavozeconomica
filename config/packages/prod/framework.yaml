@@ -1,0 +1,5 @@
+# Este directorio tiene que existir: services.yaml importa packages/prod/*.yaml
+# solo con APP_ENV=prod. Si falta, Symfony no compila el contenedor y la web da 500.
+framework:
+    php_errors:
+        log: true

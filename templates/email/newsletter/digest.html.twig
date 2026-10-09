@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ periodLabel }}</title>
+</head>
+<body style="margin:0;padding:0;background:#f1f5f9;font-family:Georgia,serif;color:#1a1a1a">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#f1f5f9;padding:32px 16px">
+        <tr>
+            <td align="center">
+                <table width="600" cellpadding="0" cellspacing="0" style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:32px">
+                    <tr>
+                        <td>
+                            {% if theme.logoUrl|default('') %}
+                                <img src="{{ theme.logoUrl }}" alt="{{ site.name }}" style="max-height:48px;margin-bottom:16px">
+                            {% else %}
+                                <p style="font-size:22px;font-weight:700;margin:0 0 16px">{{ site.name }}</p>
+                            {% endif %}
+                            <h1 style="font-size:22px;margin:0 0 8px">{{ periodLabel }}</h1>
+                            <p style="color:#64748b;margin:0 0 24px">Lo más destacado para ti</p>
+
+                            {% for article in articles %}
+                                <div style="margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid #e2e8f0">
+                                    {% if article.category %}
+                                        <p style="font-size:11px;text-transform:uppercase;color:{{ theme.primaryColor|default('#b91c1c') }};margin:0 0 4px;font-weight:700">{{ article.category }}</p>
+                                    {% endif %}
+                                    <h2 style="font-size:18px;margin:0 0 6px">
+                                        <a href="{{ article.url }}" style="color:#1a1a1a;text-decoration:none">{{ article.title }}</a>
+                                    </h2>
+                                    {% if article.lead %}
+                                        <p style="font-size:14px;line-height:1.5;color:#475569;margin:0 0 8px">{{ article.lead }}</p>
+                                    {% endif %}
+                                    <a href="{{ article.url }}" style="font-size:13px;color:{{ theme.linkColorResolved|default(theme.primaryColor|default('#b91c1c')) }}">Leer noticia →</a>
+                                </div>
+                            {% endfor %}
+
+                            <p style="margin:24px 0 0">
+                                <a href="{{ homeUrl }}" style="display:inline-block;background:{{ theme.primaryColor|default('#b91c1c') }};color:#fff;padding:10px 20px;text-decoration:none;border-radius:8px;font-weight:700">
+                                    Ver portada
+                                </a>
+                            </p>
+
+                            <p style="font-size:12px;color:#94a3b8;margin:28px 0 0;line-height:1.5">
+                                <a href="{{ preferencesUrl }}" style="color:#64748b">Cambiar preferencias</a>
+                                ·
+                                <a href="{{ unsubscribeUrl }}" style="color:#64748b">Cancelar suscripción</a>
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

@@ -1,0 +1,88 @@
+{% extends 'public/layout.html.twig' %}
+
+{% block title %}Sudoku del día — {{ site.name }}{% endblock %}
+
+{% block body %}
+<div class="games-layout">
+    <div class="games-main">
+        <div class="games-page games-page--sudoku">
+            {% include 'public/_partials/breadcrumb.html.twig' with {
+                crumbs: [
+                    { label: 'Pasatiempos', url: path('public_games') },
+                    { label: 'Sudoku' },
+                ]
+            } %}
+
+            <header class="games-page-head">
+                <h1>Sudoku del día</h1>
+                {% if puzzle %}
+                    <p class="games-page-meta">
+                        <span>Reto diario</span>
+                        <span class="games-page-meta-sep">·</span>
+                        <span>{{ puzzle.dateKey|date('d/m/Y') }}</span>
+                        <span class="games-page-meta-sep">·</span>
+                        <span><strong id="sudoku-progress">0</strong>/<span id="sudoku-empty-total">0</span> celdas</span>
+                    </p>
+                {% endif %}
+                <p class="games-page-lead">Completa la cuadrícula con números del 1 al 9. El mismo reto para todos los lectores.</p>
+            </header>
+
+            {% if puzzle %}
+                <div class="sudoku-stage" id="sudoku-app"
+                     data-puzzle="{{ puzzle.puzzle|json_encode|e('html_attr') }}"
+                     data-solution="{{ puzzle.solution|json_encode|e('html_attr') }}">
+                    <div class="sudoku-board-panel">
+                        <div class="sudoku-grid" id="sudoku-grid" role="grid" aria-label="Sudoku 9 por 9"></div>
+                        <p class="sudoku-status" id="sudoku-status" aria-live="polite"></p>
+                    </div>
+
+                    <aside class="sudoku-side">
+                        <div class="sudoku-side-card">
+                            <h2>Controles</h2>
+                            <div class="sudoku-actions" role="group" aria-label="Acciones del sudoku">
+                                <button type="button" class="btn-game" id="sudoku-check">Comprobar</button>
+                                <button type="button" class="btn-game btn-game--ghost" id="sudoku-hint">Pista</button>
+                                <button type="button" class="btn-game btn-game--ghost" id="sudoku-reset">Reiniciar</button>
+                            </div>
+                        </div>
+
+                        <div class="sudoku-side-card">
+                            <h2>Teclado</h2>
+                            <p class="sudoku-side-hint">Toca un número o usa el teclado. Borrar vacía la celda.</p>
+                            <div class="sudoku-pad" id="sudoku-pad" role="group" aria-label="Números del 1 al 9">
+                                {% for n in 1..9 %}
+                                    <button type="button" class="sudoku-pad-key" data-num="{{ n }}">{{ n }}</button>
+                                {% endfor %}
+                                <button type="button" class="sudoku-pad-key sudoku-pad-key--wide" data-num="0">Borrar</button>
+                            </div>
+                        </div>
+
+                        <div class="sudoku-side-card sudoku-side-card--rules">
+                            <h2>Cómo se juega</h2>
+                            <ul>
+                                <li>Cada fila, columna y bloque 3×3 debe contener los números del 1 al 9 sin repetir.</li>
+                                <li>Las celdas sombreadas son fijas; solo rellenas las vacías.</li>
+                                <li>Usa las flechas del teclado para moverte entre celdas.</li>
+                            </ul>
+                        </div>
+
+                        {% if config.wordScrambleEnabled %}
+                            <a class="sudoku-more-link" href="{{ path('public_games_anagrama') }}">También hoy: Anagrama del día →</a>
+                        {% else %}
+                            <a class="sudoku-more-link" href="{{ path('public_games') }}">Ver más pasatiempos →</a>
+                        {% endif %}
+                    </aside>
+                </div>
+            {% else %}
+                <p class="games-empty">No hay sudoku disponible en este momento.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    {% include 'public/games/_sidebar.html.twig' %}
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+    <script src="/js/sudoku.js?v=2" defer></script>
+{% endblock %}

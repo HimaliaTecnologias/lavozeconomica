@@ -1,0 +1,8 @@
+{% if categories is not empty %}
+<div class="category-subnav community-category-nav" aria-label="{{ navLabel|default('Categorías') }}">
+    <a href="{{ allRoute }}" class="category-subnav-item{{ activeCategory is null ? ' active' : '' }}">Todos</a>
+    {% for category in categories %}
+        <a href="{{ path(categoryRoute, {categorySlug: category.slug}) }}" class="category-subnav-item{{ activeCategory and activeCategory.id == category.id ? ' active' : '' }}">{{ category.name }}</a>
+    {% endfor %}
+</div>
+{% endif %}

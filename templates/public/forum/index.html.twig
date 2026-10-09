@@ -1,0 +1,94 @@
+{% extends 'public/layout.html.twig' %}
+
+{% block title %}{{ seoTitle|default('Foro') }}{% endblock %}
+
+{% block body %}
+<div class="community-layout community-layout--full">
+    <nav class="article-breadcrumb community-breadcrumb">
+        <a href="{{ path('home') }}">Portada</a>
+        · {% if activeCategory %}
+            <a href="{{ path('public_forum') }}">Foro</a>
+            · {{ activeCategory.name }}
+        {% else %}
+            Foro
+        {% endif %}
+    </nav>
+
+    <header class="category-header community-page-head">
+        <h1 class="category-title">
+            {% if activeCategory %}
+                {{ activeCategory.name }}
+            {% else %}
+                Foro de la comunidad
+            {% endif %}
+        </h1>
+        <p class="category-description">
+            {% if activeCategory and activeCategory.description %}
+                {{ activeCategory.description }}
+            {% else %}
+                Debate actualidad, temas locales y asuntos de interés con otros lectores.
+            {% endif %}
+        </p>
+        <div class="community-page-head-actions">
+            {% if app.user %}
+                <a href="{{ path('public_forum_new', activeCategory ? {categoria: activeCategory.id} : {}) }}" class="community-action-btn community-action-btn--primary">Nuevo tema</a>
+            {% else %}
+                <a href="{{ path('cuenta_login') }}" class="community-action-btn community-action-btn--primary">Entrar para participar</a>
+            {% endif %}
+        </div>
+    </header>
+
+    {% include 'public/_partials/community_category_nav.html.twig' with {
+        categories: categories,
+        activeCategory: activeCategory,
+        allRoute: path('public_forum'),
+        categoryRoute: 'public_forum_category',
+        navLabel: 'Categorías del foro',
+    } only %}
+
+    {% if topics is empty %}
+        <div class="community-empty-panel">
+            <p>Aún no hay temas en esta categoría.</p>
+            {% if app.user %}
+                <a href="{{ path('public_forum_new', activeCategory ? {categoria: activeCategory.id} : {}) }}" class="community-action-btn">Abre el primer debate</a>
+            {% else %}
+                <p class="community-login-hint"><a href="{{ path('cuenta_register') }}">Crea una cuenta</a> para participar.</p>
+            {% endif %}
+        </div>
+    {% else %}
+        <p class="archive-results-count">{{ topics|length }} tema{{ topics|length != 1 ? 's' : '' }}</p>
+        <div class="forum-table-wrap">
+            <div class="forum-table-head" aria-hidden="true">
+                <span>Tema</span>
+                <span>Categoría</span>
+                <span>Autor</span>
+                <span>Respuestas</span>
+                <span>Última actividad</span>
+            </div>
+            <ul class="forum-topic-list">
+                {% for topic in topics %}
+                    <li class="forum-topic-row{{ topic.isPinned ? ' is-pinned' : '' }}{{ topic.isLocked ? ' is-locked' : '' }}">
+                        <a href="{{ path('public_forum_show', {slug: topic.slug}) }}" class="forum-topic-row-link">
+                            <span class="forum-col-topic">
+                                {% if topic.isPinned %}<span class="forum-status forum-status--pin">Fijado</span>{% endif %}
+                                {% if topic.isLocked %}<span class="forum-status forum-status--lock">Cerrado</span>{% endif %}
+                                <strong>{{ topic.title }}</strong>
+                            </span>
+                            <span class="forum-col-category">
+                                {% if topic.category %}
+                                    <span class="community-category-pill">{{ topic.category.name }}</span>
+                                {% else %}—{% endif %}
+                            </span>
+                            <span class="forum-col-author">{{ topic.userName }}</span>
+                            <span class="forum-col-replies">{{ topic.replyCount }}</span>
+                            <span class="forum-col-activity">{{ topic.lastReplyAt|date('d/m/Y H:i') }}</span>
+                        </a>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+
+    {% include 'public/_partials/community_related_news.html.twig' %}
+</div>
+{% endblock %}

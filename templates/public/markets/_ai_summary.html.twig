@@ -1,0 +1,13 @@
+{% if aiSummary %}
+    <section class="markets-ai-summary" aria-label="Comentario de mercados">
+        <h2 class="section-label">Comentario de mercados</h2>
+        <div class="markets-ai-summary-body">
+            <p class="markets-ai-badge">Análisis editorial con IA</p>
+            <h3 class="markets-ai-headline">{{ aiSummary.headline }}</h3>
+            {% for paragraph in aiSummary.paragraphs %}
+                <p class="markets-ai-paragraph">{{ paragraph }}</p>
+            {% endfor %}
+            <p class="markets-ai-meta">Generado {{ aiSummary.generatedAt|date('d/m/Y H:i') }} · No constituye recomendación de inversión</p>
+        </div>
+    </section>
+{% endif %}

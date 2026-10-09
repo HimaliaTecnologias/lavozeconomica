@@ -1,0 +1,94 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}Ingesta HimtecMedia{% endblock %}
+
+{% block body %}
+<div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:1rem">
+    <h1 style="margin:0">Ingesta HimtecMedia</h1>
+    <div class="actions" style="margin:0">
+        <a href="{{ path('admin_ingest_history') }}" class="btn btn-secondary btn-sm">Historial de importaciones</a>
+        <a href="{{ path('admin_settings_ingest') }}" class="btn btn-secondary btn-sm">Configurar ingesta</a>
+    </div>
+</div>
+
+<p class="hint">Noticias recibidas desde HimtecMedia (push o pull). Puedes revisarlas y publicarlas en <strong>{{ site.name }}</strong>.</p>
+
+<h2 style="font-size:1.1rem;margin:1.5rem 0 .75rem">Últimas importaciones</h2>
+{% if recentRuns is empty %}
+    <p class="hint">Todavía no hay ejecuciones registradas. Usa <strong>Ejecutar ingesta ahora</strong> en Configuración → HimtecMedia.</p>
+{% else %}
+<table>
+    <thead>
+        <tr>
+            <th>Fecha</th>
+            <th>Origen</th>
+            <th>En feed</th>
+            <th>Nuevas</th>
+            <th>Publicadas</th>
+            <th>Estado</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for run in recentRuns %}
+        <tr>
+            <td>{{ run.ranAt|date('d/m/Y H:i:s') }}</td>
+            <td>{{ triggerLabels[run.trigger]|default(run.trigger) }}</td>
+            <td>{{ run.feedTotal }}</td>
+            <td>{{ run.received }}</td>
+            <td>{{ run.published }}</td>
+            <td>
+                {% if run.success %}
+                    <span class="badge badge-published">OK</span>
+                {% else %}
+                    <span class="badge badge-other">Error</span>
+                {% endif %}
+            </td>
+            <td><a href="{{ path('admin_ingest_run_show', {id: run.id}) }}" class="btn btn-secondary btn-sm">Detalle</a></td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+<p style="margin-top:.75rem"><a href="{{ path('admin_ingest_history') }}">Ver historial completo →</a></p>
+{% endif %}
+
+<h2 style="font-size:1.1rem;margin:1.75rem 0 .75rem">Bandeja de noticias ingestadas</h2>
+{% if stories is empty %}
+    <p class="hint">No hay historias ingestadas todavía.</p>
+{% else %}
+<table>
+    <thead>
+        <tr>
+            <th>Título</th>
+            <th>ID externo</th>
+            <th>Recibida</th>
+            <th>Estado</th>
+            <th>En este periódico</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for story in stories %}
+        {% set pub = publicationMap[story.id] ?? null %}
+        <tr>
+            <td><strong>{{ story.title }}</strong></td>
+            <td><code>{{ story.externalId }}</code></td>
+            <td>{{ story.receivedAt|date('d/m/Y H:i') }}</td>
+            <td><span class="badge badge-other">{{ story.status.value }}</span></td>
+            <td>
+                {% if pub and pub.articleId %}
+                    <span class="badge badge-published">Publicada</span>
+                    <span class="hint">art. #{{ pub.articleId }}</span>
+                {% else %}
+                    <span class="badge badge-draft">Pendiente</span>
+                {% endif %}
+            </td>
+            <td>
+                <a href="{{ path('admin_ingest_show', {id: story.id}) }}" class="btn btn-secondary btn-sm">Ver</a>
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+{% endblock %}

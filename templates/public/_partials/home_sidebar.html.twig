@@ -1,0 +1,24 @@
+<div class="home-sidebar-ads">
+    {% include 'public/_partials/ad_slot.html.twig' with { placement: 'home_sidebar' } only %}
+    {% include 'public/_partials/ad_slot.html.twig' with { placement: 'sidebar_top' } only %}
+</div>
+
+{% include 'public/_partials/popular_sidebar.html.twig' with {
+    articles: popularArticles|default([]),
+    limit: layout.sidebarPopularCount|default(5),
+    homeOnly: true,
+    period: popularPeriod|default('week'),
+    title: 'Más vistas',
+} %}
+
+{% include 'public/_partials/ad_slot.html.twig' with { placement: 'sidebar_between_lists' } only %}
+
+{% include 'public/_partials/latest_sidebar.html.twig' with {
+    articles: latestSidebarArticles|default(articles|default([])),
+    limit: layout.sidebarLatestCount|default(5),
+    title: 'Últimas noticias',
+} %}
+
+{% include 'public/_partials/ad_slot.html.twig' with { placement: 'sidebar_bottom' } only %}
+{% include 'public/_partials/home_community.html.twig' %}
+{% include 'public/_partials/sidebar_links.html.twig' %}

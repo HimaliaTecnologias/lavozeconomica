@@ -1,0 +1,40 @@
+{% extends 'public/account/_layout.html.twig' %}
+
+{% block account_content %}
+<h2>Resumen</h2>
+
+<dl class="account-profile-dl" style="margin-bottom:1.25rem">
+    <dt>Nombre</dt>
+    <dd>{{ accountUser.name }}</dd>
+    <dt>Correo</dt>
+    <dd>{{ accountUser.email }}</dd>
+    <dt>Rol</dt>
+    <dd>{{ roleLabel }}</dd>
+</dl>
+
+<div class="account-stats">
+    <div class="account-stat">
+        <strong>{{ activity.forumTopics }}</strong>
+        <span>Temas iniciados</span>
+    </div>
+    <div class="account-stat">
+        <strong>{{ activity.forumPosts }}</strong>
+        <span>Respuestas en foro</span>
+    </div>
+    <div class="account-stat">
+        <strong>{{ activity.comments }}</strong>
+        <span>Comentarios</span>
+    </div>
+    <div class="account-stat">
+        <strong>{{ activity.classifieds }}</strong>
+        <span>Anuncios publicados</span>
+    </div>
+</div>
+
+<p class="account-empty" style="margin:0">
+    Desde aquí puedes revisar tus publicaciones y actualizar tu contraseña.
+    {% if activity.forumTopics == 0 and activity.forumPosts == 0 and activity.comments == 0 and activity.classifieds == 0 %}
+        Aún no has participado: <a href="{{ path('public_forum') }}">visita el foro</a> o comenta en las noticias.
+    {% endif %}
+</p>
+{% endblock %}

@@ -1,0 +1,63 @@
+doctrine:
+    dbal:
+        default_connection: platform
+        connections:
+            platform:
+                url: '%env(PLATFORM_DATABASE_URL)%'
+                server_version: 'mariadb-11.4.0'
+                charset: utf8mb4
+                profiling_collect_backtrace: '%kernel.debug%'
+            site:
+                url: '%env(SITE_DATABASE_URL)%'
+                server_version: 'mariadb-11.4.0'
+                charset: utf8mb4
+                profiling_collect_backtrace: '%kernel.debug%'
+    orm:
+        default_entity_manager: platform
+        entity_managers:
+            platform:
+                naming_strategy: doctrine.orm.naming_strategy.underscore_number_aware
+                connection: platform
+                mappings:
+                    Platform:
+                        type: attribute
+                        dir: '%kernel.project_dir%/src/Entity/Platform'
+                        prefix: 'App\Entity\Platform'
+                        alias: Platform
+            site:
+                naming_strategy: doctrine.orm.naming_strategy.underscore_number_aware
+                connection: site
+                mappings:
+                    Site:
+                        type: attribute
+                        dir: '%kernel.project_dir%/src/Entity/Site'
+                        prefix: 'App\Entity\Site'
+                        alias: Site
+
+when@test:
+    doctrine:
+        dbal:
+            connections:
+                platform:
+                    url: '%env(PLATFORM_DATABASE_URL)%'
+                site:
+                    url: '%env(SITE_DATABASE_URL)%'
+
+when@prod:
+    doctrine:
+        orm:
+            entity_managers:
+                platform:
+                    query_cache_driver:
+                        type: pool
+                        pool: doctrine.system_cache_pool
+                    result_cache_driver:
+                        type: pool
+                        pool: doctrine.result_cache_pool
+                site:
+                    query_cache_driver:
+                        type: pool
+                        pool: doctrine.system_cache_pool
+                    result_cache_driver:
+                        type: pool
+                        pool: doctrine.result_cache_pool

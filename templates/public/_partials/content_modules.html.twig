@@ -1,0 +1,20 @@
+{#
+  Renders configurable after-content modules for a surface.
+  Required: surface (string), contentModulesConfig
+  Optional data used by modules:
+    relatedArticles, popularArticles, latestArticles, categorySections, layout
+#}
+{% set modulesConfig = contentModulesConfig|default(null) %}
+{% if modulesConfig %}
+    {% set modules = modulesConfig.enabledFor(surface) %}
+    {% if modules is not empty %}
+        <div class="content-modules" data-surface="{{ surface }}">
+            {% for module in modules %}
+                {% include 'public/_partials/content_module.html.twig' with {
+                    module: module,
+                    surface: surface,
+                } %}
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endif %}

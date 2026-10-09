@@ -1,0 +1,69 @@
+{% set videoReplaces = article.video and article.videoReplacesFeatured %}
+{% set featured = article_usable_featured(article) %}
+{% set galleryEntity = article.gallery %}
+{% set galleryImages = galleryEntity ? galleryEntity.images : article.legacyGalleryImages %}
+
+{% if videoReplaces and article.video %}
+    {% include 'public/article/_video.html.twig' with { video: article.video, variant: 'hero' } %}
+{% elseif featured %}
+    <figure class="article-hero-img">
+        <a href="{{ featured.url }}" class="article-lightbox-trigger" data-caption="{{ featured.caption|default('') }}">
+            {{ seo_article_image(featured, article.title, {loading: 'eager', fetchpriority: 'high'}) }}
+        </a>
+        {% if featured.caption %}
+            <figcaption>{{ featured.caption }}</figcaption>
+        {% endif %}
+    </figure>
+{% else %}
+    <div class="article-hero-placeholder" role="img" aria-label="{{ article.title }}">
+        <span class="article-hero-placeholder-brand">{{ site.name }}</span>
+        {% if article.category %}
+            <span class="article-hero-placeholder-cat">{{ article.category.name }}</span>
+        {% endif %}
+    </div>
+{% endif %}
+
+{% if galleryImages is not empty %}
+    <div class="article-gallery article-gallery--lightbox">
+        {% for image in galleryImages %}
+            <figure class="article-gallery-item">
+                <a href="{{ image.url }}" class="article-lightbox-trigger" data-caption="{{ image.caption|default('') }}">
+                    {{ seo_article_image(image, article.title) }}
+                </a>
+                {% if image.caption %}
+                    <figcaption>{{ image.caption }}</figcaption>
+                {% endif %}
+            </figure>
+        {% endfor %}
+    </div>
+{% endif %}
+
+<div id="article-lightbox" class="article-lightbox" hidden>
+    <button type="button" class="article-lightbox-close" aria-label="Cerrar">×</button>
+    <img src="" alt="" title="" id="article-lightbox-img">
+    <p class="article-lightbox-caption" id="article-lightbox-caption" hidden></p>
+</div>
+<script>
+(function () {
+    const lb = document.getElementById('article-lightbox');
+    if (!lb) return;
+    const img = document.getElementById('article-lightbox-img');
+    const cap = document.getElementById('article-lightbox-caption');
+    const close = () => { lb.hidden = true; };
+    lb.querySelector('.article-lightbox-close')?.addEventListener('click', close);
+    lb.addEventListener('click', (e) => { if (e.target === lb) close(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(); });
+    document.querySelectorAll('.article-lightbox-trigger').forEach((a) => {
+        a.addEventListener('click', (e) => {
+            e.preventDefault();
+            const thumb = a.querySelector('img');
+            img.src = a.href;
+            img.alt = thumb?.alt || '';
+            img.title = thumb?.title || thumb?.alt || '';
+            const c = a.dataset.caption || '';
+            if (c) { cap.textContent = c; cap.hidden = false; } else { cap.hidden = true; }
+            lb.hidden = false;
+        });
+    });
+})();
+</script>

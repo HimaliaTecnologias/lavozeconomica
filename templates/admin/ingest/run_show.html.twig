@@ -1,0 +1,101 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}Detalle de importación{% endblock %}
+
+{% block body %}
+<h1>Importación {{ run.ranAt|date('d/m/Y H:i:s') }}</h1>
+<p class="hint">
+    Origen: <strong>{{ triggerLabels[run.trigger]|default(run.trigger) }}</strong> ·
+    {% if run.success %}
+        <span class="badge badge-published">Completada</span>
+    {% else %}
+        <span class="badge badge-other">Con errores</span>
+    {% endif %}
+</p>
+
+<div class="status-panel" style="background:#fafafa;border:1px solid var(--border);border-radius:8px;padding:1rem;margin:1rem 0">
+    <dl style="margin:0;display:grid;grid-template-columns:140px 1fr;gap:.35rem .75rem;font-size:.9rem">
+        <dt style="color:var(--muted);font-weight:600">Resumen</dt>
+        <dd style="margin:0">{{ run.statusMessage }}</dd>
+        <dt style="color:var(--muted);font-weight:600">En el feed</dt>
+        <dd style="margin:0">{{ run.feedTotal }}</dd>
+        <dt style="color:var(--muted);font-weight:600">Nuevas</dt>
+        <dd style="margin:0">{{ run.received }}</dd>
+        <dt style="color:var(--muted);font-weight:600">Duplicadas</dt>
+        <dd style="margin:0">{{ run.duplicates }}</dd>
+        <dt style="color:var(--muted);font-weight:600">Publicadas en sitio</dt>
+        <dd style="margin:0">{{ run.published }}</dd>
+        <dt style="color:var(--muted);font-weight:600">Errores</dt>
+        <dd style="margin:0">{{ run.errors }}</dd>
+        {% if run.requestUrl %}
+        <dt style="color:var(--muted);font-weight:600">URL</dt>
+        <dd style="margin:0"><code style="font-size:.8rem">{{ run.requestUrl }}</code></dd>
+        {% endif %}
+    </dl>
+</div>
+
+{% if run.errorMessages is not empty %}
+    <div class="flash flash-error">
+        {% for message in run.errorMessages %}
+            <div>{{ message }}</div>
+        {% endfor %}
+    </div>
+{% endif %}
+
+<h2 style="font-size:1.05rem;margin:1.25rem 0 .75rem">Noticias recuperadas en esta ejecución</h2>
+{% if run.items is empty %}
+    <p class="hint">No se recuperó ninguna noticia en esta ejecución (feed vacío o error antes de procesar items).</p>
+{% else %}
+<table>
+    <thead>
+        <tr>
+            <th>Título</th>
+            <th>ID externo</th>
+            <th>Resultado</th>
+            <th>Historia / Artículo</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for item in run.items %}
+        <tr>
+            <td><strong>{{ item.title }}</strong></td>
+            <td><code>{{ item.externalId }}</code></td>
+            <td>
+                {% if item.outcome == 'new' %}
+                    <span class="badge badge-published">Nueva</span>
+                {% elseif item.outcome == 'duplicate' %}
+                    <span class="badge badge-other">Duplicada</span>
+                {% else %}
+                    <span class="badge badge-draft">Error</span>
+                {% endif %}
+                {% if item.published %}
+                    <span class="badge badge-published" style="margin-left:.25rem">Publicada</span>
+                {% elseif item.scheduled|default(false) %}
+                    <span class="badge badge-other" style="margin-left:.25rem">Programada{% if item.scheduledAt %} {{ item.scheduledAt|date('H:i') }}{% endif %}</span>
+                {% endif %}
+            </td>
+            <td class="hint">
+                {% if item.ingestedStoryId %}ingesta #{{ item.ingestedStoryId }}{% endif %}
+                {% if item.articleId %} · art. #{{ item.articleId }}{% endif %}
+                {% if item.error %}<br>{{ item.error }}{% endif %}
+            </td>
+            <td>
+                {% if item.ingestedStoryId %}
+                    <a href="{{ path('admin_ingest_show', {id: item.ingestedStoryId}) }}" class="btn btn-secondary btn-sm">Ver historia</a>
+                {% endif %}
+                {% if item.articleId %}
+                    <a href="{{ path('admin_articles_edit', {id: item.articleId}) }}" class="btn btn-secondary btn-sm">Editar noticia</a>
+                {% endif %}
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+
+<p style="margin-top:1.5rem">
+    <a href="{{ path('admin_ingest_history') }}" class="btn btn-secondary btn-sm">Historial completo</a>
+    <a href="{{ path('admin_ingest_index') }}" class="btn btn-secondary btn-sm">Bandeja de ingesta</a>
+</p>
+{% endblock %}

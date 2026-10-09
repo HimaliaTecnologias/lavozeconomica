@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acceso editorial — {{ site ? site.name : 'MyMediaCMS' }}</title>
+    {% if appearance and appearance.faviconUrl %}
+        <link rel="icon" href="{{ appearance.faviconUrl }}">
+    {% endif %}
+    {% if theme %}
+        <link href="{{ theme.googleFontsUrl }}" rel="stylesheet">
+    {% else %}
+        <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700&family=Libre+Baskerville:wght@700&display=swap" rel="stylesheet">
+    {% endif %}
+    <link rel="stylesheet" href="/css/admin-login.css?v=6">
+    <style>
+        :root {
+            --brand-primary: {{ appearance ? appearance.primaryColor : '#1a365d' }};
+            --brand-secondary: {{ appearance ? appearance.secondaryColor : '#2c5282' }};
+            --brand-heading-font: {% if theme.headingFontFamily is defined %}{{ theme.headingFontFamily|raw }}{% else %}'Libre Baskerville', Georgia, serif{% endif %};
+            --brand-body-font: {% if theme.bodyFontFamily is defined %}{{ theme.bodyFontFamily|raw }}{% else %}'DM Sans', system-ui, sans-serif{% endif %};
+        }
+    </style>
+</head>
+<body>
+<div class="login-page">
+    <aside class="login-brand">
+        <div class="login-brand-bg" aria-hidden="true"></div>
+        <div class="login-brand-grain" aria-hidden="true"></div>
+
+        <div class="login-brand-inner">
+            <p class="login-platform-badge">Panel editorial</p>
+
+            {% set logoUrl = appearance and appearance.logoDarkUrl ? appearance.logoDarkUrl : (appearance ? appearance.logoUrl : '') %}
+            {% if logoUrl %}
+                <img src="{{ logoUrl }}" alt="{{ site ? site.name : 'MyMediaCMS' }}" class="login-site-logo">
+            {% endif %}
+
+            <h1>{{ site ? site.name : 'Panel editorial' }}</h1>
+            {% if appearance and appearance.tagline %}
+                <p class="login-brand-tagline">{{ appearance.tagline }}</p>
+            {% else %}
+                <p class="login-brand-tagline">Redacción, medios, publicidad e ingesta en un solo entorno de trabajo.</p>
+            {% endif %}
+
+            <ul class="login-features">
+                <li>
+                    <span class="login-feature-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                    </span>
+                    <span>Noticias, secciones y edición del día</span>
+                </li>
+                <li>
+                    <span class="login-feature-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                    </span>
+                    <span>Mediateca, galerías y apariencia</span>
+                </li>
+                <li>
+                    <span class="login-feature-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                    </span>
+                    <span>Publicación e ingesta automatizada</span>
+                </li>
+            </ul>
+        </div>
+
+        <p class="login-brand-footer">Acceso restringido al equipo de redacción</p>
+    </aside>
+
+    <main class="login-panel">
+        <div class="login-card">
+            <div class="login-card-head">
+                <p class="login-card-kicker">Identificación</p>
+                <h2>Entrar al panel</h2>
+                <p>Usa tu cuenta editorial{% if site %} de <strong>{{ site.name }}</strong>{% endif %}.</p>
+            </div>
+
+            {% if staffOnly %}
+                <div class="login-alert" role="alert">
+                    <span class="login-alert-icon" aria-hidden="true">!</span>
+                    <span>Esta cuenta no tiene permiso para el panel editorial.</span>
+                </div>
+            {% elseif error %}
+                <div class="login-alert" role="alert">
+                    <span class="login-alert-icon" aria-hidden="true">!</span>
+                    <span>{{ error.messageKey|trans(error.messageData, 'security') }}</span>
+                </div>
+            {% endif %}
+
+            <form method="post" action="{{ path('login_check') }}" id="login-form" novalidate>
+                <div class="login-field">
+                    <label for="username">Correo o usuario</label>
+                    <div class="login-input-wrap">
+                        <span class="login-input-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                        </span>
+                        <input type="text" id="username" name="_username"
+                               value="{{ last_username }}"
+                               required autofocus autocomplete="username"
+                               placeholder="tu@correo.com">
+                    </div>
+                </div>
+
+                <div class="login-field">
+                    <label for="password">Contraseña</label>
+                    <div class="login-input-wrap login-input-wrap--password">
+                        <span class="login-input-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                        </span>
+                        <input type="password" id="password" name="_password"
+                               required autocomplete="current-password"
+                               placeholder="••••••••">
+                        <button type="button" class="login-toggle-pw" id="toggle-password" aria-label="Mostrar contraseña">
+                            Mostrar
+                        </button>
+                    </div>
+                </div>
+
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+
+                <button type="submit" class="login-submit">Entrar</button>
+
+                <div class="login-card-actions">
+                    <a href="{{ path('home') }}" class="login-back">Volver a la web pública</a>
+                    <a href="{{ path('cuenta_login') }}" class="login-back login-back--muted">Acceso lectores</a>
+                </div>
+            </form>
+        </div>
+    </main>
+</div>
+
+<script>
+(function () {
+    const pw = document.getElementById('password');
+    const toggle = document.getElementById('toggle-password');
+    if (pw && toggle) {
+        toggle.addEventListener('click', function () {
+            const show = pw.type === 'password';
+            pw.type = show ? 'text' : 'password';
+            toggle.textContent = show ? 'Ocultar' : 'Mostrar';
+            toggle.setAttribute('aria-label', show ? 'Ocultar contraseña' : 'Mostrar contraseña');
+        });
+    }
+})();
+</script>
+</body>
+</html>

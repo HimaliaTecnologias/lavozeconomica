@@ -1,0 +1,8 @@
+code: demo
+name: Diario Demo
+locale: es
+timezone: Europe/Madrid
+
+theme:
+  parent: base
+  primary_color: '#1a365d'

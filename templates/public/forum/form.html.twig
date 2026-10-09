@@ -1,0 +1,56 @@
+{% extends 'public/layout.html.twig' %}
+
+{% block title %}{{ seoTitle|default('Nuevo tema') }}{% endblock %}
+
+{% block body %}
+<div class="community-layout community-layout--full">
+    <nav class="article-breadcrumb community-breadcrumb">
+        <a href="{{ path('home') }}">Portada</a>
+        · <a href="{{ path('public_forum') }}">Foro</a>
+        · Nuevo tema
+    </nav>
+
+    <div class="community-form-panel community-form-panel--wide">
+        <header class="community-form-panel-head">
+            <h1>Nuevo tema</h1>
+            <p class="community-page-lead">Plantea una pregunta o abre un debate. Elige la categoría que mejor describa tu tema.</p>
+        </header>
+
+        <form method="post" class="community-form" action="{{ path('public_forum_new') }}">
+            <input type="hidden" name="_token" value="{{ csrf_token('forum_topic_create') }}">
+
+            <div class="community-field">
+                <label for="categoryId">Categoría</label>
+                <select id="categoryId" name="categoryId" required>
+                    <option value="">— Selecciona categoría —</option>
+                    {% for category in categories %}
+                        <option value="{{ category.id }}" {{ formData.categoryId == category.id ? 'selected' : '' }}>{{ category.name }}</option>
+                    {% endfor %}
+                </select>
+                {% if errors.categoryId is defined %}<p class="community-error">{{ errors.categoryId }}</p>{% endif %}
+            </div>
+
+            <div class="community-field">
+                <label for="title">Título del tema</label>
+                <input type="text" id="title" name="title" maxlength="200" required value="{{ formData.title }}" placeholder="Ej. ¿Qué opinas del nuevo plan de movilidad?">
+                {% if errors.title is defined %}<p class="community-error">{{ errors.title }}</p>{% endif %}
+            </div>
+
+            <div class="community-field community-field--editor">
+                <label for="body">Mensaje inicial</label>
+                <textarea id="body" name="body" class="simple-wysiwyg" data-editor-height="280" maxlength="8000" required placeholder="Explica el contexto y tu punto de vista…">{{ formData.body }}</textarea>
+                {% if errors.body is defined %}<p class="community-error">{{ errors.body }}</p>{% endif %}
+            </div>
+
+            <div class="community-form-actions">
+                <button type="submit" class="community-action-btn community-action-btn--primary">Crear tema</button>
+                <a href="{{ path('public_forum') }}" class="community-action-btn">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+{% include 'public/_partials/simple_wysiwyg_assets.html.twig' %}
+{% endblock %}

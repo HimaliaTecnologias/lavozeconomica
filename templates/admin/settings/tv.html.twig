@@ -1,0 +1,124 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}Guía TV{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .settings-subnav { display: flex; gap: .5rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
+    .settings-subnav a { padding: .4rem .75rem; border-radius: 6px; background: #edf2f7; text-decoration: none; color: var(--text); font-size: .9rem; font-weight: 600; }
+    .settings-subnav a.active { background: var(--primary); color: #fff; }
+    .form-section { margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+    .form-section h2 { font-size: 1rem; margin: 0 0 1rem; }
+    .channel-options { display: grid; gap: .65rem; margin-top: .5rem; }
+    .channel-group-title {
+        margin: 1rem 0 .25rem;
+        font-size: .82rem;
+        font-weight: 800;
+        letter-spacing: .06em;
+        text-transform: uppercase;
+        color: var(--text-muted);
+    }
+    .channel-group-title:first-child { margin-top: 0; }
+    .channel-option {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: .35rem .75rem;
+        padding: .65rem .75rem;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: #fafafa;
+    }
+    .channel-option strong { font-size: .95rem; }
+    .channel-option span { font-size: .82rem; color: var(--text-muted); grid-column: 2; }
+    .tv-preview { background: #f8fafc; border: 1px solid var(--border); border-radius: 10px; padding: 1rem; margin-top: 1rem; }
+    .tv-preview-channel { margin-bottom: .85rem; padding-bottom: .85rem; border-bottom: 1px solid var(--border); }
+    .tv-preview-channel:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+    .inline-actions { display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; margin-top: 1rem; }
+</style>
+{% endblock %}
+
+{% block body %}
+<h1>Guía TV</h1>
+<p class="hint">Activa la sección pública <code>/guia-tv</code> con la parrilla de los principales canales españoles.</p>
+{% include 'admin/settings/_subnav.html.twig' %}
+
+<form method="post" action="{{ path('admin_settings_tv') }}">
+    <input type="hidden" name="_token" value="{{ csrf_token('settings_tv') }}">
+
+    <div class="checkbox-row field">
+        <input type="checkbox" id="enabled" name="enabled" value="1" {{ (data.enabled|default(config.enabled)) ? 'checked' : '' }}>
+        <label for="enabled">Mostrar guía TV en el periódico</label>
+    </div>
+
+    <div class="form-section">
+        <h2>Canales a mostrar</h2>
+        <p class="hint">Selecciona los canales que quieres publicar. Los datos se actualizan automáticamente cada hora.</p>
+        {% if errors.channelIds is defined %}<div class="error-msg">{{ errors.channelIds }}</div>{% endif %}
+
+        <div class="channel-options">
+            {% set selectedIds = data.channelIds|default(config.channelIds) %}
+            {% for groupKey in ['generalista', 'autonomica', 'informacion', 'tematico', 'infantil'] %}
+                {% set groupChannels = availableChannels|filter(c => c.group == groupKey) %}
+                {% if groupChannels is not empty %}
+                    <h3 class="channel-group-title">{{ tv_group_label(groupKey) }}</h3>
+                    {% for channel in groupChannels %}
+                        <label class="channel-option">
+                            <input type="checkbox" name="channelIds[]" value="{{ channel.id }}"
+                                   {{ channel.id in selectedIds ? 'checked' : '' }}>
+                            <strong>{{ channel.name }}</strong>
+                            <span>{{ channel.description }}</span>
+                        </label>
+                    {% endfor %}
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="form-section">
+        <h2>Fuente de datos</h2>
+        <div class="field">
+            <label for="feedUrl">URL del feed XMLTV</label>
+            <input type="url" id="feedUrl" name="feedUrl"
+                   value="{{ data.feedUrl|default(config.feedUrl) }}"
+                   class="{{ errors.feedUrl is defined ? 'error' : '' }}"
+                   placeholder="{{ config.feedUrl }}">
+            {% if errors.feedUrl is defined %}<div class="error-msg">{{ errors.feedUrl }}</div>{% endif %}
+            <p class="hint">Por defecto se usa un feed español de <code>iptv-epg.org</code>. La primera carga puede tardar unos segundos.</p>
+        </div>
+        <div class="field">
+            <label for="timezone">Zona horaria</label>
+            <select id="timezone" name="timezone">
+                {% for tz in ['Europe/Madrid', 'Europe/Lisbon', 'Atlantic/Canary'] %}
+                    <option value="{{ tz }}" {{ (data.timezone|default(config.timezone)) == tz ? 'selected' : '' }}>{{ tz }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+
+    <div class="inline-actions">
+        <button type="submit" class="btn btn-primary">Guardar</button>
+    </div>
+</form>
+
+<form method="post" action="{{ path('admin_settings_tv') }}" class="inline-actions">
+    <input type="hidden" name="_token" value="{{ csrf_token('settings_tv') }}">
+    <input type="hidden" name="action" value="refresh_schedule">
+    <button type="submit" class="btn btn-secondary btn-sm">Actualizar parrilla ahora</button>
+</form>
+
+{% if schedule and schedule.channels is not empty %}
+    <div class="tv-preview">
+        <p class="hint"><strong>Vista previa</strong> — {{ schedule.scheduleDate|date('d/m/Y') }} · actualizado {{ schedule.fetchedAt|date('d/m/Y H:i') }}</p>
+        {% for channel in schedule.channels|slice(0, 6) %}
+            <div class="tv-preview-channel">
+                <strong>{{ channel.name }}</strong>
+                {% set current = channel.currentProgramme() %}
+                {% if current %}
+                    <span> — Ahora: {{ current.title }} ({{ tv_format_time(current.startsAt) }})</span>
+                {% endif %}
+                <div class="hint">{{ channel.programmes|length }} programas hoy</div>
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+{% endblock %}

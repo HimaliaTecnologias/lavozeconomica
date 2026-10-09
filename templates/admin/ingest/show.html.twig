@@ -1,0 +1,36 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}Historia ingestada{% endblock %}
+
+{% block body %}
+<h1>{{ story.title }}</h1>
+<p class="hint">
+    ID externo: <code>{{ story.externalId }}</code> ·
+    Recibida: {{ story.receivedAt|date('d/m/Y H:i') }} ·
+    Estado: {{ story.status.value }}
+</p>
+
+{% if publication and publication.articleId %}
+    <div class="flash flash-success" style="margin-top:1rem">
+        Ya publicada en este periódico (artículo #{{ publication.articleId }}).
+        <a href="{{ path('admin_articles_edit', {id: publication.articleId}) }}">Editar noticia</a>
+    </div>
+{% else %}
+    <form method="post" action="{{ path('admin_ingest_publish', {id: story.id}) }}" style="margin:1rem 0">
+        <input type="hidden" name="_token" value="{{ csrf_token('ingest_publish' ~ story.id) }}">
+        <button type="submit" class="btn btn-primary">Publicar en {{ site.name }}</button>
+    </form>
+{% endif %}
+
+<h2 style="margin-top:1.5rem">Contenido</h2>
+{% if story.rawPayload.resumen is defined and story.rawPayload.resumen %}
+    <p><strong>Resumen:</strong> {{ story.rawPayload.resumen }}</p>
+{% endif %}
+<div style="border:1px solid var(--border);border-radius:8px;padding:1rem;background:#fafafa;margin-top:.75rem">
+    {{ story.bodyHtml|raw }}
+</div>
+
+<p style="margin-top:1.5rem">
+    <a href="{{ path('admin_ingest_index') }}" class="btn btn-secondary btn-sm">Volver al listado</a>
+</p>
+{% endblock %}

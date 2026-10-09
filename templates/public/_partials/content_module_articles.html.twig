@@ -1,0 +1,207 @@
+{% set articles = articles|default([])|filter(article => article_is_visible(article)) %}
+{% if articles is empty %}
+{# Sin noticias con imagen usable: no pintar el módulo. #}
+{% elseif format == 'lead_stack' %}
+    {% include 'public/_partials/home_section_block.html.twig' with {
+        articles: articles,
+        sectionId: moduleId,
+        sectionTitle: title,
+        sectionUrl: null,
+        sectionMoreLabel: null,
+    } %}
+
+{% elseif format == 'list' %}
+    <section class="content-module content-module--list" id="{{ moduleId }}">
+        <h2 class="section-label">{{ title }}</h2>
+        <div class="content-module-list">
+            {% for article in articles %}
+                {% set excerpt = (article.lead ?: article.subtitle)|default('')|trim %}
+                {% set img = article_usable_featured(article) %}
+                <article class="content-module-list-row">
+                    <a href="{{ path('public_article_show', {slug: article.slug}) }}" class="content-module-list-row-thumb">
+                        {% if img %}{{ seo_article_image(img, article.title) }}{% endif %}
+                    </a>
+                    <div class="content-module-list-row-body">
+                        {% if article.category %}
+                            <a href="{{ path('public_category_show', {slug: article.category.slug}) }}" class="cat-pill cat-pill--muted">{{ article.category.name }}</a>
+                        {% endif %}
+                        <h3><a href="{{ path('public_article_show', {slug: article.slug}) }}">{{ article.title }}</a></h3>
+                        {% if excerpt|length >= 40 %}
+                            <p class="content-module-excerpt">{{ excerpt|length > 160 ? excerpt|slice(0, 157) ~ '…' : excerpt }}</p>
+                        {% endif %}
+                        <div class="meta-line">
+                            {% if article.publishedAt %}{{ article.publishedAt|date('d/m/Y') }}{% endif %}
+                            {% if article.viewCount > 0 %} · {{ article.viewCount }} lecturas{% endif %}
+                        </div>
+                    </div>
+                </article>
+            {% endfor %}
+        </div>
+    </section>
+
+{% elseif format == 'list_2col' %}
+    <section class="content-module content-module--list-2col" id="{{ moduleId }}">
+        <h2 class="section-label">{{ title }}</h2>
+        <div class="content-module-list-2col">
+            {% for article in articles %}
+                {% set excerpt = (article.lead ?: article.subtitle)|default('')|trim %}
+                {% set img = article_usable_featured(article) %}
+                <article class="content-module-list-item">
+                    <a href="{{ path('public_article_show', {slug: article.slug}) }}" class="content-module-list-thumb">
+                        {% if img %}{{ seo_article_image(img, article.title) }}{% endif %}
+                    </a>
+                    <div class="content-module-list-body">
+                        {% if article.category %}
+                            <a href="{{ path('public_category_show', {slug: article.category.slug}) }}" class="cat-pill cat-pill--muted">{{ article.category.name }}</a>
+                        {% endif %}
+                        <h3><a href="{{ path('public_article_show', {slug: article.slug}) }}">{{ article.title }}</a></h3>
+                        {% if excerpt|length >= 40 %}
+                            <p class="content-module-excerpt">{{ excerpt|length > 140 ? excerpt|slice(0, 137) ~ '…' : excerpt }}</p>
+                        {% endif %}
+                        <div class="meta-line">
+                            {% if article.publishedAt %}{{ article.publishedAt|date('d/m/Y') }}{% endif %}
+                            {% if article.viewCount > 0 %} · {{ article.viewCount }} lecturas{% endif %}
+                        </div>
+                    </div>
+                </article>
+            {% endfor %}
+        </div>
+    </section>
+
+{% elseif format == 'headlines' %}
+    <section class="content-module content-module--headlines" id="{{ moduleId }}">
+        <h2 class="section-label">{{ title }}</h2>
+        <ol class="content-module-headlines">
+            {% for article in articles %}
+                <li>
+                    <a href="{{ path('public_article_show', {slug: article.slug}) }}">{{ article.title }}</a>
+                    {% if article.publishedAt %}
+                        <time datetime="{{ article.publishedAt|date('c') }}">{{ article.publishedAt|date('d/m/Y') }}</time>
+                    {% endif %}
+                </li>
+            {% endfor %}
+        </ol>
+    </section>
+
+{% elseif format == 'hero_pair' %}
+    <section class="content-module content-module--hero-pair" id="{{ moduleId }}">
+        <h2 class="section-label">{{ title }}</h2>
+        <div class="content-module-hero-pair">
+            {% for article in articles|slice(0, 2) %}
+                {% set excerpt = (article.lead ?: article.subtitle)|default('')|trim %}
+                {% set img = article_usable_featured(article) %}
+                <article class="content-module-hero-card">
+                    <a href="{{ path('public_article_show', {slug: article.slug}) }}" class="content-module-hero-media">
+                        {% if img %}{{ seo_article_image(img, article.title) }}{% endif %}
+                    </a>
+                    <div class="content-module-hero-body">
+                        {% if article.category %}
+                            <a href="{{ path('public_category_show', {slug: article.category.slug}) }}" class="cat-pill">{{ article.category.name }}</a>
+                        {% endif %}
+                        <h3><a href="{{ path('public_article_show', {slug: article.slug}) }}">{{ article.title }}</a></h3>
+                        {% if excerpt|length >= 40 %}
+                            <p>{{ excerpt|length > 180 ? excerpt|slice(0, 177) ~ '…' : excerpt }}</p>
+                        {% endif %}
+                    </div>
+                </article>
+            {% endfor %}
+        </div>
+    </section>
+
+{% elseif format == 'magazine' %}
+    {% set lead = articles[0] ?? null %}
+    {% set side = articles|slice(1, 3) %}
+    {% if lead %}
+    <section class="content-module content-module--magazine" id="{{ moduleId }}">
+        <h2 class="section-label">{{ title }}</h2>
+        <div class="content-module-magazine">
+            {% set leadExcerpt = (lead.lead ?: lead.subtitle)|default('')|trim %}
+            {% set img = article_usable_featured(lead) %}
+            <article class="content-module-magazine-lead">
+                <a href="{{ path('public_article_show', {slug: lead.slug}) }}" class="content-module-magazine-lead-media">
+                    {% if img %}{{ seo_article_image(img, lead.title) }}{% endif %}
+                </a>
+                <div class="content-module-magazine-lead-body">
+                    {% if lead.category %}
+                        <a href="{{ path('public_category_show', {slug: lead.category.slug}) }}" class="cat-pill">{{ lead.category.name }}</a>
+                    {% endif %}
+                    <h3><a href="{{ path('public_article_show', {slug: lead.slug}) }}">{{ lead.title }}</a></h3>
+                    {% if leadExcerpt|length >= 40 %}
+                        <p>{{ leadExcerpt|length > 220 ? leadExcerpt|slice(0, 217) ~ '…' : leadExcerpt }}</p>
+                    {% endif %}
+                    <div class="meta-line">
+                        {% if lead.publishedAt %}{{ lead.publishedAt|date('d/m/Y') }}{% endif %}
+                    </div>
+                </div>
+            </article>
+            {% if side is not empty %}
+            <div class="content-module-magazine-side">
+                {% for article in side %}
+                    {% include 'public/_partials/home_stack_item.html.twig' with { article: article, show_meta: true } %}
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+    </section>
+    {% endif %}
+
+{% elseif format == 'mosaic' %}
+    {% set lead = articles[0] ?? null %}
+    {% set rest = articles|slice(1, 4) %}
+    {% if lead %}
+    <section class="content-module content-module--mosaic" id="{{ moduleId }}">
+        <h2 class="section-label">{{ title }}</h2>
+        <div class="content-module-mosaic">
+            {% set leadExcerpt = (lead.lead ?: lead.subtitle)|default('')|trim %}
+            {% set img = article_usable_featured(lead) %}
+            <article class="content-module-mosaic-lead">
+                <a href="{{ path('public_article_show', {slug: lead.slug}) }}" class="content-module-mosaic-lead-media">
+                    {% if img %}{{ seo_article_image(img, lead.title) }}{% endif %}
+                </a>
+                <div class="content-module-mosaic-lead-body">
+                    {% if lead.category %}
+                        <a href="{{ path('public_category_show', {slug: lead.category.slug}) }}" class="cat-pill">{{ lead.category.name }}</a>
+                    {% endif %}
+                    <h3><a href="{{ path('public_article_show', {slug: lead.slug}) }}">{{ lead.title }}</a></h3>
+                    {% if leadExcerpt|length >= 40 %}
+                        <p>{{ leadExcerpt|length > 160 ? leadExcerpt|slice(0, 157) ~ '…' : leadExcerpt }}</p>
+                    {% endif %}
+                </div>
+            </article>
+            {% if rest is not empty %}
+            <div class="story-grid story-grid--cols-4 story-grid--content-module content-module-mosaic-grid">
+                {% for article in rest %}
+                    {% include 'public/_partials/story_card.html.twig' with {
+                        article: article,
+                        muted: true,
+                        show_excerpt: false,
+                        show_meta: false,
+                        section_card: true,
+                        grid_card: true,
+                    } %}
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+    </section>
+    {% endif %}
+
+{% else %}
+    {% set cols = format == 'grid_2' ? 2 : (format == 'grid_3' or format == 'grid_6' ? 3 : 4) %}
+    {% set dense = format in ['grid_6', 'grid_8'] %}
+    <section class="content-module content-module--grid content-module--cols-{{ cols }}{{ dense ? ' content-module--dense' : '' }}{{ format == 'grid_2' ? ' content-module--wide' : '' }}{{ format == 'grid_3' ? ' content-module--triple' : '' }}{{ format == 'grid_4' ? ' content-module--quad' : '' }}" id="{{ moduleId }}">
+        <h2 class="section-label">{{ title }}</h2>
+        <div class="story-grid story-grid--cols-{{ cols }} story-grid--content-module">
+            {% for article in articles %}
+                {% include 'public/_partials/story_card.html.twig' with {
+                    article: article,
+                    muted: true,
+                    show_excerpt: false,
+                    show_meta: not dense,
+                    section_card: true,
+                    grid_card: true,
+                } %}
+            {% endfor %}
+        </div>
+    </section>
+{% endif %}

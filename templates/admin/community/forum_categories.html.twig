@@ -1,0 +1,73 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}Categorías del foro{% endblock %}
+
+{% block admin_breadcrumbs %}
+{% import 'admin/_breadcrumbs.html.twig' as breadcrumb %}
+{{ breadcrumb.breadcrumbs([
+    { label: 'Panel', url: path('admin_dashboard') },
+    { label: 'Comunidad', url: path('admin_community_forum') },
+    { label: 'Categorías del foro' },
+]) }}
+{% endblock %}
+
+{% block body %}
+{% include 'admin/_page_header.html.twig' with {
+    title: 'Categorías del foro',
+    subtitle: 'Organiza los debates por secciones en la web pública.',
+    breadcrumbs: [
+        { label: 'Panel', url: path('admin_dashboard') },
+        { label: 'Foro', url: path('admin_community_forum') },
+        { label: 'Categorías' },
+    ],
+    actions: '<a href="' ~ path('admin_community_forum_category_new') ~ '" class="btn btn-primary btn-sm">Nueva categoría</a>'
+} only %}
+
+{% include 'admin/community/_subnav.html.twig' %}
+
+{% if categories is empty %}
+    <div class="empty-panel">No hay categorías. Crea al menos una para que los usuarios puedan publicar temas.</div>
+{% else %}
+<div class="table-responsive">
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>Nombre</th>
+            <th>Slug</th>
+            <th>Orden</th>
+            <th>Estado</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for category in categories %}
+        <tr class="{{ not category.isActive ? 'row-muted' : '' }}">
+            <td data-label="Nombre">{{ category.name }}</td>
+            <td data-label="Slug"><code>{{ category.slug }}</code></td>
+            <td data-label="Orden">{{ category.sortOrder }}</td>
+            <td data-label="Estado">
+                {% if category.isActive %}
+                    <span class="status-badge status-badge--published">Activa</span>
+                {% else %}
+                    <span class="status-badge status-badge--archived">Oculta</span>
+                {% endif %}
+            </td>
+            <td>
+                <a href="{{ path('admin_community_forum_category_edit', {id: category.id}) }}" class="btn btn-secondary btn-sm">Editar</a>
+                <form class="inline-form" method="post" action="{{ path('admin_community_forum_category_delete', {id: category.id}) }}" onsubmit="return confirm('¿Eliminar esta categoría?')">
+                    <input type="hidden" name="_token" value="{{ csrf_token('delete_forum_category' ~ category.id) }}">
+                    <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
+                </form>
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+</div>
+{% endif %}
+
+<p class="hint" style="margin-top:1rem">
+    <a href="{{ path('admin_settings_forum') }}">Configuración del foro</a> ·
+    <a href="{{ path('admin_community_forum') }}">Moderar temas</a>
+</p>
+{% endblock %}

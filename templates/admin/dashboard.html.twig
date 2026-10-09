@@ -1,0 +1,336 @@
+{% extends 'admin/layout.html.twig' %}
+{% import 'admin/_icons.html.twig' as icons %}
+
+{% block title %}Panel{% endblock %}
+{% block admin_content_modifier %}admin-content--dashboard{% endblock %}
+{% block admin_surface_class %}admin-surface--flush{% endblock %}
+
+{% block body %}
+<section class="dash-hero" aria-labelledby="dash-title">
+    <div class="dash-hero-pattern" aria-hidden="true"></div>
+    <div class="dash-hero-inner">
+        <div class="dash-hero-copy">
+            <p class="dash-hero-kicker">
+                {{ icons.dashboard() }}
+                <span>Panel de administración</span>
+            </p>
+            <h2 id="dash-title">Hola, {{ user.name }}</h2>
+            <p>Gestiona <strong>{{ site.name }}</strong>: contenido editorial, distribución, monetización y apariencia del periódico.</p>
+        </div>
+        <div class="dash-hero-aside">
+            <span class="dash-hero-badge">{{ site.code }}</span>
+            <a href="{{ path('home') }}" class="dash-hero-link" target="_blank" rel="noopener">
+                {{ icons.external() }}
+                Ver web pública
+            </a>
+        </div>
+    </div>
+</section>
+
+{% if can_manage_site() %}
+<section class="dash-stats" aria-label="Resumen del sitio">
+    <article class="dash-stat">
+        <div class="dash-stat-icon dash-stat-icon--blue">{{ icons.articles() }}</div>
+        <div>
+            <p class="dash-stat-value">{{ stats.articles_total }}</p>
+            <p class="dash-stat-label">Noticias</p>
+            <p class="dash-stat-meta">{{ stats.articles_published }} publicadas · {{ stats.articles_draft }} borradores</p>
+        </div>
+    </article>
+    <article class="dash-stat">
+        <div class="dash-stat-icon dash-stat-icon--emerald">{{ icons.categories() }}</div>
+        <div>
+            <p class="dash-stat-value">{{ stats.categories }}</p>
+            <p class="dash-stat-label">Categorías</p>
+            <p class="dash-stat-meta">Secciones del periódico</p>
+        </div>
+    </article>
+    <article class="dash-stat">
+        <div class="dash-stat-icon dash-stat-icon--amber">{{ icons.media() }}</div>
+        <div>
+            <p class="dash-stat-value">{{ stats.media }}</p>
+            <p class="dash-stat-label">Medios</p>
+            <p class="dash-stat-meta">Imágenes y archivos</p>
+        </div>
+    </article>
+    <article class="dash-stat">
+        <div class="dash-stat-icon dash-stat-icon--cyan">{{ icons.newsletter() }}</div>
+        <div>
+            <p class="dash-stat-value">{{ stats.newsletter }}</p>
+            <p class="dash-stat-label">Boletín</p>
+            <p class="dash-stat-meta">Suscriptores registrados</p>
+        </div>
+    </article>
+</section>
+
+<section class="dash-analytics">
+    <article class="dash-panel dash-panel--chart">
+        <header class="dash-panel-head">
+            <div>
+                <h3>Publicaciones</h3>
+                <p>Últimos 14 días</p>
+            </div>
+            <div class="dash-chart-kpi">
+                <strong>{{ chartTotal }}</strong>
+                <span>noticias publicadas</span>
+            </div>
+        </header>
+
+        <div class="dash-chart-layout">
+            <div class="dash-chart-y" aria-hidden="true">
+                <span>{{ chartMax }}</span>
+                <span>{{ chartMax > 1 ? (chartMax / 2)|round(0, 'ceil') : 0 }}</span>
+                <span>0</span>
+            </div>
+            <div class="dash-chart-body">
+                <div class="dash-chart-gridlines" aria-hidden="true"></div>
+                <div
+                    class="dash-chart"
+                    role="img"
+                    aria-label="Gráfico de publicaciones diarias en los últimos 14 días"
+                >
+                    {% for row in chartData %}
+                        {% set pct = chartMax > 0 ? (row.count / chartMax * 100) : 0 %}
+                        <div class="dash-chart-col">
+                            <div class="dash-chart-track" title="{{ row.day }}: {{ row.count }} publicación(es)">
+                                <div class="dash-chart-fill" style="--pct: {{ pct }}%">
+                                    {% if row.count > 0 %}
+                                        <span class="dash-chart-value">{{ row.count }}</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <time class="dash-chart-label" datetime="{{ row.day }}">{{ row.day|date('d/m') }}</time>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </article>
+
+    <article class="dash-panel dash-panel--health">
+        <header class="dash-panel-head">
+            <div>
+                <h3>Estado del sitio</h3>
+                <p>Salud operativa y recursos</p>
+            </div>
+        </header>
+        <ul class="health-list">
+            {% for check in health %}
+            <li class="health-item health-item--{{ check.status }}">
+                <strong>{{ check.label }}</strong>
+                <span>{{ check.detail }}</span>
+            </li>
+            {% endfor %}
+        </ul>
+    </article>
+</section>
+
+<div class="dash-two-col">
+    <section class="dash-panel">
+        <header class="dash-panel-head">
+            <div>
+                <h3>Últimas ediciones</h3>
+                <p>Noticias modificadas recientemente</p>
+            </div>
+            <a href="{{ path('admin_articles_index') }}" class="btn btn-secondary btn-sm">Ver todas</a>
+        </header>
+        {% if recentArticles is empty %}
+            <p class="hint">Sin actividad reciente.</p>
+        {% else %}
+        <ul class="dash-list">
+            {% for article in recentArticles %}
+            <li>
+                <a href="{{ path('admin_articles_edit', {id: article.id}) }}">{{ article.title|slice(0, 60) }}</a>
+                <time>{{ article.updatedAt|date('d/m H:i') }}</time>
+            </li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+    </section>
+
+    <section class="dash-panel">
+        <header class="dash-panel-head">
+            <div>
+                <h3>Borradores pendientes</h3>
+                <p>Contenido aún no publicado</p>
+            </div>
+            <a href="{{ path('admin_articles_index', {status: 'draft'}) }}" class="btn btn-secondary btn-sm">Ver borradores</a>
+        </header>
+        {% if draftArticles is empty %}
+            <p class="hint">No hay borradores.</p>
+        {% else %}
+        <ul class="dash-list">
+            {% for article in draftArticles %}
+            <li>
+                <a href="{{ path('admin_articles_edit', {id: article.id}) }}">{{ article.title|slice(0, 60) }}</a>
+                <time>{{ article.updatedAt|date('d/m H:i') }}</time>
+            </li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+        {% if ingestPending > 0 %}
+        <p class="dash-alert">
+            <a href="{{ path('admin_ingest_index') }}">{{ ingestPending }} noticia(s) en bandeja de ingesta</a>
+        </p>
+        {% endif %}
+    </section>
+</div>
+
+<section class="dash-panel dash-panel--activity">
+    <header class="dash-panel-head">
+        <div>
+            <h3>Actividad reciente</h3>
+            <p>Acciones del equipo editorial</p>
+        </div>
+    </header>
+    {% if activity is empty %}
+        <p class="hint">Aún no hay registros de actividad.</p>
+    {% else %}
+    <ul class="activity-feed">
+        {% for log in activity %}
+        <li>
+            <time class="activity-time">{{ log.createdAt|date('d/m H:i') }}</time>
+            <span class="activity-user">{{ log.userName }}</span>
+            <span class="activity-action">{{ log.action }}</span>
+            {% if log.entityLabel %}<span class="activity-entity">{{ log.entityLabel|slice(0, 50) }}</span>{% endif %}
+        </li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+</section>
+
+<section class="dash-panel dash-panel--activity">
+    <header class="dash-panel-head">
+        <div>
+            <h3>Búsquedas de lectores</h3>
+            <p>{{ searchWeekCount }} en los últimos 7 días</p>
+        </div>
+        <a href="{{ path('admin_search_logs') }}" class="btn btn-secondary btn-sm">Ver log</a>
+    </header>
+    {% if searchTop is empty %}
+        <p class="hint">Todavía no hay búsquedas registradas.</p>
+    {% else %}
+    <ul class="dash-list">
+        {% for row in searchTop %}
+        <li>
+            <a href="{{ path('admin_search_logs', {q: row.query}) }}">{{ row.query }}</a>
+            <time>{{ row.total }}</time>
+        </li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+</section>
+{% endif %}
+
+<section class="dash-section">
+    <header class="dash-section-head">
+        <h3>Acceso rápido</h3>
+        <p>Salta directamente a las herramientas que usas cada día.</p>
+    </header>
+
+    <div class="dash-grid">
+        <article class="dash-tile dash-tile--blue">
+            <div class="dash-tile-glow" aria-hidden="true"></div>
+            <div class="dash-tile-icon">{{ icons.articles() }}</div>
+            <h4>Noticias</h4>
+            <p>Crea, edita y publica el contenido editorial.</p>
+            <div class="dash-tile-actions">
+                <a href="{{ path('admin_articles_index') }}" class="btn btn-primary btn-sm">Gestionar</a>
+                <a href="{{ path('admin_articles_new') }}" class="btn btn-secondary btn-sm">Nueva</a>
+            </div>
+        </article>
+
+        <article class="dash-tile dash-tile--amber">
+            <div class="dash-tile-glow" aria-hidden="true"></div>
+            <div class="dash-tile-icon">{{ icons.media() }}</div>
+            <h4>Biblioteca de medios</h4>
+            <p>Imágenes, vídeos y archivos para tus noticias.</p>
+            <div class="dash-tile-actions">
+                <a href="{{ path('admin_media_index') }}" class="btn btn-primary btn-sm">Abrir biblioteca</a>
+            </div>
+        </article>
+
+        {% if can_manage_site() %}
+        <article class="dash-tile dash-tile--violet">
+            <div class="dash-tile-glow" aria-hidden="true"></div>
+            <div class="dash-tile-icon">{{ icons.ingest() }}</div>
+            <h4>Ingesta HimtecMedia</h4>
+            <p>Revisa noticias recibidas y publícalas al instante.</p>
+            <div class="dash-tile-actions">
+                <a href="{{ path('admin_ingest_index') }}" class="btn btn-primary btn-sm">Bandeja</a>
+            </div>
+        </article>
+
+        <article class="dash-tile dash-tile--emerald">
+            <div class="dash-tile-glow" aria-hidden="true"></div>
+            <div class="dash-tile-icon">{{ icons.categories() }}</div>
+            <h4>Categorías</h4>
+            <p>Organiza secciones y navegación del sitio.</p>
+            <div class="dash-tile-actions">
+                <a href="{{ path('admin_categories_index') }}" class="btn btn-primary btn-sm">Gestionar</a>
+            </div>
+        </article>
+
+        <article class="dash-tile dash-tile--rose">
+            <div class="dash-tile-glow" aria-hidden="true"></div>
+            <div class="dash-tile-icon">{{ icons.ads() }}</div>
+            <h4>Publicidad</h4>
+            <p>Banners, campañas y métricas de clics.</p>
+            <div class="dash-tile-actions">
+                <a href="{{ path('admin_ads_dashboard') }}" class="btn btn-primary btn-sm">Dashboard</a>
+            </div>
+        </article>
+
+        <article class="dash-tile dash-tile--cyan">
+            <div class="dash-tile-glow" aria-hidden="true"></div>
+            <div class="dash-tile-icon">{{ icons.newsletter() }}</div>
+            <h4>Boletín</h4>
+            <p>Suscriptores y envío de resúmenes por correo.</p>
+            <div class="dash-tile-actions">
+                <a href="{{ path('admin_newsletter_index') }}" class="btn btn-primary btn-sm">Gestionar</a>
+            </div>
+        </article>
+
+        <article class="dash-tile dash-tile--indigo">
+            <div class="dash-tile-glow" aria-hidden="true"></div>
+            <div class="dash-tile-icon">{{ icons.polls() }}</div>
+            <h4>Encuestas</h4>
+            <p>Crea encuestas vinculadas a tus artículos.</p>
+            <div class="dash-tile-actions">
+                <a href="{{ path('admin_polls_index') }}" class="btn btn-primary btn-sm">Gestionar</a>
+            </div>
+        </article>
+
+        <article class="dash-tile dash-tile--slate">
+            <div class="dash-tile-glow" aria-hidden="true"></div>
+            <div class="dash-tile-icon">{{ icons.users() }}</div>
+            <h4>Usuarios</h4>
+            <p>Administradores, redactores y permisos.</p>
+            <div class="dash-tile-actions">
+                <a href="{{ path('admin_users_index') }}" class="btn btn-primary btn-sm">Gestionar</a>
+            </div>
+        </article>
+
+        <article class="dash-tile dash-tile--blue">
+            <div class="dash-tile-glow" aria-hidden="true"></div>
+            <div class="dash-tile-icon">{{ icons.settings() }}</div>
+            <h4>Configuración</h4>
+            <p>Apariencia, tiempo, SEO y ajustes del sitio.</p>
+            <div class="dash-tile-actions">
+                <a href="{{ path('admin_settings_index') }}" class="btn btn-primary btn-sm">Abrir</a>
+            </div>
+        </article>
+
+        <article class="dash-tile dash-tile--teal">
+            <div class="dash-tile-glow" aria-hidden="true"></div>
+            <div class="dash-tile-icon">{{ icons.links() }}</div>
+            <h4>Enlaces</h4>
+            <p>Otros medios del grupo bajo el pie; enlaces de interés en la franja del footer.</p>
+            <div class="dash-tile-actions">
+                <a href="{{ path('admin_links_index') }}" class="btn btn-primary btn-sm">Gestionar</a>
+            </div>
+        </article>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

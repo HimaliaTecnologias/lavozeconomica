@@ -1,0 +1,328 @@
+{% extends 'admin/layout.html.twig' %}
+{% import 'admin/_icons.html.twig' as icons %}
+
+{% block title %}Configuración{% endblock %}
+
+{% block body %}
+{% set socialCount = footer.socialLinks|length %}
+{% set ingestActive = ingest.enabled and ingest.jsonUrl %}
+{% set ingestInterval = ingest.intervalMinutes == 60 ? 'Cada hora' : (ingest.intervalMinutes == 1440 ? 'Cada 24 h' : 'Cada ' ~ ingest.intervalMinutes ~ ' min') %}
+
+{% include 'admin/_page_header.html.twig' with {
+    title: 'Configuración',
+    subtitle: 'Ajustes del periódico ' ~ site.name ~ '.',
+    breadcrumbs: [
+        { label: 'Panel', url: path('admin_dashboard') },
+        { label: 'Configuración' },
+    ],
+} %}
+
+{% include 'admin/settings/_subnav.html.twig' %}
+
+<div class="settings-hub">
+    <section class="settings-status" aria-label="Estado rápido">
+        <article class="settings-status-item">
+            <span class="settings-status-label">Marca</span>
+            <strong>{{ appearance.logoUrl ? 'Logo configurado' : 'Logo en texto' }}</strong>
+            <span class="settings-status-meta">{{ appearance.tagline ?: 'Sin eslogan' }}</span>
+        </article>
+        <article class="settings-status-item">
+            <span class="settings-status-label">Colores</span>
+            <strong class="settings-status-swatches">
+                <span style="--swatch: {{ appearance.primaryColor }}"></span>
+                <span style="--swatch: {{ appearance.secondaryColor }}"></span>
+                {{ appearance.primaryColor }}
+            </strong>
+            <span class="settings-status-meta">{{ appearance.headingFont }} / {{ appearance.bodyFont }}</span>
+        </article>
+        <article class="settings-status-item">
+            <span class="settings-status-label">Correo</span>
+            {% if mail.isConfigured() %}
+                <strong class="is-ok">SMTP activo</strong>
+                <span class="settings-status-meta">{{ mail.username }}</span>
+            {% elseif mail.enabled %}
+                <strong class="is-warn">Incompleto</strong>
+                <span class="settings-status-meta">Faltan datos SMTP</span>
+            {% else %}
+                <strong class="is-muted">Sin configurar</strong>
+                <span class="settings-status-meta">Contacto y boletín</span>
+            {% endif %}
+        </article>
+        <article class="settings-status-item">
+            <span class="settings-status-label">IA</span>
+            {% if ai.isConfigured %}
+                <strong class="is-ok">OpenAI lista</strong>
+                <span class="settings-status-meta">{{ ai.hasOpenaiApiKey ? 'Clave del periódico' : 'Variable de entorno' }} · {{ ai.model }}</span>
+            {% else %}
+                <strong class="is-warn">Sin API key</strong>
+                <span class="settings-status-meta"><a href="{{ path('admin_settings_ai') }}">Configurar ahora</a></span>
+            {% endif %}
+        </article>
+        <article class="settings-status-item">
+            <span class="settings-status-label">Ingesta</span>
+            {% if ingestActive %}
+                <strong class="is-ok">Automática</strong>
+                <span class="settings-status-meta">{{ ingestInterval }}{% if ingest.lastFetchedAt %} · {{ ingest.lastFetchedAt|date('d/m H:i') }}{% endif %}</span>
+            {% else %}
+                <strong class="is-muted">Desactivada</strong>
+                <span class="settings-status-meta">HimtecMedia</span>
+            {% endif %}
+        </article>
+    </section>
+
+    <div class="settings-hub-columns">
+        <div class="settings-hub-main">
+            <section class="settings-panel">
+                <header class="settings-panel-head">
+                    <div>
+                        <h2>Sitio y marca</h2>
+                        <p>Identidad, SEO, plantillas y transferencia entre entornos.</p>
+                    </div>
+                </header>
+                <div class="settings-list">
+                    <a class="settings-row" href="{{ path('admin_settings_general') }}">
+                        <span class="settings-row-icon settings-card-icon--blue">{{ icons.settings() }}</span>
+                        <span class="settings-row-body">
+                            <strong>General</strong>
+                            <span>Nombre, dominio, idioma y zona horaria.</span>
+                        </span>
+                        <span class="settings-row-go" aria-hidden="true">→</span>
+                    </a>
+                    <a class="settings-row" href="{{ path('admin_settings_appearance') }}">
+                        <span class="settings-row-icon settings-card-icon--rose">{{ icons.media() }}</span>
+                        <span class="settings-row-body">
+                            <strong>Apariencia</strong>
+                            <span>Colores, tipografías, logos y favicon.</span>
+                        </span>
+                        <span class="settings-row-meta status-pill status-on">Activo</span>
+                        <span class="settings-row-go" aria-hidden="true">→</span>
+                    </a>
+                    <a class="settings-row" href="{{ path('admin_settings_seo') }}">
+                        <span class="settings-row-icon settings-card-icon--teal">{{ icons.articles() }}</span>
+                        <span class="settings-row-body">
+                            <strong>SEO</strong>
+                            <span>Metadatos, Open Graph, verificaciones y robots.txt.</span>
+                        </span>
+                        <span class="settings-row-go" aria-hidden="true">→</span>
+                    </a>
+                    <a class="settings-row" href="{{ path('admin_settings_layout') }}">
+                        <span class="settings-row-icon settings-card-icon--violet">{{ icons.categories() }}</span>
+                        <span class="settings-row-body">
+                            <strong>Plantillas</strong>
+                            <span>Portada, categorías y detalle de noticia.</span>
+                        </span>
+                        <span class="settings-row-meta">{{ layout.homeTemplate.value }}</span>
+                        <span class="settings-row-go" aria-hidden="true">→</span>
+                    </a>
+                    <a class="settings-row" href="{{ path('admin_settings_content_modules') }}">
+                        <span class="settings-row-icon settings-card-icon--teal">{{ icons.articles() }}</span>
+                        <span class="settings-row-body">
+                            <strong>Módulos de contenido</strong>
+                            <span>Te puede interesar, más vistas, últimas, alojamientos… orden y formato por sección.</span>
+                        </span>
+                        <span class="settings-row-go" aria-hidden="true">→</span>
+                    </a>
+                    <a class="settings-row" href="{{ path('admin_settings_footer') }}">
+                        <span class="settings-row-icon settings-card-icon--slate">{{ icons.articles() }}</span>
+                        <span class="settings-row-body">
+                            <strong>Pie de página</strong>
+                            <span>Contacto interno y redes sociales.</span>
+                        </span>
+                        {% if socialCount > 0 %}
+                            <span class="settings-row-meta status-pill status-on">{{ socialCount }} redes</span>
+                        {% else %}
+                            <span class="settings-row-meta status-pill status-off">Sin redes</span>
+                        {% endif %}
+                        <span class="settings-row-go" aria-hidden="true">→</span>
+                    </a>
+                    <a class="settings-row" href="{{ path('admin_settings_transfer') }}">
+                        <span class="settings-row-icon settings-card-icon--indigo">{{ icons.settings() }}</span>
+                        <span class="settings-row-body">
+                            <strong>Exportar / importar</strong>
+                            <span>Copia la configuración entre local y producción.</span>
+                        </span>
+                        <span class="settings-row-go" aria-hidden="true">→</span>
+                    </a>
+                </div>
+            </section>
+
+            <section class="settings-panel">
+                <header class="settings-panel-head">
+                    <div>
+                        <h2>Contenido y navegación</h2>
+                        <p>Menús, páginas legales y mensaje 404.</p>
+                    </div>
+                </header>
+                <div class="settings-list">
+                    <a class="settings-row" href="{{ path('admin_settings_navigation') }}">
+                        <span class="settings-row-icon settings-card-icon--indigo">{{ icons.categories() }}</span>
+                        <span class="settings-row-body">
+                            <strong>Menús</strong>
+                            <span>Cabecera, pie y enlaces del periódico.</span>
+                        </span>
+                        <span class="settings-row-go" aria-hidden="true">→</span>
+                    </a>
+                    <a class="settings-row" href="{{ path('admin_settings_pages') }}">
+                        <span class="settings-row-icon settings-card-icon--teal">{{ icons.articles() }}</span>
+                        <span class="settings-row-body">
+                            <strong>Páginas del periódico</strong>
+                            <span>Quiénes somos, aviso legal, cookies y contacto.</span>
+                        </span>
+                        <span class="settings-row-go" aria-hidden="true">→</span>
+                    </a>
+                    <a class="settings-row" href="{{ path('admin_settings_error_404') }}">
+                        <span class="settings-row-icon settings-card-icon--amber">{{ icons.settings() }}</span>
+                        <span class="settings-row-body">
+                            <strong>Página 404</strong>
+                            <span>Mensaje y accesos cuando una URL no existe.</span>
+                        </span>
+                        <span class="settings-row-go" aria-hidden="true">→</span>
+                    </a>
+                    <a class="settings-row" href="{{ path('admin_links_index') }}">
+                        <span class="settings-row-icon settings-card-icon--cyan">{{ icons.links() }}</span>
+                        <span class="settings-row-body">
+                            <strong>Enlaces</strong>
+                            <span>Otros medios e interés en pie y lateral.</span>
+                        </span>
+                        <span class="settings-row-go" aria-hidden="true">→</span>
+                    </a>
+                </div>
+            </section>
+        </div>
+
+        <aside class="settings-hub-side">
+            <section class="settings-panel">
+                <header class="settings-panel-head">
+                    <div>
+                        <h2>Distribución e IA</h2>
+                        <p>OpenAI, correo, analítica e ingesta.</p>
+                    </div>
+                </header>
+                <div class="settings-list settings-list--compact">
+                    <a class="settings-row" href="{{ path('admin_settings_ai') }}">
+                        <span class="settings-row-icon settings-card-icon--violet">{{ icons.articles() }}</span>
+                        <span class="settings-row-body">
+                            <strong>Inteligencia artificial</strong>
+                            <span>API key de OpenAI y modelo para tiempo, bolsa y horóscopo.</span>
+                        </span>
+                        {% if ai.isConfigured %}
+                            <span class="settings-row-meta status-pill status-on">OK</span>
+                        {% else %}
+                            <span class="settings-row-meta status-pill status-off">!</span>
+                        {% endif %}
+                        <span class="settings-row-go" aria-hidden="true">→</span>
+                    </a>
+                    <a class="settings-row" href="{{ path('admin_settings_mail') }}">
+                        <span class="settings-row-icon settings-card-icon--blue">{{ icons.newsletter() }}</span>
+                        <span class="settings-row-body">
+                            <strong>Correo SMTP</strong>
+                            <span>Contacto, boletín y avisos.</span>
+                        </span>
+                        {% if mail.isConfigured() %}
+                            <span class="settings-row-meta status-pill status-on">OK</span>
+                        {% elseif mail.enabled %}
+                            <span class="settings-row-meta status-pill status-off">!</span>
+                        {% else %}
+                            <span class="settings-row-meta status-pill status-off">Off</span>
+                        {% endif %}
+                    </a>
+                    <a class="settings-row" href="{{ path('admin_settings_analytics') }}">
+                        <span class="settings-row-icon settings-card-icon--slate">{{ icons.dashboard() }}</span>
+                        <span class="settings-row-body">
+                            <strong>Estadísticas</strong>
+                            <span>Matomo, GA u otro tracking.</span>
+                        </span>
+                    </a>
+                    <a class="settings-row" href="{{ path('admin_settings_ingest') }}">
+                        <span class="settings-row-icon settings-card-icon--amber">{{ icons.ingest() }}</span>
+                        <span class="settings-row-body">
+                            <strong>HimtecMedia</strong>
+                            <span>Ingesta automática JSON.</span>
+                        </span>
+                        {% if ingestActive %}
+                            <span class="settings-row-meta status-pill status-on">On</span>
+                        {% else %}
+                            <span class="settings-row-meta status-pill status-off">Off</span>
+                        {% endif %}
+                    </a>
+                </div>
+            </section>
+
+            <section class="settings-panel">
+                <header class="settings-panel-head">
+                    <div>
+                        <h2>Comunidad</h2>
+                        <p>Gestiona avisos y foro; activa o desactiva las secciones públicas.</p>
+                    </div>
+                </header>
+                <div class="settings-list settings-list--compact">
+                    <a class="settings-row" href="{{ path('admin_community_classifieds') }}">
+                        <span class="settings-row-icon settings-card-icon--teal">{{ icons.newsletter() }}</span>
+                        <span class="settings-row-body">
+                            <strong>Moderar avisos</strong>
+                            <span>Anuncios de compra-venta publicados por lectores.</span>
+                        </span>
+                        <span class="settings-row-go" aria-hidden="true">→</span>
+                    </a>
+                    <a class="settings-row" href="{{ path('admin_community_classified_categories') }}">
+                        <span class="settings-row-icon settings-card-icon--cyan">{{ icons.categories() }}</span>
+                        <span class="settings-row-body">
+                            <strong>Categorías de avisos</strong>
+                            <span>Secciones del tablón de anuncios.</span>
+                        </span>
+                        <span class="settings-row-go" aria-hidden="true">→</span>
+                    </a>
+                    <a class="settings-row" href="{{ path('admin_community_forum') }}">
+                        <span class="settings-row-icon settings-card-icon--indigo">{{ icons.users() }}</span>
+                        <span class="settings-row-body">
+                            <strong>Moderar foro</strong>
+                            <span>Temas, respuestas, ocultar o bloquear.</span>
+                        </span>
+                        <span class="settings-row-go" aria-hidden="true">→</span>
+                    </a>
+                    <a class="settings-row" href="{{ path('admin_community_forum_categories') }}">
+                        <span class="settings-row-icon settings-card-icon--violet">{{ icons.categories() }}</span>
+                        <span class="settings-row-body">
+                            <strong>Categorías del foro</strong>
+                            <span>Áreas de debate de la comunidad.</span>
+                        </span>
+                        <span class="settings-row-go" aria-hidden="true">→</span>
+                    </a>
+                    <a class="settings-row" href="{{ path('admin_settings_classifieds') }}">
+                        <span class="settings-row-icon settings-card-icon--slate">{{ icons.settings() }}</span>
+                        <span class="settings-row-body">
+                            <strong>Activar / desactivar avisos</strong>
+                            <span>Mostrar u ocultar <code>/avisos</code> en la web.</span>
+                        </span>
+                        <span class="settings-row-go" aria-hidden="true">→</span>
+                    </a>
+                    <a class="settings-row" href="{{ path('admin_settings_forum') }}">
+                        <span class="settings-row-icon settings-card-icon--slate">{{ icons.settings() }}</span>
+                        <span class="settings-row-body">
+                            <strong>Activar / desactivar foro</strong>
+                            <span>Mostrar u ocultar <code>/foro</code> en la web.</span>
+                        </span>
+                        <span class="settings-row-go" aria-hidden="true">→</span>
+                    </a>
+                </div>
+            </section>
+
+            <section class="settings-panel">
+                <header class="settings-panel-head">
+                    <div>
+                        <h2>Otros servicios</h2>
+                        <p>Tiempo, bolsa, TV y pasatiempos.</p>
+                    </div>
+                </header>
+                <div class="settings-modules">
+                    <a href="{{ path('admin_settings_weather') }}">{{ icons.weather() }}<span>El tiempo</span></a>
+                    <a href="{{ path('admin_settings_markets') }}">{{ icons.ads() }}<span>Bolsa</span></a>
+                    <a href="{{ path('admin_settings_tv') }}">{{ icons.media() }}<span>Guía TV</span></a>
+                    <a href="{{ path('admin_settings_games') }}">{{ icons.polls() }}<span>Pasatiempos</span></a>
+                    <a href="{{ path('admin_settings_horoscope') }}">{{ icons.articles() }}<span>Horóscopo</span></a>
+                </div>
+            </section>
+        </aside>
+    </div>
+</div>
+{% endblock %}

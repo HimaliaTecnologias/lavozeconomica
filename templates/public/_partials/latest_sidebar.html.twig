@@ -1,0 +1,13 @@
+{% set latestLimit = limit|default(layout.sidebarLatestCount|default(5)) %}
+{% set latestTitle = title|default('Últimas noticias') %}
+{% set latestArticles = articles|default([])|slice(0, latestLimit) %}
+{% if latestArticles is not empty %}
+    <div class="sidebar-block">
+        <p class="sidebar-label">{{ latestTitle }}</p>
+        <div class="sidebar-list">
+            {% for item in latestArticles %}
+                {% include 'public/_partials/sidebar_story.html.twig' with { article: item } %}
+            {% endfor %}
+        </div>
+    </div>
+{% endif %}

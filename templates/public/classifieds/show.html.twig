@@ -1,0 +1,73 @@
+{% extends 'public/layout.html.twig' %}
+
+{% block title %}{{ seoTitle|default(ad.title) }}{% endblock %}
+
+{% block body %}
+<div class="community-layout community-layout--full">
+    <nav class="article-breadcrumb community-breadcrumb">
+        <a href="{{ path('home') }}">Portada</a>
+        · <a href="{{ path('public_classifieds') }}">Avisos</a>
+        {% if ad.category %}
+            · <a href="{{ path('public_classifieds_category', {categorySlug: ad.category.slug}) }}">{{ ad.category.name }}</a>
+        {% endif %}
+        · {{ ad.title|slice(0, 48) }}{% if ad.title|length > 48 %}…{% endif %}
+    </nav>
+
+    {% include 'public/_partials/community_category_nav.html.twig' with {
+        categories: categories,
+        activeCategory: ad.category,
+        allRoute: path('public_classifieds'),
+        categoryRoute: 'public_classifieds_category',
+        navLabel: 'Categorías de avisos',
+    } only %}
+
+    <article class="classified-detail classified-detail--full">
+        <header class="classified-detail-head">
+            {% if ad.category %}
+                <a href="{{ path('public_classifieds_category', {categorySlug: ad.category.slug}) }}" class="classified-badge classified-badge--lg classified-badge--{{ ad.category.slug }}">{{ ad.category.name }}</a>
+            {% endif %}
+            <h1>{{ ad.title }}</h1>
+            <p class="classified-detail-meta">
+                <span>{{ ad.userName }}</span>
+                <span>{{ ad.createdAt|date('d/m/Y H:i') }}</span>
+                {% if ad.expiresAt %}<span>Válido hasta {{ ad.expiresAt|date('d/m/Y') }}</span>{% endif %}
+            </p>
+            {% if ad.priceLabel %}
+                <p class="classified-detail-price">{{ ad.priceLabel }}</p>
+            {% endif %}
+        </header>
+
+        <div class="classified-detail-body community-prose">{{ ad.body|community_rich_text }}</div>
+
+        {% if ad.contactPhone or ad.contactEmail %}
+            <section class="classified-contact-inline">
+                <h2>Contacto</h2>
+                {% if ad.contactPhone %}
+                    <p class="classified-contact-line">
+                        <span class="classified-contact-label">Teléfono</span>
+                        <a href="tel:{{ ad.contactPhone|replace({' ': ''}) }}">{{ ad.contactPhone }}</a>
+                    </p>
+                {% endif %}
+                {% if ad.contactEmail %}
+                    <p class="classified-contact-line">
+                        <span class="classified-contact-label">Email</span>
+                        <a href="mailto:{{ ad.contactEmail }}">{{ ad.contactEmail }}</a>
+                    </p>
+                {% endif %}
+            </section>
+        {% endif %}
+
+        <div class="community-detail-actions">
+            <a href="{{ path('public_classifieds') }}" class="community-action-btn">← Volver a avisos</a>
+            {% if canDelete %}
+                <form method="post" action="{{ path('public_classifieds_delete', {slug: ad.slug}) }}" class="classified-delete-form" onsubmit="return confirm('¿Eliminar este anuncio?');">
+                    <input type="hidden" name="_token" value="{{ csrf_token('classified_delete_' ~ ad.slug) }}">
+                    <button type="submit" class="community-action-btn community-action-btn--danger">Eliminar mi anuncio</button>
+                </form>
+            {% endif %}
+        </div>
+    </article>
+
+    {% include 'public/_partials/community_related_news.html.twig' %}
+</div>
+{% endblock %}

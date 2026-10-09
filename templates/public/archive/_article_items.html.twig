@@ -1,0 +1,28 @@
+{% for article in articles %}
+    <article class="archive-story{% if loop.first and page|default(1) == 1 %} archive-story--lead{% endif %}">
+        <a href="{{ path('public_article_show', {slug: article.slug}) }}" class="archive-story-media">
+            {% set img = article_usable_featured(article) %}
+            {% if img %}
+                {{ seo_article_image(img, article.title, {loading: loop.first and page|default(1) == 1 ? 'eager' : 'lazy'}) }}
+            {% else %}
+                <div class="archive-story-media-placeholder" aria-hidden="true"></div>
+            {% endif %}
+        </a>
+        <div class="archive-story-body">
+            {% if article.category %}
+                <a href="{{ path('public_category_show', {slug: article.category.slug}) }}" class="cat-pill{% if not (loop.first and page|default(1) == 1) %} cat-pill--muted{% endif %}">{{ article.category.name }}</a>
+            {% endif %}
+            <h2 class="archive-story-title"><a href="{{ path('public_article_show', {slug: article.slug}) }}">{{ article.title }}</a></h2>
+            <div class="meta-line">
+                {% if article.publishedAt %}{{ article.publishedAt|date('d/m/Y H:i') }}{% endif %}
+                {% if article.viewCount > 0 %} · {{ article.viewCount }} lecturas{% endif %}
+            </div>
+            {% set excerpt = article.lead ?: article.subtitle %}
+            {% if excerpt and (loop.first and page|default(1) == 1) %}
+                <p class="archive-story-excerpt">{{ excerpt|length > 220 ? excerpt|slice(0, 217) ~ '…' : excerpt }}</p>
+            {% elseif excerpt and showExcerpt|default(false) %}
+                <p class="archive-story-excerpt archive-story-excerpt--compact">{{ excerpt|length > 140 ? excerpt|slice(0, 137) ~ '…' : excerpt }}</p>
+            {% endif %}
+        </div>
+    </article>
+{% endfor %}

@@ -1,0 +1,31 @@
+{# Shared media library picker (article, gallery, etc.) #}
+<div id="media-picker-modal" class="media-modal" hidden
+     data-api-url="{{ path('admin_media_api') }}"
+     data-upload-url="{{ path('admin_media_upload') }}"
+     data-csrf="{{ csrf_token('media_upload') }}">
+    <div class="media-modal-backdrop" data-close-modal tabindex="-1" aria-hidden="true"></div>
+    <div class="media-modal-panel" role="dialog" aria-modal="true" aria-labelledby="media-picker-title">
+        <div class="media-modal-head">
+            <h2 id="media-picker-title">Biblioteca de medios</h2>
+            <button type="button" class="btn btn-secondary btn-sm" data-close-modal>Cerrar</button>
+        </div>
+
+        <div id="media-picker-upload" class="upload-zone media-picker-upload"
+             data-upload-url="{{ path('admin_media_upload') }}"
+             data-csrf="{{ csrf_token('media_upload') }}">
+            <strong class="media-picker-upload-title">Subir archivo</strong>
+            <span class="hint media-picker-upload-hint">Arrastra aquí o haz clic · JPG, PNG, WebP, GIF · máx. 20 MB</span>
+            <input type="file" data-picker-file accept="image/jpeg,image/png,image/webp,image/gif" hidden>
+        </div>
+
+        <div class="media-picker-toolbar">
+            <input type="search" id="media-picker-search" placeholder="Buscar por nombre o título…" autocomplete="off">
+            <p id="media-picker-status" class="hint media-picker-status" aria-live="polite"></p>
+        </div>
+
+        <div id="media-picker-grid" class="media-picker-grid"></div>
+        <div class="media-picker-footer">
+            <button type="button" class="btn btn-secondary btn-sm" id="media-picker-more" hidden>Cargar más</button>
+        </div>
+    </div>
+</div>

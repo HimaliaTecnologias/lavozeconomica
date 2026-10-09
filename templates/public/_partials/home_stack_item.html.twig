@@ -1,0 +1,27 @@
+<article class="home-stack-item">
+    <a href="{{ path('public_article_show', {slug: article.slug}) }}" class="home-stack-thumb">
+        {% set img = article_usable_featured(article) %}
+        {% if img %}
+            {{ seo_article_image(img, article.title) }}
+        {% else %}
+            <span class="story-card-media-placeholder" aria-hidden="true">{{ site.name }}</span>
+        {% endif %}
+    </a>
+    <div class="home-stack-body">
+        {% if article.category %}
+            <a href="{{ path('public_category_show', {slug: article.category.slug}) }}" class="cat-pill cat-pill--muted home-stack-cat">{{ article.category.name }}</a>
+        {% endif %}
+        <h3><a href="{{ path('public_article_show', {slug: article.slug}) }}">{{ article.title }}</a></h3>
+        {% if show_meta is defined and show_meta %}
+            <div class="meta-line">
+                {% if article.publishedAt %}{{ article.publishedAt|date('d/m/Y') }}{% endif %}
+                {% if article.viewCount > 0 %} · {{ article.viewCount }} lecturas{% endif %}
+            </div>
+        {% endif %}
+        {% include 'public/_partials/home_related_links.html.twig' with {
+            article: article,
+            modifier: ' home-related-links--stack',
+            limit: 2,
+        } %}
+    </div>
+</article>

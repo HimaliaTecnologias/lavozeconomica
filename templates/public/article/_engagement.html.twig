@@ -1,0 +1,73 @@
+<section class="article-engagement" id="comentarios">
+    <div class="article-engagement-head">
+        <h2 class="article-engagement-title">Valoración y comentarios</h2>
+        {% if ratingSummary.count > 0 %}
+            {% set ratingRounded = ratingSummary.average|round(0, 'common') %}
+            <p class="article-rating-summary">
+                <span class="article-rating-stars" aria-label="{{ ratingSummary.average }} de 5">
+                    {% for i in 1..5 %}
+                        <span class="star {{ i <= ratingRounded ? 'is-on' : '' }}">★</span>
+                    {% endfor %}
+                </span>
+                <span>{{ ratingSummary.average }}/5 · {{ ratingSummary.count }} valoraciones</span>
+            </p>
+        {% else %}
+            <p class="article-rating-summary muted">Sin valoraciones todavía.</p>
+        {% endif %}
+    </div>
+
+    {% if app.user %}
+        <div class="article-rating-form-wrap">
+            <p class="engagement-label">Tu valoración</p>
+            <form method="post" action="{{ path('public_article_rate', {slug: article.slug}) }}" class="article-rating-form">
+                <input type="hidden" name="_token" value="{{ csrf_token('article_rate_' ~ article.slug) }}">
+                <div class="rating-stars-input">
+                    {% for score in 5..1 %}
+                        <label>
+                            <input type="radio" name="score" value="{{ score }}" {{ userRating and userRating.score == score ? 'checked' : '' }}>
+                            <span>★</span>
+                        </label>
+                    {% endfor %}
+                </div>
+                <button type="submit" class="engagement-btn">Guardar valoración</button>
+            </form>
+        </div>
+
+        <div class="article-comment-form-wrap">
+            <p class="engagement-label">Deja un comentario</p>
+            <form method="post" action="{{ path('public_article_comment', {slug: article.slug}) }}" class="article-comment-form">
+                <input type="hidden" name="_token" value="{{ csrf_token('article_comment_' ~ article.slug) }}">
+                <textarea name="body" class="simple-wysiwyg" data-editor-height="160" maxlength="2000" required placeholder="Escribe tu comentario…"></textarea>
+                <button type="submit" class="engagement-btn">Publicar comentario</button>
+            </form>
+        </div>
+    {% else %}
+        <div class="engagement-guest">
+            <p class="engagement-guest-text">Para valorar y comentar esta noticia necesitas una cuenta.</p>
+            <div class="engagement-guest-actions">
+                <a href="{{ path('cuenta_login') }}" class="engagement-guest-btn engagement-guest-btn--primary">Iniciar sesión</a>
+                <a href="{{ path('cuenta_register') }}" class="engagement-guest-btn engagement-guest-btn--secondary">Registrarse</a>
+            </div>
+        </div>
+    {% endif %}
+
+    {% if comments is not empty %}
+        <ul class="article-comments">
+            {% for comment in comments %}
+                <li class="article-comment">
+                    <div class="article-comment-meta">
+                        <strong>{{ comment.userName }}</strong>
+                        <time datetime="{{ comment.createdAt|date('c') }}">{{ comment.createdAt|date('d/m/Y H:i') }}</time>
+                    </div>
+                    <div class="article-comment-body community-prose">{{ comment.body|community_rich_text }}</div>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p class="engagement-empty">Aún no hay comentarios. ¡Sé el primero!</p>
+    {% endif %}
+</section>
+
+{% if app.user %}
+{% include 'public/_partials/simple_wysiwyg_assets.html.twig' %}
+{% endif %}

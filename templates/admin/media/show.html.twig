@@ -1,0 +1,167 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}{{ media.title|default(media.originalFilename) }}{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .media-detail {
+        display: grid;
+        grid-template-columns: minmax(280px, 420px) 1fr;
+        gap: 1.5rem;
+        align-items: start;
+    }
+    @media (max-width: 900px) { .media-detail { grid-template-columns: 1fr; } }
+    .media-preview-box {
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        overflow: hidden;
+        background: #f8fafc;
+    }
+    .media-preview-box img {
+        display: block;
+        width: 100%;
+        max-height: 480px;
+        object-fit: contain;
+        background: #111;
+    }
+    .media-meta-list {
+        list-style: none;
+        padding: 0;
+        margin: 0 0 1rem;
+        font-size: .9rem;
+    }
+    .media-meta-list li {
+        padding: .35rem 0;
+        border-bottom: 1px solid var(--border);
+    }
+    .media-ops {
+        display: grid;
+        gap: .5rem;
+        margin-top: 1rem;
+    }
+    .media-ops form { display: inline; }
+    .status-pill {
+        display: inline-block;
+        padding: .2rem .55rem;
+        border-radius: 999px;
+        font-size: .75rem;
+        font-weight: 700;
+    }
+    .status-pill.pending, .status-pill.processing { background: #fff3cd; color: #856404; }
+    .status-pill.enhanced { background: #d4edda; color: #155724; }
+    .status-pill.skipped { background: #e2e3e5; color: #383d41; }
+    .status-pill.failed { background: #f8d7da; color: #721c24; }
+    .ops-group {
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        background: #fafafa;
+    }
+    .ops-group h3 { margin: 0 0 .75rem; font-size: .95rem; }
+    .ops-buttons { display: flex; flex-wrap: wrap; gap: .5rem; }
+</style>
+{% endblock %}
+
+{% block body %}
+<div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:1rem">
+    <h1 style="margin:0">{{ media.isVideo ? 'Gestionar vídeo' : 'Gestionar imagen' }}</h1>
+    <a href="{{ path('admin_media_index') }}" class="btn btn-secondary">Volver a biblioteca</a>
+</div>
+
+<div class="media-detail">
+    <div>
+        <div class="media-preview-box">
+            {% if media.isVideo %}
+                <video controls preload="metadata" src="{{ media.publicPath }}" style="display:block;width:100%;max-height:480px;background:#111"></video>
+            {% else %}
+                <img src="{{ media.publicPath }}" alt="{{ media.alt|default(media.originalFilename) }}" id="media-preview-img">
+            {% endif %}
+        </div>
+        <ul class="media-meta-list" style="margin-top:1rem">
+            <li><strong>Archivo:</strong> {{ media.originalFilename }}</li>
+            <li><strong>Tipo:</strong> {{ media.mimeType }}</li>
+            {% if media.width and media.height %}
+                <li><strong>Dimensiones:</strong> {{ media.width }}×{{ media.height }} px</li>
+            {% endif %}
+            <li><strong>Tamaño:</strong> {{ (media.sizeBytes / 1024)|round(1) }} KB</li>
+            <li><strong>Estado:</strong> <span class="status-pill {{ media.enhancementStatus.value }}">{{ media.enhancementStatus.value }}</span></li>
+            {% if media.enhancementError %}
+                <li><strong>Error:</strong> {{ media.enhancementError }}</li>
+            {% endif %}
+            <li><strong>En noticias:</strong> {{ linkedCount }} uso(s)</li>
+            <li><strong>Subida:</strong> {{ media.createdAt|date('d/m/Y H:i') }}</li>
+        </ul>
+    </div>
+
+    <div>
+        <form method="post" action="{{ path('admin_media_show', {id: media.id}) }}">
+            <input type="hidden" name="_token" value="{{ csrf_token('media_edit' ~ media.id) }}">
+            <div class="field">
+                <label for="title">Título</label>
+                <input type="text" id="title" name="title" value="{{ media.title|default('') }}">
+            </div>
+            <div class="field">
+                <label for="alt">Texto alternativo</label>
+                <input type="text" id="alt" name="alt" value="{{ media.alt|default('') }}">
+            </div>
+            <div class="field">
+                <label for="caption">Pie de foto</label>
+                <input type="text" id="caption" name="caption" value="{{ media.caption|default('') }}">
+            </div>
+            <button type="submit" class="btn btn-primary">Guardar metadatos</button>
+        </form>
+
+        {% if not media.isVideo %}
+        <div class="ops-group">
+            <h3>Calidad editorial</h3>
+            <p class="hint">Mejora resolución y nitidez para publicación digital (1200×675 mín.).</p>
+            <div class="ops-buttons">
+                <form method="post" action="{{ path('admin_media_process', {id: media.id}) }}">
+                    <input type="hidden" name="_token" value="{{ csrf_token('media_process' ~ media.id) }}">
+                    <input type="hidden" name="operation" value="enhance">
+                    <button type="submit" class="btn btn-secondary btn-sm">Mejorar calidad</button>
+                </form>
+                <form method="post" action="{{ path('admin_media_process', {id: media.id}) }}">
+                    <input type="hidden" name="_token" value="{{ csrf_token('media_process' ~ media.id) }}">
+                    <input type="hidden" name="operation" value="enhance_force">
+                    <button type="submit" class="btn btn-secondary btn-sm">Forzar mejora</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="ops-group">
+            <h3>Transformar</h3>
+            <div class="ops-buttons">
+                {% for op, label in transformOperations %}
+                    <form method="post" action="{{ path('admin_media_process', {id: media.id}) }}" onsubmit="return confirm('¿Aplicar: {{ label }}?')">
+                        <input type="hidden" name="_token" value="{{ csrf_token('media_process' ~ media.id) }}">
+                        <input type="hidden" name="operation" value="{{ op }}">
+                        <button type="submit" class="btn btn-secondary btn-sm">{{ label }}</button>
+                    </form>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="ops-group">
+            <h3>Anonimizar</h3>
+            <p class="hint">Desenfoque o pixelado para proteger identidades. La operación es irreversible.</p>
+            <div class="ops-buttons">
+                {% for op, label in anonymizeOperations %}
+                    <form method="post" action="{{ path('admin_media_process', {id: media.id}) }}" onsubmit="return confirm('¿{{ label }}? Esta acción es irreversible.')">
+                        <input type="hidden" name="_token" value="{{ csrf_token('media_process' ~ media.id) }}">
+                        <input type="hidden" name="operation" value="{{ op }}">
+                        <button type="submit" class="btn btn-danger btn-sm">{{ label }}</button>
+                    </form>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <form method="post" action="{{ path('admin_media_delete', {id: media.id}) }}" onsubmit="return confirm('¿Eliminar permanentemente?')" style="margin-top:1rem">
+            <input type="hidden" name="_token" value="{{ csrf_token('delete_media' ~ media.id) }}">
+            <button type="submit" class="btn btn-danger btn-sm">Eliminar de biblioteca</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

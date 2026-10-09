@@ -1,0 +1,131 @@
+{% extends 'public/layout.html.twig' %}
+
+{% block title %}El tiempo — {{ site.name }}{% endblock %}
+
+{% block body %}
+<div class="weather-layout">
+    <div class="weather-main">
+        <div class="weather-page">
+            {% include 'public/_partials/breadcrumb.html.twig' with {
+                crumbs: [{ label: 'El tiempo' }]
+            } %}
+
+            {% include 'public/weather/_sponsor.html.twig' %}
+
+            {% include 'public/_partials/ad_slot.html.twig' with { placement: 'weather_sponsor' } only %}
+
+            <header class="weather-page-head">
+                <h1>El tiempo</h1>
+                {% if forecast %}
+                    <p class="weather-location">{{ forecast.placeName }} <span class="weather-postal">{{ forecast.postalCode }}</span></p>
+                {% elseif config.placeName %}
+                    <p class="weather-location">{{ config.placeName }} <span class="weather-postal">{{ config.postalCode }}</span></p>
+                {% endif %}
+            </header>
+
+            {% if forecast %}
+                <section class="weather-current-card">
+                    <div class="weather-current-main">
+                        <span class="weather-icon {{ weather_icon_class(forecast.currentWeatherCode ?? 0) }}" aria-hidden="true"></span>
+                        <div>
+                            {% if forecast.currentTemp is not null %}
+                                <p class="weather-current-temp">{{ forecast.currentTemp }}°C</p>
+                            {% endif %}
+                            <p class="weather-current-desc">{{ forecast.currentDescription }}</p>
+                        </div>
+                    </div>
+                    <p class="weather-updated">Actualizado {{ forecast.fetchedAt|date('d/m/Y H:i') }}</p>
+                </section>
+
+                <section class="weather-forecast-grid" aria-label="Predicción 7 días">
+                    {% for day in forecast.daily %}
+                        <article class="weather-day-card">
+                            <p class="weather-day-label">{{ day.label }}</p>
+                            <span class="weather-icon weather-icon--sm {{ weather_icon_class(day.code) }}" aria-hidden="true"></span>
+                            <p class="weather-day-desc">{{ day.description }}</p>
+                            <p class="weather-day-temps">
+                                {% if day.max is not null %}<span class="temp-max">{{ day.max }}°</span>{% endif %}
+                                {% if day.min is not null %}<span class="temp-min">{{ day.min }}°</span>{% endif %}
+                            </p>
+                            {% if day.precip is not null and day.precip > 0 %}
+                                <p class="weather-day-precip">Lluvia {{ day.precip }}%</p>
+                            {% endif %}
+                        </article>
+                    {% endfor %}
+                </section>
+
+                {% if aiSummary %}
+                    <section class="weather-ai-summary" aria-label="Pronóstico para los próximos días">
+                        <h2 class="section-label">Pronóstico para los próximos días</h2>
+                        <div class="weather-ai-summary-body">
+                            <h3 class="weather-ai-headline">{{ aiSummary.headline }}</h3>
+                            {% for paragraph in aiSummary.paragraphs %}
+                                <p class="weather-ai-paragraph">{{ paragraph }}</p>
+                            {% endfor %}
+                        </div>
+                    </section>
+                {% endif %}
+            {% else %}
+                <p class="weather-empty">No hay predicción disponible en este momento. Inténtalo más tarde.</p>
+            {% endif %}
+
+            {% if webcams is not empty %}
+                <section class="weather-webcams">
+                    <h2 class="section-label">Webcams de la zona</h2>
+                    <div class="weather-webcam-grid">
+                        {% for webcam in webcams %}
+                            <article class="weather-webcam-card">
+                                <h3>{{ webcam.title }}</h3>
+                                {% if webcam.isEmbed %}
+                                    <div class="weather-webcam-embed">
+                                        <iframe src="{{ webcam.url }}" title="{{ webcam.title }}" loading="lazy" allowfullscreen></iframe>
+                                    </div>
+                                {% else %}
+                                    <div class="weather-webcam-image">
+                                        {{ seo_img(webcam.url, webcam.title) }}
+                                    </div>
+                                {% endif %}
+                            </article>
+                        {% endfor %}
+                    </div>
+                </section>
+            {% endif %}
+
+            {% if latestArticles is not empty %}
+                <section class="weather-latest-news">
+                    <div class="weather-latest-head">
+                        <h2 class="section-label">Últimas noticias</h2>
+                        <a href="{{ path('home') }}" class="section-more">Ver portada</a>
+                    </div>
+                    <div class="story-grid story-grid--section">
+                        {% for article in latestArticles|slice(0, 4) %}
+                            {% include 'public/_partials/story_card.html.twig' with {
+                                article: article,
+                                show_meta: true,
+                                show_excerpt: true,
+                            } %}
+                        {% endfor %}
+                    </div>
+                </section>
+            {% endif %}
+
+            {% include 'public/_partials/ad_slot.html.twig' with { placement: 'weather_footer' } only %}
+        </div>
+    </div>
+
+    <aside class="article-sidebar">
+        {% include 'public/_partials/sidebar_ad_stack.html.twig' with {
+            placements: ['weather_sidebar', 'category_sidebar', 'sidebar_top']
+        } only %}
+        {% include 'public/_partials/latest_sidebar.html.twig' with {
+            articles: latestArticles|default([]),
+            limit: layout.sidebarLatestCount|default(5),
+            title: 'Lo último',
+        } %}
+        {% include 'public/_partials/sidebar_ad_stack.html.twig' with {
+            placements: ['sidebar_bottom']
+        } only %}
+        {% include 'public/_partials/sidebar_links.html.twig' %}
+    </aside>
+</div>
+{% endblock %}

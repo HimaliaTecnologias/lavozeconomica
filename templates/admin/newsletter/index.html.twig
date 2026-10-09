@@ -1,0 +1,56 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}Boletín{% endblock %}
+
+{% block body %}
+<div class="page-header">
+    <h1>Suscriptores del boletín</h1>
+    <a href="{{ path('public_newsletter_index') }}" class="btn btn-secondary" target="_blank">Ver página pública</a>
+</div>
+
+<div class="ads-kpi-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.75rem;margin-bottom:1.25rem">
+    <div class="ads-kpi" style="background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:.85rem">
+        <p style="font-size:.72rem;font-weight:700;text-transform:uppercase;color:var(--muted);margin:0">Activos</p>
+        <p style="font-size:1.5rem;font-weight:800;margin:.25rem 0 0">{{ confirmedCount }}</p>
+    </div>
+    <div class="ads-kpi" style="background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:.85rem">
+        <p style="font-size:.72rem;font-weight:700;text-transform:uppercase;color:var(--muted);margin:0">Pendientes</p>
+        <p style="font-size:1.5rem;font-weight:800;margin:.25rem 0 0">{{ pendingCount }}</p>
+    </div>
+</div>
+
+<p class="hint">Los envíos se programan con <code>newsletter:send-digests</code> (diario/semanal según preferencia de cada suscriptor).</p>
+
+{% if subscribers is empty %}
+    <p class="hint">No hay suscriptores todavía.</p>
+{% else %}
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>Correo</th>
+            <th>Estado</th>
+            <th>Periodicidad</th>
+            <th>Categorías</th>
+            <th>Último envío</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for sub in subscribers %}
+        <tr>
+            <td>{{ sub.email }}</td>
+            <td><span class="badge {{ sub.status.value == 'confirmed' ? 'badge-published' : 'badge-draft' }}">{{ sub.status.label }}</span></td>
+            <td>{{ sub.frequency.label }}</td>
+            <td>
+                {% if sub.categories is empty %}
+                    Todas
+                {% else %}
+                    {% for cat in sub.categories %}{{ cat.name }}{% if not loop.last %}, {% endif %}{% endfor %}
+                {% endif %}
+            </td>
+            <td>{{ sub.lastDigestSentAt ? sub.lastDigestSentAt|date('d/m/Y H:i') : '—' }}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+{% endblock %}

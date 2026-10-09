@@ -1,0 +1,26 @@
+{% for item in articles %}
+    <article class="more-story article-feed-item">
+        <a href="{{ path('public_article_show', {slug: item.slug}) }}" class="more-story-thumb">
+            {% set img = article_usable_featured(item) %}
+            {% if img %}
+                {{ seo_article_image(img, item.title) }}
+            {% else %}
+                <span class="story-card-media-placeholder" aria-hidden="true">{{ site.name }}</span>
+            {% endif %}
+        </a>
+        <div class="more-story-body">
+            {% if item.category %}
+                <a href="{{ path('public_category_show', {slug: item.category.slug}) }}" class="cat-pill cat-pill--muted">{{ item.category.name }}</a>
+            {% endif %}
+            <h4><a href="{{ path('public_article_show', {slug: item.slug}) }}">{{ item.title }}</a></h4>
+            <div class="meta-line">
+                {% if item.publishedAt %}{{ item.publishedAt|date('d/m/Y H:i') }}{% endif %}
+                · {{ item.viewCount }} lecturas
+            </div>
+            {% set excerpt = item.lead ?: item.subtitle %}
+            {% if excerpt %}
+                <p>{{ excerpt|length > 140 ? excerpt|slice(0, 137) ~ '…' : excerpt }}</p>
+            {% endif %}
+        </div>
+    </article>
+{% endfor %}

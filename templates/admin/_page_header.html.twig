@@ -1,0 +1,15 @@
+<div class="page-header">
+    <div class="page-header-main">
+        {% if breadcrumbs is defined and breadcrumbs %}
+            {% import 'admin/_breadcrumbs.html.twig' as breadcrumb %}
+            {{ breadcrumb.breadcrumbs(breadcrumbs) }}
+        {% endif %}
+        <h1>{{ title }}</h1>
+        {% if subtitle is defined and subtitle %}
+            <p class="page-header-subtitle">{{ subtitle }}</p>
+        {% endif %}
+    </div>
+    {% if actions is defined and actions %}
+        <div class="page-header-actions">{{ actions|raw }}</div>
+    {% endif %}
+</div>

@@ -1,0 +1,43 @@
+{% set _categoryId = categoryId|default(null) %}
+{% set _tagIds = tagIds|default([]) %}
+{% if ad_banners(placement, _categoryId, _tagIds) is not empty %}
+    <div class="ad-slot ad-slot--{{ placement }}" data-ad-placement="{{ placement }}">
+        {% for banner in ad_banners(placement, _categoryId, _tagIds) %}
+            {% set creative = banner.resolveCreativeType() %}
+            <div class="ad-banner {{ banner.format.cssClass }} ad-banner--{{ creative.value }}" role="complementary" aria-label="Publicidad">
+                {% if creative.value == 'html' and banner.htmlContent %}
+                    {{ banner.htmlContent|seo_enrich_html(banner.altText|default(banner.name))|raw }}
+                {% elseif creative.value in ['text', 'generated'] and banner.headline %}
+                    {% set textInner %}
+                        <span class="ad-text-banner-kicker">Publicidad</span>
+                        <strong class="ad-text-banner-title">{{ banner.headline }}</strong>
+                        {% if banner.bodyText %}
+                            <p class="ad-text-banner-body">{{ banner.bodyText }}</p>
+                        {% endif %}
+                        {% if banner.ctaLabel %}
+                            <span class="ad-text-banner-cta">{{ banner.ctaLabel }}</span>
+                        {% endif %}
+                    {% endset %}
+                    <div class="ad-text-banner"
+                         style="--ad-bg: {{ banner.bgColor|default('#0f172a') }}; --ad-fg: {{ banner.textColor|default('#f8fafc') }}; --ad-accent: {{ banner.accentColor|default('#f59e0b') }};">
+                        {% if banner.linkUrl and banner.id %}
+                            <a class="ad-text-banner-link" href="{{ path('public_ad_click', {id: banner.id, from: app.request.pathinfo, slot: placement}) }}" {% if banner.linkUrl starts with 'http' %}target="_blank" rel="noopener sponsored"{% else %}rel="sponsored"{% endif %}>
+                                {{ textInner }}
+                            </a>
+                        {% else %}
+                            {{ textInner }}
+                        {% endif %}
+                    </div>
+                {% elseif banner.imageUrl %}
+                    {% if banner.linkUrl and banner.id %}
+                        <a href="{{ path('public_ad_click', {id: banner.id, from: app.request.pathinfo, slot: placement}) }}" {% if banner.linkUrl starts with 'http' %}target="_blank" rel="noopener sponsored"{% else %}rel="sponsored"{% endif %}>
+                            {{ seo_img(banner.imageUrl, banner.altText|default(banner.name)) }}
+                        </a>
+                    {% else %}
+                        {{ seo_img(banner.imageUrl, banner.altText|default(banner.name)) }}
+                    {% endif %}
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}

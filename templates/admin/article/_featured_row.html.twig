@@ -1,0 +1,83 @@
+{% set urlValue = row ? row.url|default('') : (img ? img.url : '') %}
+{% set mediaIdValue = row ? row.mediaId|default('') : (img and img.media ? img.media.id : '') %}
+{% set altValue = row ? row.alt|default('') : (img ? img.alt|default('') : '') %}
+{% set captionValue = row ? row.caption|default('') : (img ? img.caption|default('') : '') %}
+{% set hasPreview = urlValue is not empty %}
+
+<div class="featured-picker{% if hasPreview %} has-media{% endif %}" data-gallery-row>
+    <button type="button"
+            class="featured-picker-preview media-dropzone"
+            data-field="preview"
+            data-action="pick-media"
+            {% if not hasPreview %}data-empty="1"{% endif %}
+            aria-label="{{ hasPreview ? 'Cambiar imagen principal' : 'Elegir o subir imagen principal' }}">
+        {% if hasPreview %}
+            <img src="{{ urlValue }}" alt="">
+            <span class="featured-picker-overlay">Cambiar imagen</span>
+        {% else %}
+            <div class="featured-picker-empty">
+                <span class="featured-picker-empty-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                </span>
+                <strong>Añadir imagen de portada</strong>
+                <span>Arrastra aquí, o haz clic para abrir la biblioteca</span>
+            </div>
+        {% endif %}
+        <span class="media-busy" hidden><span class="media-busy-spinner"></span><span class="media-busy-label">Subiendo…</span></span>
+    </button>
+
+    <div class="featured-picker-side">
+        <input type="hidden" name="featured[mediaId]" value="{{ mediaIdValue }}" data-field="mediaId">
+        <input type="file" data-field="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden>
+
+        <div class="featured-picker-actions">
+            <button type="button" class="btn btn-primary btn-sm" data-action="upload-media">Subir desde el ordenador</button>
+            <button type="button" class="btn btn-secondary btn-sm" data-action="pick-media">Elegir de la biblioteca</button>
+            <button type="button" class="btn btn-danger btn-sm" data-action="clear-featured" {{ hasPreview ? '' : 'hidden' }}>Quitar</button>
+        </div>
+
+        <p class="hint featured-picker-formats">JPG, PNG, WebP o GIF · máx. 20 MB · recomendado ≥ 1200 px de ancho.</p>
+        <p class="media-row-error" data-field="error" hidden></p>
+
+        <div class="field" style="margin:0">
+            <label for="featured-alt">Texto alternativo</label>
+            <input type="text" id="featured-alt" name="featured[alt]" value="{{ altValue }}" data-field="alt" placeholder="Describe la imagen para accesibilidad">
+        </div>
+        <div class="field" style="margin:0">
+            <label for="featured-caption">Pie de foto</label>
+            <input type="text" id="featured-caption" name="featured[caption]" value="{{ captionValue }}" data-field="caption" placeholder="Opcional">
+        </div>
+
+        <details class="featured-advanced">
+            <summary>URL avanzada</summary>
+            <div class="field" style="margin:.5rem 0 0">
+                <label for="featured-url">URL de la imagen</label>
+                <input type="text" id="featured-url" name="featured[url]" value="{{ urlValue }}" data-field="url" placeholder="/media/… o https://…" inputmode="url" autocomplete="off">
+                <p class="hint">Si editas la URL a mano, se deja de usar el archivo de la biblioteca.</p>
+            </div>
+        </details>
+
+        <div class="media-meta" data-field="meta" {% if not (img and img.width and img.height) %}hidden{% endif %}>
+            {% if img and img.width and img.height %}
+                <span class="enhancement-badge {{ img.enhancementStatus.value }}">
+                    {{ img.width }}×{{ img.height }} px
+                    {% if img.enhancementStatus.value == 'pending' or img.enhancementStatus.value == 'processing' %}
+                        — Procesando…
+                    {% elseif img.enhancementStatus.value == 'enhanced' %}
+                        — Optimizada
+                    {% elseif img.enhancementStatus.value == 'failed' %}
+                        — Error al optimizar
+                    {% elseif img.enhancementStatus.value == 'skipped' %}
+                        — Sin cambios
+                    {% endif %}
+                </span>
+            {% endif %}
+        </div>
+        <a href="{{ mediaIdValue ? path('admin_media_show', {id: mediaIdValue}) : '#' }}"
+           target="_blank" rel="noopener"
+           class="hint media-library-link"
+           data-field="library-link"
+           style="font-size:.75rem;margin:0"
+           {{ mediaIdValue ? '' : 'hidden' }}>Gestionar en biblioteca ↗</a>
+    </div>
+</div>

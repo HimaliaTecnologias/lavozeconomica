@@ -1,0 +1,311 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}Usuarios{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .users-stats {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: .85rem;
+        margin: 0 0 1.25rem;
+    }
+    @media (max-width: 720px) {
+        .users-stats { grid-template-columns: 1fr; }
+    }
+    .users-stat {
+        background: #fff;
+        border: 1px solid var(--admin-border);
+        border-radius: var(--admin-radius-sm);
+        padding: .9rem 1rem;
+    }
+    .users-stat strong {
+        display: block;
+        font-size: 1.45rem;
+        line-height: 1.1;
+        letter-spacing: -.02em;
+    }
+    .users-stat span {
+        color: var(--admin-muted);
+        font-size: .82rem;
+    }
+    .users-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1.4fr) minmax(280px, .9fr);
+        gap: 1.25rem;
+        align-items: start;
+    }
+    @media (max-width: 1100px) {
+        .users-layout { grid-template-columns: 1fr; }
+    }
+    .users-card {
+        background: #fff;
+        border: 1px solid var(--admin-border);
+        border-radius: var(--admin-radius-sm);
+        overflow: hidden;
+    }
+    .users-card-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: .75rem;
+        padding: .9rem 1.05rem;
+        border-bottom: 1px solid var(--admin-border);
+        background: #f8fafc;
+    }
+    .users-card-head h2 {
+        margin: 0;
+        font-size: 1rem;
+    }
+    .users-card-head p {
+        margin: .2rem 0 0;
+        color: var(--admin-muted);
+        font-size: .8rem;
+    }
+    .user-cell {
+        display: flex;
+        flex-direction: column;
+        gap: .15rem;
+        min-width: 0;
+    }
+    .user-cell strong { font-size: .95rem; }
+    .user-cell code {
+        font-size: .78rem;
+        color: var(--admin-muted);
+        background: transparent;
+        padding: 0;
+    }
+    .user-role-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: .22rem .55rem;
+        border-radius: 999px;
+        font-size: .72rem;
+        font-weight: 700;
+        letter-spacing: .03em;
+        text-transform: uppercase;
+        background: #e2e8f0;
+        color: #475569;
+        white-space: nowrap;
+    }
+    .user-role-badge.is-admin {
+        background: color-mix(in srgb, var(--admin-accent) 16%, #fff);
+        color: var(--admin-accent);
+    }
+    .user-access {
+        display: grid;
+        gap: .15rem;
+        font-size: .84rem;
+    }
+    .user-access .muted {
+        color: var(--admin-muted);
+        font-size: .76rem;
+    }
+    .user-actions {
+        display: flex;
+        gap: .4rem;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
+    .perm-preview {
+        padding: 1rem 1.05rem 1.15rem;
+    }
+    .perm-preview-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: .82rem;
+    }
+    .perm-preview-table th,
+    .perm-preview-table td {
+        padding: .45rem .35rem;
+        border-bottom: 1px solid var(--admin-border);
+        text-align: left;
+        vertical-align: middle;
+    }
+    .perm-preview-table th:not(:first-child),
+    .perm-preview-table td:not(:first-child) {
+        text-align: center;
+        width: 5.5rem;
+    }
+    .perm-preview-table .group-row td {
+        padding-top: .85rem;
+        font-size: .72rem;
+        font-weight: 700;
+        letter-spacing: .04em;
+        text-transform: uppercase;
+        color: var(--admin-muted);
+        border-bottom: none;
+    }
+    .perm-yes {
+        color: #047857;
+        font-weight: 700;
+    }
+    .perm-no {
+        color: #cbd5e1;
+    }
+    .perm-preview-actions {
+        margin-top: 1rem;
+        display: flex;
+        gap: .5rem;
+        flex-wrap: wrap;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+{% set headerActions %}
+    <a href="{{ path('admin_users_permissions') }}" class="btn btn-secondary btn-sm">Permisos por rol</a>
+    <a href="{{ path('admin_users_new') }}" class="btn btn-primary btn-sm">Nuevo usuario</a>
+{% endset %}
+{% include 'admin/_page_header.html.twig' with {
+    title: 'Usuarios del periódico',
+    subtitle: 'Equipo con acceso al panel, últimos accesos y permisos por tipo de usuario.',
+    breadcrumbs: [
+        { label: 'Panel', url: path('admin_dashboard') },
+        { label: 'Usuarios' },
+    ],
+    actions: headerActions
+} only %}
+
+<div class="users-stats">
+    <div class="users-stat">
+        <strong>{{ counts.total }}</strong>
+        <span>Usuarios de personal</span>
+    </div>
+    <div class="users-stat">
+        <strong>{{ counts.admins }}</strong>
+        <span>Administradores</span>
+    </div>
+    <div class="users-stat">
+        <strong>{{ counts.redactors }}</strong>
+        <span>Redactores</span>
+    </div>
+</div>
+
+<div class="users-layout">
+    <section class="users-card">
+        <div class="users-card-head">
+            <div>
+                <h2>Equipo</h2>
+                <p>Accesos al panel de {{ site.name }}.</p>
+            </div>
+        </div>
+
+        {% if assignments is empty %}
+            <div class="empty-panel" style="margin:0;border:0;border-radius:0">No hay usuarios asignados a este periódico.</div>
+        {% else %}
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Usuario</th>
+                        <th>Rol</th>
+                        <th>Último acceso</th>
+                        <th>Última actividad</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for assignment in assignments %}
+                    {% set u = assignment.user %}
+                    {% set activity = lastActivity[u.id]|default(null) %}
+                    {% set isAdmin = assignment.role == 'site_admin' %}
+                    <tr>
+                        <td>
+                            <div class="user-cell">
+                                <strong>{{ u.name }}</strong>
+                                <code>{{ u.email }}</code>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="user-role-badge {{ isAdmin ? 'is-admin' : '' }}">
+                                {{ roleOptions[assignment.role]|default(roleLabels[assignment.role]|default(assignment.role)) }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="user-access">
+                                {% if u.lastLoginAt %}
+                                    <span>{{ u.lastLoginAt|date('d/m/Y H:i') }}</span>
+                                    {% if u.lastLoginIp %}
+                                        <span class="muted">IP {{ u.lastLoginIp }}</span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="muted">Nunca</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="user-access">
+                                {% if activity %}
+                                    <span>{{ activity.action }}{% if activity.entityLabel %} · {{ activity.entityLabel|length > 36 ? activity.entityLabel|slice(0, 36) ~ '…' : activity.entityLabel }}{% endif %}</span>
+                                    <span class="muted">{{ activity.createdAt|date('d/m/Y H:i') }}</span>
+                                {% else %}
+                                    <span class="muted">Sin actividad registrada</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="user-actions">
+                                <a href="{{ path('admin_users_edit', {id: assignment.id}) }}" class="btn btn-secondary btn-sm">Editar</a>
+                                <form class="inline-form" method="post" action="{{ path('admin_users_remove', {id: assignment.id}) }}" onsubmit="return confirm('¿Quitar este usuario del periódico?')">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('remove_user' ~ assignment.id) }}">
+                                    <button type="submit" class="btn btn-danger btn-sm">Quitar</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+    </section>
+
+    <aside class="users-card">
+        <div class="users-card-head">
+            <div>
+                <h2>Qué puede hacer cada rol</h2>
+                <p>Resumen de la matriz activa. Configúrala al detalle.</p>
+            </div>
+        </div>
+        <div class="perm-preview">
+            <table class="perm-preview-table">
+                <thead>
+                    <tr>
+                        <th>Acción</th>
+                        <th>Admin</th>
+                        <th>Redactor</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for groupName, keys in permissionGroups %}
+                    <tr class="group-row"><td colspan="3">{{ groupName }}</td></tr>
+                    {% for key in keys %}
+                        <tr>
+                            <td>{{ permissionLabels[key]|default(key) }}</td>
+                            <td>
+                                {% if permissions.roleHas('site_admin', key) %}
+                                    <span class="perm-yes">Sí</span>
+                                {% else %}
+                                    <span class="perm-no">—</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if permissions.roleHas('redactor', key) %}
+                                    <span class="perm-yes">Sí</span>
+                                {% else %}
+                                    <span class="perm-no">—</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                {% endfor %}
+                </tbody>
+            </table>
+            <div class="perm-preview-actions">
+                <a href="{{ path('admin_users_permissions') }}" class="btn btn-primary btn-sm">Configurar permisos</a>
+            </div>
+        </div>
+    </aside>
+</div>
+{% endblock %}

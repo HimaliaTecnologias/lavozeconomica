@@ -1,0 +1,8 @@
+<form class="archive-search-form" method="post" action="{{ path('public_search_submit') }}" role="search">
+    <input type="hidden" name="_token" value="{{ csrf_token('search_form') }}">
+    <div class="archive-search-field">
+        <input type="search" id="site-search-q" name="q" value="{{ searchQuery|default('') }}"
+               placeholder="Buscar…" autocomplete="off" maxlength="200" aria-label="Buscar">
+        <button type="submit" class="archive-search-btn">Buscar</button>
+    </div>
+</form>

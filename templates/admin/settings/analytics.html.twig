@@ -1,0 +1,89 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}Estadísticas y analítica{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .settings-subnav { display: flex; gap: .5rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
+    .settings-subnav a { padding: .4rem .75rem; border-radius: 6px; background: #edf2f7; text-decoration: none; color: var(--text); font-size: .9rem; font-weight: 600; }
+    .settings-subnav a.active { background: var(--primary); color: #fff; }
+    .form-section { margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+    .form-section h2 { font-size: 1rem; margin: 0 0 1rem; }
+    .code-sample {
+        margin: .75rem 0 0;
+        padding: .85rem 1rem;
+        background: #1e293b;
+        color: #e2e8f0;
+        border-radius: 8px;
+        font-size: .78rem;
+        line-height: 1.45;
+        overflow-x: auto;
+        white-space: pre-wrap;
+        word-break: break-word;
+    }
+    .code-field textarea {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: .82rem;
+        line-height: 1.45;
+        min-height: 140px;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<h1>Estadísticas y analítica</h1>
+<p class="hint">Pega el código de seguimiento de tu herramienta (Matomo, Google Analytics, Plausible, etc.) para medir visitas en la web pública.</p>
+{% include 'admin/settings/_subnav.html.twig' %}
+
+<form method="post" action="{{ path('admin_settings_analytics') }}">
+    <input type="hidden" name="_token" value="{{ csrf_token('settings_analytics') }}">
+
+    <div class="checkbox-row field">
+        <input type="checkbox" id="enabled" name="enabled" value="1" {{ (data.enabled|default(config.enabled)) ? 'checked' : '' }}>
+        <label for="enabled">Activar seguimiento en la web pública</label>
+    </div>
+
+    <div class="form-section">
+        <h2>Código en &lt;head&gt;</h2>
+        <p class="hint">Scripts que deben cargarse en la cabecera (por ejemplo <code>gtag.js</code> de Google Analytics).</p>
+        <div class="field code-field">
+            <label for="headCode">Código HTML / JavaScript</label>
+            <textarea id="headCode" name="headCode" rows="8" placeholder="<script>…</script>">{{ data.headCode|default(config.headCode) }}</textarea>
+        </div>
+    </div>
+
+    <div class="form-section">
+        <h2>Código antes de &lt;/body&gt;</h2>
+        <p class="hint">Ideal para Matomo, que suele insertarse al final del documento. También puedes usarlo para <code>&lt;noscript&gt;</code> de respaldo.</p>
+        <div class="field code-field">
+            <label for="bodyCode">Código HTML / JavaScript</label>
+            <textarea id="bodyCode" name="bodyCode" rows="10" placeholder="<script>…</script>">{{ data.bodyCode|default(config.bodyCode) }}</textarea>
+        </div>
+
+        <p class="hint"><strong>Ejemplo Matomo</strong> (sustituye la URL y el ID de sitio):</p>
+        <pre class="code-sample">&lt;script&gt;
+  var _paq = window._paq = window._paq || [];
+  _paq.push(['trackPageView']);
+  _paq.push(['enableLinkTracking']);
+  (function() {
+    var u = "https://tu-dominio.matomo.cloud/";
+    _paq.push(['setTrackerUrl', u + 'matomo.php']);
+    _paq.push(['setSiteId', '1']);
+    var d = document, g = d.createElement('script'), s = d.getElementsByTagName('script')[0];
+    g.async = true; g.src = u + 'matomo.js'; s.parentNode.insertBefore(g, s);
+  })();
+&lt;/script&gt;</pre>
+    </div>
+
+    {% if errors.tracking is defined %}
+        <div class="error-msg">{{ errors.tracking }}</div>
+    {% endif %}
+
+    <div class="actions" style="margin-top:1.25rem">
+        <a href="{{ path('admin_settings_index') }}" class="btn btn-secondary">Volver</a>
+        <button type="submit" class="btn btn-primary">Guardar</button>
+    </div>
+</form>
+
+<p class="hint" style="margin-top:1.5rem">El código no se inserta en el panel de administración ni en las vistas previa de noticias.</p>
+{% endblock %}

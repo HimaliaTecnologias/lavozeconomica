@@ -1,0 +1,13 @@
+<nav class="article-breadcrumb account-breadcrumb" aria-label="Miga de pan">
+    <a href="{{ path('home') }}">Portada</a>
+    {% if showAccountRoot|default(true) %}
+        · {% if accountActiveSection|default('') == 'cuenta_profile' %}
+            Mi cuenta
+        {% else %}
+            <a href="{{ path('cuenta_profile') }}">Mi cuenta</a>
+        {% endif %}
+    {% endif %}
+    {% if breadcrumbCurrent|default('') != '' %}
+        · {{ breadcrumbCurrent }}
+    {% endif %}
+</nav>

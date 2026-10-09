@@ -1,0 +1,34 @@
+framework:
+    rate_limiter:
+        login:
+            policy: sliding_window
+            limit: 5
+            interval: '15 minutes'
+        ingest_api:
+            policy: fixed_window
+            limit: 30
+            interval: '1 minute'
+        public_form:
+            policy: sliding_window
+            limit: 8
+            interval: '10 minutes'
+        public_search:
+            policy: sliding_window
+            limit: 20
+            interval: '5 minutes'
+        public_ugc:
+            policy: sliding_window
+            limit: 10
+            interval: '10 minutes'
+        public_pdf:
+            policy: sliding_window
+            limit: 6
+            interval: '10 minutes'
+        public_ad_click:
+            policy: sliding_window
+            limit: 30
+            interval: '10 minutes'
+        public_api_read:
+            policy: sliding_window
+            limit: 60
+            interval: '1 minute'

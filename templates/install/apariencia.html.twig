@@ -1,0 +1,52 @@
+{% extends 'install/layout.html.twig' %}
+
+{% block title %}Apariencia{% endblock %}
+
+{% block steps %}
+<div class="steps">
+    <div class="step done">Inicio</div>
+    <div class="step done">Periódico</div>
+    <div class="step active">Apariencia</div>
+    <div class="step">Administrador</div>
+    <div class="step">Finalizar</div>
+</div>
+{% endblock %}
+
+{% block body %}
+<h2>Identidad visual</h2>
+<form method="post" action="{{ path('install_apariencia') }}" novalidate>
+    <div class="field">
+        <label for="tagline">Descripción / eslogan</label>
+        <textarea id="tagline" name="tagline" rows="2" placeholder="Noticias de tu comarca, al momento">{{ data.tagline }}</textarea>
+        <div class="hint">Aparecerá en la portada y metadatos SEO.</div>
+    </div>
+    <div class="color-row">
+        <div class="field">
+            <label for="primaryColor">Color principal</label>
+            <input type="color" id="primaryColor" name="primaryColor" value="{{ data.primaryColor }}">
+            {% if errors.primaryColor is defined %}<div class="error-msg">{{ errors.primaryColor }}</div>{% endif %}
+        </div>
+        <div class="field">
+            <label for="secondaryColor">Color secundario</label>
+            <input type="color" id="secondaryColor" name="secondaryColor" value="{{ data.secondaryColor }}">
+            {% if errors.secondaryColor is defined %}<div class="error-msg">{{ errors.secondaryColor }}</div>{% endif %}
+        </div>
+    </div>
+    <div class="field">
+        <label>Vista previa cabecera</label>
+        <div class="preview-header" id="preview" style="background: {{ data.primaryColor }}">
+            <strong>{{ data.name ?: 'Tu periódico' }}</strong>
+            {% if data.tagline %}<br><small>{{ data.tagline }}</small>{% endif %}
+        </div>
+    </div>
+    <div class="actions">
+        <a href="{{ path('install_periodico') }}" class="btn btn-secondary">Atrás</a>
+        <button type="submit" class="btn btn-primary">Continuar</button>
+    </div>
+</form>
+<script>
+document.getElementById('primaryColor')?.addEventListener('input', e => {
+    document.getElementById('preview').style.background = e.target.value;
+});
+</script>
+{% endblock %}

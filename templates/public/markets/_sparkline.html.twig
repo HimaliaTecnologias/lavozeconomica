@@ -1,0 +1,8 @@
+{% if index.sparkline|length >= 2 %}
+    {% set sparkPath = market_sparkline_path(index.sparkline) %}
+    {% if sparkPath %}
+        <svg class="market-sparkline {{ market_change_class(index.change) }}" viewBox="0 0 140 44" preserveAspectRatio="none" aria-hidden="true">
+            <path d="{{ sparkPath }}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+        </svg>
+    {% endif %}
+{% endif %}

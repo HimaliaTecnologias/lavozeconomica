@@ -1,0 +1,48 @@
+{% extends 'public/layout.html.twig' %}
+
+{% block title %}Pasatiempos — {{ site.name }}{% endblock %}
+
+{% block body %}
+<div class="games-layout">
+    <div class="games-main">
+        <div class="games-page">
+            {% include 'public/_partials/breadcrumb.html.twig' with {
+                crumbs: [{ label: 'Pasatiempos' }]
+            } %}
+
+            <header class="games-page-head">
+                <h1>Pasatiempos</h1>
+                <p class="games-page-meta">
+                    <span>Retos diarios</span>
+                    <span class="games-page-meta-sep">·</span>
+                    <span>{{ 'now'|date('d/m/Y') }}</span>
+                </p>
+                <p class="games-page-lead">Juegos sencillos para entretenerse un rato. Nuevos retos cada día a medianoche (hora de Madrid).</p>
+            </header>
+
+            <div class="games-hub-grid">
+                {% if config.sudokuEnabled %}
+                    <a href="{{ path('public_games_sudoku') }}" class="games-hub-card">
+                        <span class="games-hub-icon">9</span>
+                        <h2>Sudoku del día</h2>
+                        <p>Completa la cuadrícula con números del 1 al 9 sin repetir en filas, columnas o bloques.</p>
+                    </a>
+                {% endif %}
+                {% if config.wordScrambleEnabled %}
+                    <a href="{{ path('public_games_anagrama') }}" class="games-hub-card">
+                        <span class="games-hub-icon">A</span>
+                        <h2>Anagrama del día</h2>
+                        <p>Ordena las letras para descubrir la palabra escondida. Pista incluida.</p>
+                    </a>
+                {% endif %}
+            </div>
+
+            {% if not config.sudokuEnabled and not config.wordScrambleEnabled %}
+                <p class="games-empty">No hay pasatiempos activos en este momento.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    {% include 'public/games/_sidebar.html.twig' %}
+</div>
+{% endblock %}

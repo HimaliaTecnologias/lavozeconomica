@@ -1,0 +1,132 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}Bolsa y mercados{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .settings-subnav { display: flex; gap: .5rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
+    .settings-subnav a { padding: .4rem .75rem; border-radius: 6px; background: #edf2f7; text-decoration: none; color: var(--text); font-size: .9rem; font-weight: 600; }
+    .settings-subnav a.active { background: var(--primary); color: #fff; }
+    .form-section { margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+    .form-section h2 { font-size: 1rem; margin: 0 0 1rem; }
+    .index-options { display: grid; gap: .65rem; margin-top: .5rem; }
+    .index-group-title {
+        margin: 1rem 0 .25rem;
+        font-size: .82rem;
+        font-weight: 800;
+        letter-spacing: .06em;
+        text-transform: uppercase;
+        color: var(--text-muted);
+    }
+    .index-group-title:first-child { margin-top: 0; }
+    .index-option {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: .35rem .75rem;
+        padding: .65rem .75rem;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: #fafafa;
+    }
+    .index-option strong { font-size: .95rem; }
+    .index-option span { font-size: .82rem; color: var(--text-muted); grid-column: 2; }
+    .markets-preview { background: #f8fafc; border: 1px solid var(--border); border-radius: 10px; padding: 1rem; margin-top: 1rem; }
+    .markets-preview-grid { display: grid; gap: .75rem; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+    .markets-preview-card { background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: .75rem; }
+    .markets-preview-card h3 { margin: 0 0 .35rem; font-size: .9rem; }
+    .markets-preview-price { font-size: 1.1rem; font-weight: 700; margin: 0; }
+    .markets-preview-change { font-size: .85rem; margin: .25rem 0 0; }
+    .inline-actions { display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; margin-top: 1rem; }
+</style>
+{% endblock %}
+
+{% block body %}
+<h1>Bolsa y mercados</h1>
+<p class="hint">Activa la sección pública <code>/bolsa</code> con cotizaciones de índices como IBEX 35, mercado continuo y Nasdaq.</p>
+{% include 'admin/settings/_subnav.html.twig' %}
+
+<form method="post" action="{{ path('admin_settings_markets') }}">
+    <input type="hidden" name="_token" value="{{ csrf_token('settings_markets') }}">
+
+    <div class="checkbox-row field">
+        <input type="checkbox" id="enabled" name="enabled" value="1" {{ (data.enabled|default(config.enabled)) ? 'checked' : '' }}>
+        <label for="enabled">Mostrar sección de bolsa en el periódico</label>
+    </div>
+
+    <div class="form-section">
+        <h2>Índices a mostrar</h2>
+        <p class="hint">Selecciona los mercados que quieres publicar. Los datos se actualizan automáticamente cada 5 minutos.</p>
+        {% if errors.indexIds is defined %}<div class="error-msg">{{ errors.indexIds }}</div>{% endif %}
+
+        <div class="index-options">
+            {% set selectedIds = data.indexIds|default(config.indexIds) %}
+            {% for region in ['spain', 'europe', 'usa'] %}
+                {% set regionIndices = availableIndices|filter(i => i.region == region) %}
+                {% if regionIndices is not empty %}
+                    <h3 class="index-group-title">{{ market_region_label(region) }}</h3>
+                    {% for index in regionIndices %}
+                        <label class="index-option">
+                            <input type="checkbox" name="indexIds[]" value="{{ index.id }}"
+                                   {{ index.id in selectedIds ? 'checked' : '' }}>
+                            <strong>{{ index.name }}</strong>
+                            <span>{{ index.description }}</span>
+                        </label>
+                    {% endfor %}
+                {% endif %}
+            {% endfor %}
+        </div>
+        <p class="hint" style="margin-top:1rem">Además de los índices, la página pública muestra automáticamente las cotizaciones del IBEX 35 por empresa y una selección del Mercado Continuo.</p>
+    </div>
+
+    <div class="form-section">
+        <h2>Comentario con IA</h2>
+        <p class="hint">Genera un análisis editorial en <code>/bolsa</code> con los datos de cotizaciones y OpenAI. Se actualiza al refrescar las cotizaciones.</p>
+
+        <div class="checkbox-row field">
+            <input type="checkbox" id="aiSummaryEnabled" name="aiSummaryEnabled" value="1"
+                   {{ (data.aiSummaryEnabled|default(config.aiSummaryEnabled)) ? 'checked' : '' }}>
+            <label for="aiSummaryEnabled">Mostrar comentario de mercados generado por IA</label>
+        </div>
+        <p class="hint">La API key se configura en <a href="{{ path('admin_settings_ai') }}">Configuración → IA</a>.</p>
+        {% if errors.openaiApiKey is defined %}<div class="error-msg">{{ errors.openaiApiKey }}</div>{% endif %}
+    </div>
+
+    <div class="inline-actions">
+        <button type="submit" class="btn btn-primary">Guardar</button>
+    </div>
+</form>
+
+<form method="post" action="{{ path('admin_settings_markets') }}" class="inline-actions">
+    <input type="hidden" name="_token" value="{{ csrf_token('settings_markets') }}">
+    <input type="hidden" name="action" value="refresh_board">
+    <button type="submit" class="btn btn-secondary btn-sm">Actualizar cotizaciones ahora</button>
+</form>
+
+{% if board and board.indices is not empty %}
+    <div class="markets-preview">
+        <p class="hint"><strong>Vista previa</strong> — actualizado {{ board.fetchedAt|date('d/m/Y H:i') }}</p>
+        <div class="markets-preview-grid">
+            {% for index in board.indices %}
+                <div class="markets-preview-card">
+                    <h3>{{ index.name }}</h3>
+                    <p class="markets-preview-price">{{ market_format_price(index.price, index.currency) }}</p>
+                    <p class="markets-preview-change {{ market_change_class(index.change) }}">
+                        {{ market_format_change(index.change, index.currency) }}
+                        ({{ market_format_change_percent(index.changePercent) }})
+                    </p>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+{% endif %}
+
+{% if aiSummary %}
+    <div class="markets-preview" style="margin-top:1.5rem">
+        <p class="hint"><strong>Comentario IA</strong> — generado {{ aiSummary.generatedAt|date('d/m/Y H:i') }}</p>
+        <h3 style="margin:.5rem 0 .35rem;font-size:1rem">{{ aiSummary.headline }}</h3>
+        {% for paragraph in aiSummary.paragraphs %}
+            <p style="margin:.35rem 0;line-height:1.55">{{ paragraph }}</p>
+        {% endfor %}
+    </div>
+{% endif %}
+{% endblock %}

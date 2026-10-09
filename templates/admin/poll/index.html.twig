@@ -1,0 +1,69 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}Encuestas{% endblock %}
+
+{% block body %}
+{% set headerActions %}
+    <a href="{{ path('admin_polls_new') }}" class="btn btn-primary btn-sm">Nueva encuesta</a>
+{% endset %}
+{% include 'admin/_page_header.html.twig' with {
+    title: 'Encuestas',
+    subtitle: 'Crea encuestas aquí o al editar una noticia. Puedes reutilizar la misma encuesta en varias noticias.',
+    breadcrumbs: [
+        { label: 'Panel', url: path('admin_dashboard') },
+        { label: 'Encuestas' },
+    ],
+    actions: headerActions
+} only %}
+
+{% if polls is empty %}
+    <div class="empty-panel">No hay encuestas todavía.</div>
+{% else %}
+<div class="table-responsive">
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>Pregunta</th>
+            <th>Opciones</th>
+            <th>Votos</th>
+            <th>Estado</th>
+            <th>Noticias</th>
+            <th class="col-actions"></th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for poll in polls %}
+        <tr>
+            <td data-label="Pregunta">
+                <strong>{{ poll.question }}</strong>
+                <div class="hint" style="margin-top:.2rem">Creada {{ poll.createdAt|date('d/m/Y H:i') }}</div>
+            </td>
+            <td data-label="Opciones">{{ poll.options|length }}</td>
+            <td data-label="Votos">{{ poll.totalVotes }}</td>
+            <td data-label="Estado">
+                {% if poll.isOpen() %}
+                    <span class="status-badge status-badge--published">Abierta</span>
+                {% else %}
+                    <span class="status-badge status-badge--draft">Cerrada</span>
+                {% endif %}
+                {% if poll.closesAt %}
+                    <div class="hint" style="margin-top:.2rem">Cierra {{ poll.closesAt|date('d/m/Y H:i') }}</div>
+                {% endif %}
+            </td>
+            <td data-label="Noticias">{{ articleCounts[poll.id]|default(0) }}</td>
+            <td class="col-actions">
+                <div class="table-actions">
+                    <a href="{{ path('admin_polls_edit', {id: poll.id}) }}" class="btn btn-secondary btn-sm">Editar</a>
+                    <form class="inline-form" method="post" action="{{ path('admin_polls_delete', {id: poll.id}) }}" onsubmit="return confirm('¿Eliminar esta encuesta? Las noticias enlazadas perderán la encuesta.');">
+                        <input type="hidden" name="_token" value="{{ csrf_token('delete_poll' ~ poll.id) }}">
+                        <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
+                    </form>
+                </div>
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+</div>
+{% endif %}
+{% endblock %}

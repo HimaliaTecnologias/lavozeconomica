@@ -1,0 +1,177 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}{{ user ? 'Editar usuario' : 'Nuevo usuario' }}{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .user-form-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(260px, 340px);
+        gap: 1.25rem;
+        align-items: start;
+        max-width: 980px;
+    }
+    @media (max-width: 900px) {
+        .user-form-layout { grid-template-columns: 1fr; }
+    }
+    .user-form-card,
+    .user-form-aside {
+        background: #fff;
+        border: 1px solid var(--admin-border);
+        border-radius: var(--admin-radius-sm);
+        padding: 1.1rem 1.2rem 1.25rem;
+    }
+    .user-form-aside h2 {
+        margin: 0 0 .35rem;
+        font-size: .95rem;
+    }
+    .user-form-aside .hint { margin: 0 0 .85rem; }
+    .user-access-box {
+        margin: 0 0 1rem;
+        padding: .75rem .85rem;
+        background: #f8fafc;
+        border-radius: 8px;
+        font-size: .86rem;
+        display: grid;
+        gap: .35rem;
+    }
+    .user-access-box strong { font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; color: var(--admin-muted); }
+    .role-cap-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: grid;
+        gap: .35rem;
+        font-size: .84rem;
+    }
+    .role-cap-list li {
+        display: flex;
+        justify-content: space-between;
+        gap: .5rem;
+        padding: .35rem 0;
+        border-bottom: 1px solid var(--admin-border);
+    }
+    .role-cap-list li:last-child { border-bottom: 0; }
+    .role-cap-list .on { color: #047857; font-weight: 700; }
+    .role-cap-list .off { color: #cbd5e1; }
+</style>
+{% endblock %}
+
+{% block body %}
+{% set formData = formData|default({}) %}
+{% set loginValue = formData.login|default(user ? user.email : '') %}
+{% set nameValue = formData.name|default(user ? user.name : '') %}
+{% set selectedRole = formData.role|default(assignment ? (assignment.role == 'editor' ? 'redactor' : assignment.role) : 'redactor') %}
+
+{% include 'admin/_page_header.html.twig' with {
+    title: user ? 'Editar usuario' : 'Nuevo usuario',
+    subtitle: 'Asigna un rol. Las acciones concretas se configuran en la matriz de permisos.',
+    breadcrumbs: [
+        { label: 'Panel', url: path('admin_dashboard') },
+        { label: 'Usuarios', url: path('admin_users_index') },
+        { label: user ? 'Editar' : 'Nuevo' },
+    ]
+} only %}
+
+<div class="user-form-layout">
+    <form class="user-form-card" method="post" action="{{ user ? path('admin_users_edit', {id: assignment.id}) : path('admin_users_new') }}" novalidate>
+        <input type="hidden" name="_token" value="{{ csrf_token('user_form') }}">
+
+        <div class="field">
+            <label for="login">Usuario (login) *</label>
+            <input type="text" id="login" name="login" required
+                   value="{{ loginValue }}"
+                   class="{{ errors.login is defined ? 'error' : '' }}"
+                   {{ user ? 'readonly' : '' }}>
+            {% if errors.login is defined %}<div class="error-msg">{{ errors.login }}</div>{% endif %}
+            <p class="hint">Se usa para iniciar sesión en el panel.</p>
+        </div>
+
+        <div class="field">
+            <label for="name">Nombre *</label>
+            <input type="text" id="name" name="name" required
+                   value="{{ nameValue }}"
+                   class="{{ errors.name is defined ? 'error' : '' }}">
+            {% if errors.name is defined %}<div class="error-msg">{{ errors.name }}</div>{% endif %}
+        </div>
+
+        <div class="field">
+            <label for="password">Contraseña {{ user ? '' : '*' }}</label>
+            <input type="password" id="password" name="password"
+                   class="{{ errors.password is defined ? 'error' : '' }}"
+                   {{ user ? '' : 'required' }}>
+            {% if errors.password is defined %}<div class="error-msg">{{ errors.password }}</div>{% endif %}
+            {% if user %}<p class="hint">Deja en blanco para mantener la contraseña actual.</p>{% endif %}
+        </div>
+
+        <div class="field">
+            <label for="role">Tipo de usuario</label>
+            <select id="role" name="role" class="{{ errors.role is defined ? 'error' : '' }}">
+                {% for value, label in roleOptions %}
+                    <option value="{{ value }}" {{ selectedRole == value ? 'selected' : '' }}>{{ label }}</option>
+                {% endfor %}
+            </select>
+            {% if errors.role is defined %}<div class="error-msg">{{ errors.role }}</div>{% endif %}
+            <p class="hint"><a href="{{ path('admin_users_permissions') }}">Configurar qué puede hacer cada tipo</a></p>
+        </div>
+
+        <div class="actions">
+            <a href="{{ path('admin_users_index') }}" class="btn btn-secondary">Cancelar</a>
+            <button type="submit" class="btn btn-primary">Guardar</button>
+        </div>
+    </form>
+
+    <aside class="user-form-aside">
+        {% if user %}
+            <div class="user-access-box">
+                <strong>Último acceso</strong>
+                {% if user.lastLoginAt %}
+                    <div>{{ user.lastLoginAt|date('d/m/Y H:i') }}{% if user.lastLoginIp %} · IP {{ user.lastLoginIp }}{% endif %}</div>
+                {% else %}
+                    <div>Nunca ha iniciado sesión</div>
+                {% endif %}
+                {% if lastActivity is defined and lastActivity %}
+                    <strong style="margin-top:.35rem">Última actividad editorial</strong>
+                    <div>{{ lastActivity.action }}{% if lastActivity.entityLabel %} · {{ lastActivity.entityLabel }}{% endif %}</div>
+                    <div style="color:var(--admin-muted);font-size:.8rem">{{ lastActivity.createdAt|date('d/m/Y H:i') }}</div>
+                {% endif %}
+            </div>
+        {% endif %}
+
+        <h2>Permisos del rol seleccionado</h2>
+        <p class="hint">Vista previa según la matriz actual.</p>
+        <ul class="role-cap-list" id="role-cap-preview">
+            {% for key, label in permissionLabels %}
+                <li data-perm="{{ key }}">
+                    <span>{{ label }}</span>
+                    <span class="{{ permissions.roleHas(selectedRole, key) ? 'on' : 'off' }}">
+                        {{ permissions.roleHas(selectedRole, key) ? 'Sí' : '—' }}
+                    </span>
+                </li>
+            {% endfor %}
+        </ul>
+    </aside>
+</div>
+
+<script>
+(function () {
+    const matrix = {{ {
+        site_admin: permissions.forRole('site_admin'),
+        redactor: permissions.forRole('redactor')
+    }|json_encode|raw }};
+    const select = document.getElementById('role');
+    const items = document.querySelectorAll('#role-cap-preview li');
+    function sync() {
+        const role = select.value === 'editor' ? 'redactor' : select.value;
+        const allowed = matrix[role] || [];
+        items.forEach(function (li) {
+            const ok = allowed.indexOf(li.getAttribute('data-perm')) !== -1;
+            const badge = li.querySelector('span:last-child');
+            badge.textContent = ok ? 'Sí' : '—';
+            badge.className = ok ? 'on' : 'off';
+        });
+    }
+    if (select) select.addEventListener('change', sync);
+})();
+</script>
+{% endblock %}

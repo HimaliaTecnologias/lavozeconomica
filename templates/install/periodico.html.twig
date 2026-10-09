@@ -1,0 +1,60 @@
+{% extends 'install/layout.html.twig' %}
+
+{% block title %}Datos del periódico{% endblock %}
+
+{% block steps %}
+<div class="steps">
+    <div class="step done">Inicio</div>
+    <div class="step active">Periódico</div>
+    <div class="step">Apariencia</div>
+    <div class="step">Administrador</div>
+    <div class="step">Finalizar</div>
+</div>
+{% endblock %}
+
+{% block body %}
+<h2>Datos del periódico</h2>
+<form method="post" action="{{ path('install_periodico') }}" novalidate>
+    <div class="field">
+        <label for="name">Nombre del periódico *</label>
+        <input type="text" id="name" name="name" value="{{ data.name }}" required
+               class="{{ errors.name is defined ? 'error' : '' }}" placeholder="Diario de Asturias">
+        {% if errors.name is defined %}<div class="error-msg">{{ errors.name }}</div>{% endif %}
+    </div>
+    <div class="field">
+        <label for="code">Código interno *</label>
+        <input type="text" id="code" name="code" value="{{ data.code }}" required
+               class="{{ errors.code is defined ? 'error' : '' }}" placeholder="asturias"
+               autocapitalize="off" autocomplete="off" spellcheck="false">
+        <div class="hint">Identificador único (minúsculas). Se usa para la base de datos: mymedia_site_<em>código</em></div>
+        {% if errors.code is defined %}<div class="error-msg">{{ errors.code }}</div>{% endif %}
+    </div>
+    <div class="field">
+        <label for="domain">Dominio principal *</label>
+        <input type="text" id="domain" name="domain" value="{{ data.domain }}" required
+               class="{{ errors.domain is defined ? 'error' : '' }}" placeholder="www.miperiodico.com">
+        {% if errors.domain is defined %}<div class="error-msg">{{ errors.domain }}</div>{% endif %}
+    </div>
+    <div class="field">
+        <label for="locale">Idioma</label>
+        <select id="locale" name="locale">
+            <option value="es" {{ data.locale == 'es' ? 'selected' : '' }}>Español</option>
+            <option value="ca" {{ data.locale == 'ca' ? 'selected' : '' }}>Catalán</option>
+            <option value="gl" {{ data.locale == 'gl' ? 'selected' : '' }}>Gallego</option>
+            <option value="eu" {{ data.locale == 'eu' ? 'selected' : '' }}>Euskera</option>
+        </select>
+    </div>
+    <div class="field">
+        <label for="timezone">Zona horaria</label>
+        <select id="timezone" name="timezone">
+            <option value="Europe/Madrid" {{ data.timezone == 'Europe/Madrid' ? 'selected' : '' }}>Europe/Madrid</option>
+            <option value="Europe/Lisbon" {{ data.timezone == 'Europe/Lisbon' ? 'selected' : '' }}>Europe/Lisbon</option>
+            <option value="Atlantic/Canary" {{ data.timezone == 'Atlantic/Canary' ? 'selected' : '' }}>Atlantic/Canary</option>
+        </select>
+    </div>
+    <div class="actions">
+        <a href="{{ path('install_welcome') }}" class="btn btn-secondary">Atrás</a>
+        <button type="submit" class="btn btn-primary">Continuar</button>
+    </div>
+</form>
+{% endblock %}

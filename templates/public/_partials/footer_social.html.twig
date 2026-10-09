@@ -1,0 +1,18 @@
+{% if footer.hasSocialLinks %}
+<div class="footer-social{{ class|default('') }}"{% if aria_label is defined %} aria-label="{{ aria_label }}"{% endif %}>
+    {% for social in footer.socialLinks %}
+        <a
+            href="{{ social.url }}"
+            class="footer-social-link footer-social-link--{{ social.key }}"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="{{ social.label }}"
+        >
+            {% include 'public/_partials/social_icon.html.twig' with { network: social.key } only %}
+            {% if show_labels|default(false) %}
+                <span class="footer-social-label">{{ social.label }}</span>
+            {% endif %}
+        </a>
+    {% endfor %}
+</div>
+{% endif %}

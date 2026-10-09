@@ -1,0 +1,53 @@
+{% if articles is not empty %}
+    {% set hero = articles[0] %}
+    {% set secondaryBand = articles|slice(1, 3) %}
+
+    <div class="home-portada home-portada--magazine">
+        {% include 'public/_partials/home_hero.html.twig' with {
+            hero: hero,
+            hero_modifier: ' portada-hero--magazine',
+            hero_media_modifier: ' portada-hero-media--magazine',
+        } %}
+
+        {% if secondaryBand is not empty %}
+            <div class="portada-band portada-band--3 portada-band--magazine">
+                {% for article in secondaryBand %}
+                    {% include 'public/_partials/home_band_card.html.twig' with { article: article, related_limit: 2 } %}
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% include 'public/_partials/ad_slot.html.twig' with { placement: 'home_below_hero' } only %}
+
+        <div class="home-layout home-layout--portada">
+            <div class="home-main">
+                {% set gridArticles = articles|slice(4, layout.homeCategoryArticlesCount|default(4)) %}
+                {% if gridArticles is not empty %}
+                    {% include 'public/_partials/home_section_block.html.twig' with {
+                        articles: gridArticles,
+                        sectionId: 'portada-destacadas',
+                        sectionTitle: 'Destacadas',
+                        sectionUrl: null,
+                    } %}
+                {% endif %}
+
+                {% for section in categorySections|default([]) %}
+                    {% include 'public/_partials/home_category_section.html.twig' with { section: section } %}
+                {% endfor %}
+
+                {% include 'public/_partials/ad_slot.html.twig' with { placement: 'home_mid_content' } only %}
+
+                {% include 'public/_partials/home_latest_news.html.twig' %}
+            </div>
+
+            <aside class="home-aside article-sidebar" aria-label="Publicidad y destacados">
+                {% include 'public/_partials/home_sidebar.html.twig' %}
+            </aside>
+        </div>
+    </div>
+{% else %}
+    <div class="empty-state">
+        <p><strong>No hay noticias publicadas todavía.</strong></p>
+        <p><a href="{{ path('admin_login') }}">Ir al panel</a></p>
+    </div>
+{% endif %}

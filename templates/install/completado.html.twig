@@ -1,0 +1,20 @@
+{% extends 'install/layout.html.twig' %}
+
+{% block title %}Instalación completada{% endblock %}
+
+{% block steps %}{% endblock %}
+
+{% block body %}
+<h2>¡Instalación completada!</h2>
+<p>El periódico <strong>{{ site.name }}</strong> está listo.</p>
+<ul>
+    <li>Código: <code>{{ site.code }}</code></li>
+    <li>Base de datos: <code>mymedia_site_{{ site.code }}</code></li>
+    <li>Administrador: {{ adminEmail }}</li>
+</ul>
+<p class="hint">Accede con el dominio configurado para ver la portada. El panel de administración estará disponible en fases posteriores.</p>
+<div class="actions">
+    <span></span>
+    <a href="{{ path('home') }}" class="btn btn-primary">Ir al periódico</a>
+</div>
+{% endblock %}

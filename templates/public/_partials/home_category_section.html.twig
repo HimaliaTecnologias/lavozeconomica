@@ -1,0 +1,8 @@
+{% include 'public/_partials/home_section_block.html.twig' with {
+    section: section,
+    articles: section.articles,
+    sectionId: 'seccion-' ~ section.category.slug,
+    sectionTitle: section.category.name,
+    sectionUrl: path('public_category_show', {slug: section.category.slug}),
+    sectionMoreLabel: 'Ver sección →',
+} %}

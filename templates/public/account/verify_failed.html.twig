@@ -1,0 +1,20 @@
+{% extends 'public/layout.html.twig' %}
+
+{% block title %}Verificación fallida — {{ site.name }}{% endblock %}
+
+{% block body %}
+<div class="account-page account-page--auth">
+    {% include 'public/account/_breadcrumb.html.twig' with {
+        showAccountRoot: false,
+        breadcrumbCurrent: 'Verificación fallida',
+    } only %}
+    <div class="account-card">
+        <h1>No se pudo verificar</h1>
+        <p class="account-intro">{{ errorMessage }}</p>
+        <p class="account-footer-link">
+            <a href="{{ path('cuenta_register_pending') }}" class="account-submit account-submit--inline">Solicitar nuevo enlace</a>
+        </p>
+        <p class="account-footer-link"><a href="{{ path('cuenta_login') }}">Iniciar sesión</a></p>
+    </div>
+</div>
+{% endblock %}

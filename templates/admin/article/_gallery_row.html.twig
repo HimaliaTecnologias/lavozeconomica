@@ -1,0 +1,69 @@
+{% set namePrefix = namePrefix|default('images') %}
+{% set urlValue = row ? row.url|default('') : (img ? img.url : '') %}
+{% set mediaIdValue = row ? row.mediaId|default('') : (img and img.media ? img.media.id : '') %}
+{% set altValue = row ? row.alt|default('') : (img ? img.alt|default('') : '') %}
+{% set captionValue = row ? row.caption|default('') : (img ? img.caption|default('') : '') %}
+{% set hasPreview = urlValue is not empty %}
+{% set showReorder = showReorder|default(true) %}
+{% set showRemove = showRemove|default(true) %}
+
+<div class="gallery-row{% if hasPreview %} has-media{% endif %}" data-gallery-row>
+    {% if showReorder %}
+        <div class="gallery-drag" draggable="true" title="Arrastrar para reordenar" aria-label="Reordenar">⋮⋮</div>
+    {% endif %}
+    <button type="button"
+            class="gallery-preview media-dropzone"
+            data-field="preview"
+            data-action="pick-media"
+            {% if not hasPreview %}data-empty="1"{% endif %}
+            aria-label="{{ hasPreview ? 'Cambiar imagen' : 'Elegir o subir imagen' }}">
+        {% if hasPreview %}
+            <img src="{{ urlValue }}" alt="">
+            <span class="gallery-preview-overlay">Cambiar</span>
+        {% else %}
+            <span class="gallery-preview-empty">Añadir</span>
+        {% endif %}
+        <span class="media-busy" hidden><span class="media-busy-spinner"></span></span>
+    </button>
+    <div class="gallery-fields">
+        <input type="hidden" name="{{ namePrefix }}[{{ index }}][mediaId]" value="{{ mediaIdValue }}" data-field="mediaId">
+        <input type="hidden" name="{{ namePrefix }}[{{ index }}][url]" value="{{ urlValue }}" data-field="url">
+
+        <div class="gallery-actions">
+            <button type="button" class="btn btn-primary btn-sm" data-action="upload-media">Subir</button>
+            <button type="button" class="btn btn-secondary btn-sm" data-action="pick-media">Biblioteca</button>
+            <input type="file" data-field="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden>
+            {% if showReorder %}
+                <button type="button" class="btn btn-secondary btn-sm gallery-move-btn" data-action="move-up" title="Subir">↑</button>
+                <button type="button" class="btn btn-secondary btn-sm gallery-move-btn" data-action="move-down" title="Bajar">↓</button>
+            {% endif %}
+            {% if showRemove %}
+                <button type="button" class="btn btn-danger btn-sm" data-action="remove-row">Quitar</button>
+            {% endif %}
+        </div>
+
+        <p class="media-row-error" data-field="error" hidden></p>
+
+        <input type="text" name="{{ namePrefix }}[{{ index }}][alt]" value="{{ altValue }}" data-field="alt" placeholder="Texto alternativo">
+        <input type="text" name="{{ namePrefix }}[{{ index }}][caption]" value="{{ captionValue }}" data-field="caption" placeholder="Pie de foto">
+
+        <details class="gallery-advanced">
+            <summary>URL avanzada</summary>
+            <input type="text" data-field="url-visible" value="{{ urlValue }}" placeholder="/media/… o https://…" inputmode="url" autocomplete="off">
+        </details>
+
+        <div class="media-meta" data-field="meta" {% if not (img and img.width is defined and img.width and img.height is defined and img.height) %}hidden{% endif %}>
+            {% if img and img.width is defined and img.width and img.height is defined and img.height %}
+                <span class="enhancement-badge {{ img.enhancementStatus.value }}">
+                    {{ img.width }}×{{ img.height }} px
+                </span>
+            {% endif %}
+        </div>
+        <a href="{{ mediaIdValue ? path('admin_media_show', {id: mediaIdValue}) : '#' }}"
+           target="_blank" rel="noopener"
+           class="hint media-library-link"
+           data-field="library-link"
+           style="font-size:.75rem"
+           {{ mediaIdValue ? '' : 'hidden' }}>Gestionar en biblioteca ↗</a>
+    </div>
+</div>

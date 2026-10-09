@@ -1,0 +1,28 @@
+{% extends 'install/layout.html.twig' %}
+
+{% block title %}Bienvenida{% endblock %}
+
+{% block steps %}
+<div class="steps">
+    <div class="step active">Inicio</div>
+    <div class="step">Periódico</div>
+    <div class="step">Apariencia</div>
+    <div class="step">Administrador</div>
+    <div class="step">Finalizar</div>
+</div>
+{% endblock %}
+
+{% block body %}
+<h2>Bienvenido al asistente de instalación</h2>
+<p>Este es el <strong>momento cero</strong> de tu plataforma. En unos minutos configurarás:</p>
+<ul>
+    <li>Identidad y dominio del periódico</li>
+    <li>Colores y descripción editorial</li>
+    <li>Cuenta de administrador</li>
+</ul>
+<p class="hint">Se creará una base de datos dedicada para tu medio y quedará listo para publicar contenido.</p>
+<div class="actions">
+    <span></span>
+    <a href="{{ path('install_periodico') }}" class="btn btn-primary">Comenzar instalación</a>
+</div>
+{% endblock %}

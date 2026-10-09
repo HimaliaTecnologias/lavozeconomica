@@ -1,0 +1,53 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}Historial de importaciones{% endblock %}
+
+{% block body %}
+<div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:1rem">
+    <h1 style="margin:0">Historial de importaciones</h1>
+    <a href="{{ path('admin_ingest_index') }}" class="btn btn-secondary btn-sm">Volver a ingesta</a>
+</div>
+
+<p class="hint">Registro de cada descarga desde HimtecMedia para <strong>{{ site.name }}</strong>.</p>
+
+{% if runs is empty %}
+    <p class="hint" style="margin-top:1rem">Sin ejecuciones registradas.</p>
+{% else %}
+<table style="margin-top:1rem">
+    <thead>
+        <tr>
+            <th>Fecha</th>
+            <th>Origen</th>
+            <th>En feed</th>
+            <th>Nuevas</th>
+            <th>Duplicadas</th>
+            <th>Publicadas</th>
+            <th>Errores</th>
+            <th>Resultado</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for run in runs %}
+        <tr>
+            <td>{{ run.ranAt|date('d/m/Y H:i:s') }}</td>
+            <td>{{ triggerLabels[run.trigger]|default(run.trigger) }}</td>
+            <td>{{ run.feedTotal }}</td>
+            <td>{{ run.received }}</td>
+            <td>{{ run.duplicates }}</td>
+            <td>{{ run.published }}</td>
+            <td>{{ run.errors }}</td>
+            <td>
+                {% if run.success %}
+                    <span class="badge badge-published">OK</span>
+                {% else %}
+                    <span class="badge badge-other">Fallo</span>
+                {% endif %}
+            </td>
+            <td><a href="{{ path('admin_ingest_run_show', {id: run.id}) }}" class="btn btn-secondary btn-sm">Ver detalle</a></td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+{% endblock %}

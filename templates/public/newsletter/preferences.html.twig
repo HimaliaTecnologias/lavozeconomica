@@ -1,0 +1,64 @@
+{% extends 'public/layout.html.twig' %}
+
+{% block title %}Preferencias del boletín — {{ site.name }}{% endblock %}
+
+{% block body %}
+<div class="archive-layout newsletter-layout">
+    <div class="archive-main">
+        <div class="newsletter-page">
+            {% include 'public/_partials/breadcrumb.html.twig' with {
+                crumbs: [
+                    { label: 'Boletín', path: path('public_newsletter_index') },
+                    { label: 'Preferencias' },
+                ]
+            } %}
+
+            <header class="newsletter-page-head">
+                <h1>Preferencias del boletín</h1>
+                <p class="newsletter-intro">Correo: <strong>{{ subscriber.email }}</strong></p>
+            </header>
+
+            <div class="newsletter-page-card">
+                <form class="newsletter-form" method="post">
+                    <input type="hidden" name="_token" value="{{ csrf_token('newsletter_preferences') }}">
+
+                    <div class="newsletter-form-row">
+                        <label for="newsletter-frequency-pref">Periodicidad</label>
+                        <select id="newsletter-frequency-pref" name="frequency">
+                            {% for freq in ['daily', 'weekly'] %}
+                                <option value="{{ freq }}" {{ subscriber.frequency.value == freq ? 'selected' : '' }}>
+                                    {{ freq == 'daily' ? 'Diario' : 'Semanal' }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    {% if categories is not empty %}
+                        <div class="newsletter-form-row">
+                            <span class="newsletter-categories-label">Secciones</span>
+                            <div class="newsletter-categories">
+                                {% for cat in categories %}
+                                    <label class="newsletter-cat-check">
+                                        <input type="checkbox" name="categoryIds[]" value="{{ cat.id }}"
+                                            {{ subscriber.categories.contains(cat) ? 'checked' : '' }}>
+                                        <span>{{ cat.name }}</span>
+                                    </label>
+                                    {% for child in cat.children %}
+                                        <label class="newsletter-cat-check newsletter-cat-check--child">
+                                            <input type="checkbox" name="categoryIds[]" value="{{ child.id }}"
+                                                {{ subscriber.categories.contains(child) ? 'checked' : '' }}>
+                                            <span>{{ child.name }}</span>
+                                        </label>
+                                    {% endfor %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <button type="submit" class="newsletter-submit">Guardar preferencias</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,14 @@
+<form class="top-bar-edition-form" method="get" action="{{ path('public_edition') }}">
+    <span class="top-bar-edition-label">
+        <span class="top-bar-edition-label-full">Edición del día</span>
+        <span class="top-bar-edition-label-short">Edición</span>
+    </span>
+    <input type="date" id="site-edition-date" name="fecha"
+           class="top-bar-edition-input"
+           value="{{ editionDateIso|default('') }}"
+           {% if minDateIso|default('') != '' %}min="{{ minDateIso }}"{% endif %}
+           max="{{ maxDateIso|default('now')|date('Y-m-d') }}"
+           onchange="this.form.submit()"
+           aria-label="Seleccionar fecha de la edición">
+    <a href="{{ path('public_edition') }}" class="top-bar-edition-today">Hoy</a>
+</form>

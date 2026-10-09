@@ -1,0 +1,176 @@
+{% extends 'public/layout.html.twig' %}
+
+{% block title %}Guía TV — {{ site.name }}{% endblock %}
+
+{% block body %}
+<div class="tv-layout">
+    <div class="tv-main">
+        <div class="tv-page">
+            {% include 'public/_partials/breadcrumb.html.twig' with {
+                crumbs: [{ label: 'Guía TV' }]
+            } %}
+            <header class="tv-page-head">
+                <h1>Guía TV</h1>
+                <p class="tv-page-meta">
+                    Programación del día
+                    {% if schedule %}
+                        <span class="tv-page-meta-sep">·</span>
+                        {{ schedule.scheduleDate|date('d/m/Y') }}
+                        <span class="tv-page-meta-sep">·</span>
+                        Actualizado {{ schedule.fetchedAt|date('H:i') }}
+                    {% endif %}
+                </p>
+            </header>
+
+            {% include 'public/_partials/ad_slot.html.twig' with { placement: 'category_sidebar' } only %}
+
+            {% if schedule and schedule.channels is not empty %}
+                {% if nowOnTv is not empty %}
+                    <section class="tv-now" aria-label="Ahora en TV">
+                        <h2 class="section-label">Ahora en TV</h2>
+                        <div class="tv-now-grid">
+                            {% for item in nowOnTv %}
+                                <a class="tv-now-card" href="#canal-{{ item.channel.id }}">
+                                    {% if item.channel.iconUrl %}
+                                        {{ seo_img(item.channel.iconUrl, item.channel.name, {class: 'tv-channel-logo'}) }}
+                                    {% else %}
+                                        <span class="tv-channel-logo tv-channel-logo--fallback" aria-hidden="true">{{ item.channel.name|slice(0, 1) }}</span>
+                                    {% endif %}
+                                    <div class="tv-now-copy">
+                                        <p class="tv-now-channel">{{ item.channel.name }}</p>
+                                        <h3 class="tv-now-title">{{ item.programme.title }}</h3>
+                                        <p class="tv-now-time">{{ tv_format_time_range(item.programme.startsAt, item.programme.endsAt) }}</p>
+                                    </div>
+                                </a>
+                            {% endfor %}
+                        </div>
+                    </section>
+                {% endif %}
+
+                <nav class="tv-channel-jump" aria-label="Ir a un canal">
+                    {% for channel in schedule.channels %}
+                        <a href="#canal-{{ channel.id }}" class="tv-channel-chip">
+                            {% if channel.iconUrl %}
+                                {{ seo_img(channel.iconUrl, channel.name, {class: 'tv-channel-logo tv-channel-logo--sm'}) }}
+                            {% else %}
+                                <span class="tv-channel-logo tv-channel-logo--sm tv-channel-logo--fallback" aria-hidden="true">{{ channel.name|slice(0, 1) }}</span>
+                            {% endif %}
+                            <span>{{ channel.name }}</span>
+                        </a>
+                    {% endfor %}
+                </nav>
+
+                <section class="tv-schedule" aria-label="Parrilla por canal">
+                    <h2 class="section-label">Parrilla · a partir de ahora</h2>
+
+                    {% for channel in schedule.channels %}
+                        {% set upcoming = channel.programmesFromNow(10) %}
+                        <article class="tv-channel-block" id="canal-{{ channel.id }}">
+                            <header class="tv-channel-head">
+                                <div class="tv-channel-head-main">
+                                    {% if channel.iconUrl %}
+                                        {{ seo_img(channel.iconUrl, channel.name, {class: 'tv-channel-logo tv-channel-logo--md'}) }}
+                                    {% else %}
+                                        <span class="tv-channel-logo tv-channel-logo--md tv-channel-logo--fallback" aria-hidden="true">{{ channel.name|slice(0, 1) }}</span>
+                                    {% endif %}
+                                    <div>
+                                        <h3 class="tv-channel-name">{{ channel.name }}</h3>
+                                        <p class="tv-channel-meta">{{ tv_group_label(channel.group) }}</p>
+                                    </div>
+                                </div>
+                                {% set current = channel.currentProgramme() %}
+                                {% if current %}
+                                    <p class="tv-channel-now"><span class="tv-live-dot" aria-hidden="true"></span> {{ current.title }}</p>
+                                {% endif %}
+                            </header>
+
+                            {% if upcoming is not empty %}
+                                <ol class="tv-program-list">
+                                    {% for programme in upcoming %}
+                                        <li class="tv-program-item {{ programme.isOnNow() ? 'tv-program-item--now' : '' }}">
+                                            <div class="tv-program-time">
+                                                <span>{{ tv_format_time(programme.startsAt) }}</span>
+                                                <span class="tv-program-duration">{{ tv_format_duration(programme.startsAt, programme.endsAt) }}</span>
+                                            </div>
+                                            <div class="tv-program-body">
+                                                <p class="tv-program-title">
+                                                    {{ programme.title }}
+                                                    {% if programme.isOnNow() %}<span class="tv-live-pill">En directo</span>{% endif %}
+                                                </p>
+                                                {% if programme.category or programme.episode %}
+                                                    <p class="tv-program-meta">
+                                                        {% if programme.category %}{{ programme.category }}{% endif %}
+                                                        {% if programme.episode %}{% if programme.category %} · {% endif %}{{ programme.episode }}{% endif %}
+                                                    </p>
+                                                {% endif %}
+                                            </div>
+                                        </li>
+                                    {% endfor %}
+                                </ol>
+                            {% else %}
+                                <p class="tv-channel-empty">Sin más programación para hoy.</p>
+                            {% endif %}
+                        </article>
+                    {% endfor %}
+                </section>
+            {% else %}
+                <p class="tv-empty">No hay programación disponible en este momento. Inténtalo más tarde.</p>
+            {% endif %}
+
+            <aside class="tv-disclaimer">
+                <p>Datos de guía TV obtenidos de fuentes públicas XMLTV. Los horarios pueden tener retraso o cambios de última hora.</p>
+            </aside>
+
+            {% if tvArticles is not empty %}
+                <section class="tv-latest-news">
+                    <div class="tv-latest-head">
+                        <h2 class="section-label">Televisión y ocio</h2>
+                        <a href="{{ path('home') }}" class="section-more">Ver portada</a>
+                    </div>
+                    <div class="story-grid story-grid--section">
+                        {% for article in tvArticles|slice(0, 4) %}
+                            {% include 'public/_partials/story_card.html.twig' with {
+                                article: article,
+                                show_meta: true,
+                                show_excerpt: true,
+                            } %}
+                        {% endfor %}
+                    </div>
+                </section>
+            {% endif %}
+        </div>
+    </div>
+
+    <aside class="article-sidebar">
+        {% include 'public/_partials/sidebar_ad_stack.html.twig' with {
+            placements: ['tv_sidebar', 'sidebar_top', 'category_sidebar']
+        } only %}
+        {% if schedule and schedule.channels is not empty %}
+            <div class="sidebar-block">
+                <p class="sidebar-label">Canales</p>
+                <div class="sidebar-list tv-sidebar-channels">
+                    {% for channel in schedule.channels %}
+                        <a href="#canal-{{ channel.id }}" class="tv-sidebar-channel">
+                            {% if channel.iconUrl %}
+                                {{ seo_img(channel.iconUrl, channel.name, {class: 'tv-channel-logo tv-channel-logo--sm'}) }}
+                            {% else %}
+                                <span class="tv-channel-logo tv-channel-logo--sm tv-channel-logo--fallback" aria-hidden="true">{{ channel.name|slice(0, 1) }}</span>
+                            {% endif %}
+                            <span class="tv-sidebar-channel-name">{{ channel.name }}</span>
+                        </a>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+        {% include 'public/_partials/latest_sidebar.html.twig' with {
+            articles: sidebarArticles|default([]),
+            limit: layout.sidebarLatestCount|default(5),
+            title: 'Lo último',
+        } %}
+        {% include 'public/_partials/sidebar_ad_stack.html.twig' with {
+            placements: ['sidebar_bottom']
+        } only %}
+        {% include 'public/_partials/sidebar_links.html.twig' %}
+    </aside>
+</div>
+{% endblock %}

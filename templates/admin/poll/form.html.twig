@@ -1,0 +1,82 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}{{ poll ? 'Editar encuesta' : 'Nueva encuesta' }}{% endblock %}
+
+{% block body %}
+<h1>{{ poll ? 'Editar encuesta' : 'Nueva encuesta' }}</h1>
+
+{% set fd = formData|default({}) %}
+{% set questionVal = fd.question|default(poll ? poll.question : '') %}
+{% set isOpenVal = fd.isOpen is defined ? fd.isOpen : (poll ? poll.getIsOpenFlag() : true) %}
+{% set showResultsVal = fd.showResultsBeforeVote is defined ? fd.showResultsBeforeVote : (poll ? poll.isShowResultsBeforeVote() : false) %}
+{% set closesVal = fd.closesAt|default(poll and poll.closesAt ? poll.closesAt|date('Y-m-d\\TH:i') : '') %}
+
+<form method="post" action="{{ poll ? path('admin_polls_edit', {id: poll.id}) : path('admin_polls_new') }}">
+    <input type="hidden" name="_token" value="{{ csrf_token('poll_form') }}">
+
+    <div class="field">
+        <label for="question">Pregunta *</label>
+        <input type="text" id="question" name="question" value="{{ questionVal }}" required maxlength="500"
+               class="{{ errors.question is defined ? 'error' : '' }}">
+        {% if errors.question is defined %}<div class="error-msg">{{ errors.question }}</div>{% endif %}
+    </div>
+
+    <div class="field">
+        <label>Opciones de respuesta *</label>
+        <p class="hint">Mínimo 2 opciones. Si una opción ya tiene votos, no se puede eliminar.</p>
+        {% if errors.options is defined %}<div class="error-msg">{{ errors.options }}</div>{% endif %}
+        <div id="poll-options-list" style="display:grid;gap:.5rem;margin-top:.5rem">
+            {% if fd.options is defined and fd.options is not empty %}
+                {% for label in fd.options %}
+                    <input type="text" name="options[]" value="{{ label }}" placeholder="Opción {{ loop.index }}">
+                {% endfor %}
+            {% elseif poll and poll.options is not empty %}
+                {% for option in poll.options %}
+                    <input type="text" name="options[]" value="{{ option.label }}" placeholder="Opción {{ loop.index }}">
+                {% endfor %}
+            {% else %}
+                <input type="text" name="options[]" placeholder="Opción 1">
+                <input type="text" name="options[]" placeholder="Opción 2">
+            {% endif %}
+        </div>
+        <button type="button" class="btn btn-secondary btn-sm" id="poll-add-option" style="margin-top:.5rem">+ Añadir opción</button>
+    </div>
+
+    <div class="form-grid-2">
+        <div class="field">
+            <label for="closesAt">Fecha de cierre (opcional)</label>
+            <input type="datetime-local" id="closesAt" name="closesAt" value="{{ closesVal }}"
+                   class="{{ errors.closesAt is defined ? 'error' : '' }}">
+            {% if errors.closesAt is defined %}<div class="error-msg">{{ errors.closesAt }}</div>{% endif %}
+        </div>
+        <div class="field" style="padding-top:1.5rem">
+            <div class="checkbox-row">
+                <input type="checkbox" id="isOpen" name="isOpen" value="1" {{ isOpenVal ? 'checked' : '' }}>
+                <label for="isOpen">Encuesta abierta</label>
+            </div>
+            <div class="checkbox-row" style="margin-top:.5rem">
+                <input type="checkbox" id="showResultsBeforeVote" name="showResultsBeforeVote" value="1" {{ showResultsVal ? 'checked' : '' }}>
+                <label for="showResultsBeforeVote">Mostrar resultados antes de votar</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="actions">
+        <a href="{{ path('admin_polls_index') }}" class="btn btn-secondary">Cancelar</a>
+        <button type="submit" class="btn btn-primary">Guardar</button>
+    </div>
+</form>
+
+<script>
+document.getElementById('poll-add-option')?.addEventListener('click', function () {
+    const list = document.getElementById('poll-options-list');
+    const count = list.querySelectorAll('input').length + 1;
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.name = 'options[]';
+    input.placeholder = 'Opción ' + count;
+    list.appendChild(input);
+    input.focus();
+});
+</script>
+{% endblock %}

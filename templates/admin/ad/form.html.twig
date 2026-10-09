@@ -1,0 +1,515 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}{{ banner ? 'Editar banner' : 'Nuevo banner' }}{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .ad-type-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: .65rem;
+        margin-bottom: 1rem;
+    }
+    @media (max-width: 900px) {
+        .ad-type-grid { grid-template-columns: 1fr 1fr; }
+    }
+    .ad-type-option {
+        border: 1px solid var(--admin-border);
+        border-radius: 10px;
+        padding: .85rem .9rem;
+        background: #f8fafc;
+        cursor: pointer;
+        display: block;
+    }
+    .ad-type-option:has(input:checked) {
+        border-color: var(--admin-accent);
+        background: color-mix(in srgb, var(--admin-accent) 8%, #fff);
+        box-shadow: 0 0 0 1px var(--admin-accent);
+    }
+    .ad-type-option input { display: none; }
+    .ad-type-option strong { display: block; font-size: .92rem; margin-bottom: .25rem; }
+    .ad-type-option span { display: block; font-size: .78rem; color: var(--admin-muted); line-height: 1.35; }
+    .ad-panel { display: none; }
+    .ad-panel.is-active { display: block; }
+    .ad-preset-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: .55rem;
+        margin: .5rem 0 1rem;
+    }
+    .ad-preset-btn {
+        border: 1px solid var(--admin-border);
+        border-radius: 8px;
+        padding: .65rem .75rem;
+        background: #fff;
+        text-align: left;
+        cursor: pointer;
+        font: inherit;
+    }
+    .ad-preset-btn:hover { border-color: var(--admin-accent); }
+    .ad-preset-btn.is-selected {
+        border-color: var(--admin-accent);
+        background: color-mix(in srgb, var(--admin-accent) 8%, #fff);
+    }
+    .ad-preset-btn strong { display: block; font-size: .85rem; }
+    .ad-preset-btn span { display: block; font-size: .72rem; color: var(--admin-muted); margin-top: .2rem; }
+    .color-row {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: .75rem;
+    }
+    .color-row input[type="color"] {
+        width: 100%;
+        height: 38px;
+        padding: 2px;
+        border: 1px solid var(--admin-border);
+        border-radius: 8px;
+        background: #fff;
+    }
+    .ad-preview-box {
+        margin-top: 1rem;
+        border: 1px dashed var(--admin-border);
+        border-radius: 10px;
+        padding: 1rem;
+        background: #f8fafc;
+    }
+    .ad-preview-box h3 { margin: 0 0 .75rem; font-size: .85rem; color: var(--admin-muted); text-transform: uppercase; letter-spacing: .04em; }
+    .ad-text-banner {
+        display: block;
+        width: 100%;
+        max-width: 420px;
+        padding: 1rem 1.15rem;
+        border-radius: 10px;
+        background: var(--ad-bg, #0f172a);
+        color: var(--ad-fg, #f8fafc);
+        text-align: left;
+        box-sizing: border-box;
+        line-height: 1.35;
+    }
+    .ad-text-banner-kicker {
+        display: inline-block;
+        font-size: .68rem;
+        font-weight: 700;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        opacity: .72;
+        margin-bottom: .45rem;
+    }
+    .ad-text-banner-title {
+        display: block;
+        font-size: 1.1rem;
+        font-weight: 800;
+        margin: 0 0 .35rem;
+    }
+    .ad-text-banner-body {
+        margin: 0 0 .75rem;
+        font-size: .9rem;
+        opacity: .92;
+    }
+    .ad-text-banner-cta {
+        display: inline-flex;
+        padding: .4rem .8rem;
+        border-radius: 999px;
+        background: var(--ad-accent, #f59e0b);
+        color: #111;
+        font-size: .82rem;
+        font-weight: 700;
+    }
+    .ad-placement-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: .45rem;
+        margin-top: .35rem;
+    }
+    .ad-placement-groups {
+        display: grid;
+        gap: 1.15rem;
+        margin-top: .5rem;
+    }
+    .ad-placement-group-title {
+        margin: 0 0 .45rem;
+        font-size: .78rem;
+        font-weight: 800;
+        letter-spacing: .05em;
+        text-transform: uppercase;
+        color: var(--admin-muted);
+    }
+    .ad-placement-option {
+        display: flex;
+        align-items: flex-start;
+        gap: .5rem;
+        padding: .55rem .7rem;
+        border: 1px solid var(--admin-border);
+        border-radius: 8px;
+        background: #fff;
+        cursor: pointer;
+        font-size: .88rem;
+        line-height: 1.3;
+    }
+    .ad-placement-option:has(input:checked) {
+        border-color: var(--admin-accent);
+        background: color-mix(in srgb, var(--admin-accent) 8%, #fff);
+    }
+    .ad-placement-option--hot {
+        border-color: color-mix(in srgb, var(--admin-accent) 45%, var(--admin-border));
+        background: color-mix(in srgb, var(--admin-accent) 5%, #fff);
+    }
+    .ad-placement-option input { margin-top: .15rem; flex-shrink: 0; }
+    .ad-placement-option strong { display: block; font-size: .86rem; }
+    .ad-placement-option small {
+        display: block;
+        margin-top: .2rem;
+        font-size: .74rem;
+        color: var(--admin-muted);
+        line-height: 1.35;
+    }
+    .ad-target-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: .4rem;
+        max-height: 220px;
+        overflow: auto;
+        padding: .15rem;
+        border: 1px solid var(--admin-border);
+        border-radius: 8px;
+        background: #f8fafc;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+{% include 'admin/ad/_subnav.html.twig' %}
+
+{% set headerActions %}
+    <a href="{{ path('admin_ads_index') }}" class="btn btn-secondary btn-sm">Volver al listado</a>
+{% endset %}
+{% include 'admin/_page_header.html.twig' with {
+    title: banner ? 'Editar banner' : 'Nuevo banner',
+    subtitle: banner ? ('Clics registrados: ' ~ banner.clickCount) : 'Elige el tipo de creativo: imagen, texto, plantilla autogenerada o HTML.',
+    breadcrumbs: [
+        { label: 'Panel', url: path('admin_dashboard') },
+        { label: 'Publicidad', url: path('admin_ads_index') },
+        { label: banner ? 'Editar' : 'Nuevo' },
+    ],
+    actions: headerActions
+} only %}
+
+{% set fd = formData|default({}) %}
+{% set nameVal = fd.name|default(banner ? banner.name : '') %}
+{% set placementVals = fd.placements|default(banner ? banner.placementValues : []) %}
+{% if placementVals is not iterable %}
+    {% set placementVals = [] %}
+{% endif %}
+{% set categoryVals = fd.categoryIds|default(banner ? banner.categoryIds : []) %}
+{% if categoryVals is not iterable %}
+    {% set categoryVals = [] %}
+{% endif %}
+{% set tagVals = fd.tagIds|default(banner ? banner.tagIds : []) %}
+{% if tagVals is not iterable %}
+    {% set tagVals = [] %}
+{% endif %}
+{% set formatVal = fd.format|default(banner ? banner.format.value : 'medium_rectangle') %}
+{% set creativeVal = fd.creativeType|default(banner ? banner.creativeType.value : 'image') %}
+{% set imageUrlVal = fd.imageUrl|default(banner ? banner.imageUrl : '') %}
+{% set linkUrlVal = fd.linkUrl|default(banner ? banner.linkUrl : '') %}
+{% set htmlVal = fd.htmlContent|default(banner ? banner.htmlContent : '') %}
+{% set altVal = fd.altText|default(banner ? banner.altText : '') %}
+{% set headlineVal = fd.headline|default(banner ? banner.headline : '') %}
+{% set bodyVal = fd.bodyText|default(banner ? banner.bodyText : '') %}
+{% set ctaVal = fd.ctaLabel|default(banner ? banner.ctaLabel : 'Más información') %}
+{% set bgVal = fd.bgColor|default(banner and banner.bgColor ? banner.bgColor : '#0f172a') %}
+{% set textColorVal = fd.textColor|default(banner and banner.textColor ? banner.textColor : '#f8fafc') %}
+{% set accentVal = fd.accentColor|default(banner and banner.accentColor ? banner.accentColor : '#f59e0b') %}
+{% set presetVal = fd.presetKey|default(banner ? banner.presetKey : '') %}
+{% set sortVal = fd.sortOrder|default(banner ? banner.sortOrder : 0) %}
+{% set activeVal = fd.isActive is defined ? fd.isActive : (banner ? banner.isActive : true) %}
+{% set startsVal = fd.startsAt|default(banner and banner.startsAt ? banner.startsAt|date('Y-m-d\\TH:i') : '') %}
+{% set endsVal = fd.endsAt|default(banner and banner.endsAt ? banner.endsAt|date('Y-m-d\\TH:i') : '') %}
+
+<form method="post" action="{{ banner ? path('admin_ads_edit', {id: banner.id}) : path('admin_ads_new') }}" id="ad-banner-form">
+    <input type="hidden" name="_token" value="{{ csrf_token(banner ? 'ad_form_' ~ banner.id : 'ad_form_new') }}">
+    <input type="hidden" name="presetKey" id="presetKey" value="{{ presetVal }}">
+
+    {% if errors.content is defined %}<div class="flash flash-error">{{ errors.content }}</div>{% endif %}
+
+    <div class="field">
+        <label for="name">Nombre interno *</label>
+        <input type="text" id="name" name="name" value="{{ nameVal }}" required class="{{ errors.name is defined ? 'error' : '' }}">
+        {% if errors.name is defined %}<div class="error-msg">{{ errors.name }}</div>{% endif %}
+    </div>
+
+    <div class="field">
+        <label>Tipo de banner *</label>
+        <div class="ad-type-grid" role="radiogroup" aria-label="Tipo de banner">
+            {% for type in creativeTypes %}
+                <label class="ad-type-option">
+                    <input type="radio" name="creativeType" value="{{ type.value }}" {{ creativeVal == type.value ? 'checked' : '' }} data-ad-type>
+                    <strong>{{ type.label }}</strong>
+                    <span>{{ type.description }}</span>
+                </label>
+            {% endfor %}
+        </div>
+        {% if errors.creativeType is defined %}<div class="error-msg">{{ errors.creativeType }}</div>{% endif %}
+    </div>
+
+    <div class="field">
+        <label>Ubicaciones *</label>
+        <p class="hint" style="margin-top:0">Marca todas las secciones donde quieras mostrar este banner. La más importante para noticias es <strong>Noticia — columna derecha (principal)</strong>.</p>
+        <div class="ad-placement-groups">
+            {% for groupName in placementGroups %}
+                {% set groupItems = placements|filter(p => p.group == groupName) %}
+                {% if groupItems is not empty %}
+                    <div class="ad-placement-group">
+                        <h3 class="ad-placement-group-title">{{ groupName }}</h3>
+                        <div class="ad-placement-grid">
+                            {% for p in groupItems %}
+                                <label class="ad-placement-option {{ p.value == 'article_sidebar' ? 'ad-placement-option--hot' : '' }}">
+                                    <input type="checkbox" name="placements[]" value="{{ p.value }}" {{ p.value in placementVals ? 'checked' : '' }}>
+                                    <span>
+                                        <strong>{{ p.label }}</strong>
+                                        <small>{{ p.hint }}</small>
+                                    </span>
+                                </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+        {% if errors.placements is defined %}<div class="error-msg">{{ errors.placements }}</div>{% endif %}
+    </div>
+
+    <div class="form-grid-2">
+        <div class="field">
+            <label>Categorías (opcional)</label>
+            <p class="hint" style="margin-top:0">Vacío = todas. Si marcas alguna, el banner solo aparece en esas categorías (y en sus noticias).</p>
+            {% if categories is empty %}
+                <p class="hint">No hay categorías creadas.</p>
+            {% else %}
+                <div class="ad-target-grid">
+                    {% for category in categories %}
+                        <label class="ad-placement-option">
+                            <input type="checkbox" name="categoryIds[]" value="{{ category.id }}" {{ category.id in categoryVals ? 'checked' : '' }}>
+                            <span>{{ category.name }}</span>
+                        </label>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+        <div class="field">
+            <label>Etiquetas / tags (opcional)</label>
+            <p class="hint" style="margin-top:0">Vacío = todas. Si marcas alguna, el banner aparece en noticias o listados con esos tags.</p>
+            {% if tags is empty %}
+                <p class="hint">No hay etiquetas creadas.</p>
+            {% else %}
+                <div class="ad-target-grid">
+                    {% for tag in tags %}
+                        <label class="ad-placement-option">
+                            <input type="checkbox" name="tagIds[]" value="{{ tag.id }}" {{ tag.id in tagVals ? 'checked' : '' }}>
+                            <span>{{ tag.name }}</span>
+                        </label>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="field">
+        <label for="format">Formato *</label>
+        <select id="format" name="format" required>
+            {% for f in formats %}
+                <option value="{{ f.value }}" {{ formatVal == f.value ? 'selected' : '' }}>{{ f.label }}</option>
+            {% endfor %}
+        </select>
+        {% if errors.format is defined %}<div class="error-msg">{{ errors.format }}</div>{% endif %}
+    </div>
+
+    <div class="field">
+        <label for="linkUrl">URL de destino (clic)</label>
+        <input type="text" id="linkUrl" name="linkUrl" value="{{ linkUrlVal }}" placeholder="https://… o /pagina/anunciantes" class="{{ errors.linkUrl is defined ? 'error' : '' }}">
+        {% if errors.linkUrl is defined %}<div class="error-msg">{{ errors.linkUrl }}</div>{% endif %}
+    </div>
+
+    <div class="ad-panel {{ creativeVal == 'image' ? 'is-active' : '' }}" data-panel="image">
+        <div class="field">
+            <label for="imageUrl">URL de imagen *</label>
+            <input type="text" id="imageUrl" name="imageUrl" value="{{ imageUrlVal }}" placeholder="https://… o /media/sites/…" class="{{ errors.imageUrl is defined ? 'error' : '' }}">
+            <p class="hint">Usa una imagen de la <a href="{{ path('admin_media_index') }}">biblioteca de medios</a>.</p>
+            {% if errors.imageUrl is defined %}<div class="error-msg">{{ errors.imageUrl }}</div>{% endif %}
+        </div>
+        <div class="field">
+            <label for="altText">Texto alternativo</label>
+            <input type="text" id="altText" name="altText" value="{{ altVal }}">
+        </div>
+    </div>
+
+    <div class="ad-panel {{ creativeVal in ['text', 'generated'] ? 'is-active' : '' }}" data-panel="text">
+        <div class="ad-panel {{ creativeVal == 'generated' ? 'is-active' : '' }}" data-panel="generated">
+            <p class="hint" style="margin-top:0">Elige una plantilla con textos básicos. Luego puedes editar titular, mensaje y colores.</p>
+            <div class="ad-preset-grid" id="ad-preset-grid">
+                {% for preset in presets %}
+                    <button type="button"
+                            class="ad-preset-btn {{ presetVal == preset.key ? 'is-selected' : '' }}"
+                            data-preset="{{ preset|json_encode|e('html_attr') }}">
+                        <strong>{{ preset.label }}</strong>
+                        <span>{{ preset.headline }}</span>
+                    </button>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="field">
+            <label for="headline">Titular *</label>
+            <input type="text" id="headline" name="headline" value="{{ headlineVal }}" maxlength="180" class="{{ errors.headline is defined ? 'error' : '' }}">
+            {% if errors.headline is defined %}<div class="error-msg">{{ errors.headline }}</div>{% endif %}
+        </div>
+        <div class="field">
+            <label for="bodyText">Mensaje</label>
+            <textarea id="bodyText" name="bodyText" rows="3" maxlength="400">{{ bodyVal }}</textarea>
+        </div>
+        <div class="field">
+            <label for="ctaLabel">Texto del botón</label>
+            <input type="text" id="ctaLabel" name="ctaLabel" value="{{ ctaVal }}" maxlength="80">
+        </div>
+        <div class="color-row">
+            <div class="field">
+                <label for="bgColor">Fondo</label>
+                <input type="color" id="bgColor" name="bgColor" value="{{ bgVal }}">
+            </div>
+            <div class="field">
+                <label for="textColor">Texto</label>
+                <input type="color" id="textColor" name="textColor" value="{{ textColorVal }}">
+            </div>
+            <div class="field">
+                <label for="accentColor">Acento / CTA</label>
+                <input type="color" id="accentColor" name="accentColor" value="{{ accentVal }}">
+            </div>
+        </div>
+
+        <div class="ad-preview-box">
+            <h3>Vista previa</h3>
+            <div id="ad-text-preview" class="ad-text-banner ad-format-{{ formatVal }}" style="--ad-bg: {{ bgVal }}; --ad-fg: {{ textColorVal }}; --ad-accent: {{ accentVal }};">
+                <span class="ad-text-banner-kicker">Publicidad</span>
+                <strong class="ad-text-banner-title" id="preview-headline">{{ headlineVal ?: 'Titular del anuncio' }}</strong>
+                <p class="ad-text-banner-body" id="preview-body">{{ bodyVal ?: 'Mensaje breve del anuncio.' }}</p>
+                <span class="ad-text-banner-cta" id="preview-cta">{{ ctaVal ?: 'Más información' }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="ad-panel {{ creativeVal == 'html' ? 'is-active' : '' }}" data-panel="html">
+        <div class="field">
+            <label for="htmlContent">Código HTML *</label>
+            <textarea id="htmlContent" name="htmlContent" rows="6" placeholder="Para campañas AdSense o HTML personalizado">{{ htmlVal }}</textarea>
+            <p class="hint">Se insertará tal cual en la ubicación elegida.</p>
+        </div>
+    </div>
+
+    <div class="form-grid-2">
+        <div class="field">
+            <label for="startsAt">Inicio campaña</label>
+            <input type="datetime-local" id="startsAt" name="startsAt" value="{{ startsVal }}">
+            <p class="hint">Hora de Madrid. Déjalo vacío para publicar de inmediato.</p>
+        </div>
+        <div class="field">
+            <label for="endsAt">Fin campaña</label>
+            <input type="datetime-local" id="endsAt" name="endsAt" value="{{ endsVal }}">
+            <p class="hint">Hora de Madrid. Vacío = sin fecha de fin.</p>
+        </div>
+    </div>
+
+    <div class="form-grid-2">
+        <div class="field">
+            <label for="sortOrder">Prioridad</label>
+            <input type="number" id="sortOrder" name="sortOrder" value="{{ sortVal }}" min="0">
+        </div>
+        <div class="field checkbox-row" style="padding-top:1.75rem">
+            <input type="checkbox" id="isActive" name="isActive" value="1" {{ activeVal ? 'checked' : '' }}>
+            <label for="isActive">Banner activo</label>
+        </div>
+    </div>
+
+    <div class="actions">
+        <a href="{{ path('admin_ads_index') }}" class="btn btn-secondary">Cancelar</a>
+        <button type="submit" class="btn btn-primary">Guardar</button>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+(function () {
+    var form = document.getElementById('ad-banner-form');
+    if (!form) return;
+
+    var typeInputs = form.querySelectorAll('[data-ad-type]');
+    var imagePanel = form.querySelector('[data-panel="image"]');
+    var textPanel = form.querySelector('[data-panel="text"]');
+    var generatedPanel = form.querySelector('[data-panel="generated"]');
+    var htmlPanel = form.querySelector('[data-panel="html"]');
+    var presetKeyInput = document.getElementById('presetKey');
+
+    function selectedType() {
+        var checked = form.querySelector('[data-ad-type]:checked');
+        return checked ? checked.value : 'image';
+    }
+
+    function syncPanels() {
+        var type = selectedType();
+        imagePanel.classList.toggle('is-active', type === 'image');
+        textPanel.classList.toggle('is-active', type === 'text' || type === 'generated');
+        generatedPanel.classList.toggle('is-active', type === 'generated');
+        htmlPanel.classList.toggle('is-active', type === 'html');
+    }
+
+    function syncPreview() {
+        var headline = document.getElementById('headline');
+        var body = document.getElementById('bodyText');
+        var cta = document.getElementById('ctaLabel');
+        var bg = document.getElementById('bgColor');
+        var fg = document.getElementById('textColor');
+        var accent = document.getElementById('accentColor');
+        var box = document.getElementById('ad-text-preview');
+        if (!box) return;
+        box.style.setProperty('--ad-bg', bg.value);
+        box.style.setProperty('--ad-fg', fg.value);
+        box.style.setProperty('--ad-accent', accent.value);
+        document.getElementById('preview-headline').textContent = headline.value || 'Titular del anuncio';
+        document.getElementById('preview-body').textContent = body.value || 'Mensaje breve del anuncio.';
+        document.getElementById('preview-cta').textContent = cta.value || 'Más información';
+    }
+
+    typeInputs.forEach(function (input) {
+        input.addEventListener('change', syncPanels);
+    });
+
+    ['headline', 'bodyText', 'ctaLabel', 'bgColor', 'textColor', 'accentColor'].forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el) el.addEventListener('input', syncPreview);
+    });
+
+    document.querySelectorAll('.ad-preset-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var data = JSON.parse(btn.getAttribute('data-preset') || '{}');
+            document.getElementById('headline').value = data.headline || '';
+            document.getElementById('bodyText').value = data.body || '';
+            document.getElementById('ctaLabel').value = data.cta || '';
+            document.getElementById('bgColor').value = data.bgColor || '#0f172a';
+            document.getElementById('textColor').value = data.textColor || '#f8fafc';
+            document.getElementById('accentColor').value = data.accentColor || '#f59e0b';
+            presetKeyInput.value = data.key || '';
+            document.querySelectorAll('.ad-preset-btn').forEach(function (b) { b.classList.remove('is-selected'); });
+            btn.classList.add('is-selected');
+            var name = document.getElementById('name');
+            if (name && !name.value) {
+                name.value = data.label || data.headline || '';
+            }
+            syncPreview();
+        });
+    });
+
+    syncPanels();
+    syncPreview();
+})();
+</script>
+{% endblock %}
