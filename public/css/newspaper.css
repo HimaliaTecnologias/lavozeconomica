@@ -4012,6 +4012,11 @@ a.cat-pill:hover {
 .content-modules .home-section-more {
     display: none;
 }
+.contact-page .content-modules {
+    margin-top: 3.25rem;
+    padding-top: 0;
+    border-top: none;
+}
 .content-module--grid .story-grid--content-module {
     gap: 1rem 1.15rem;
 }
@@ -4368,43 +4373,59 @@ a.cat-pill:hover {
         overflow: hidden;
     }
     .portada-hero-media-wrap {
-        background: var(--paper-muted);
+        display: flex;
+        flex-direction: column;
+        background: var(--paper);
+        overflow: visible;
     }
     .portada-hero-media,
     .portada-hero-media--magazine {
         aspect-ratio: 16 / 10;
-        min-height: 16rem;
+        min-height: 0;
+        overflow: hidden;
     }
-    .portada-hero-lead,
-    .portada-hero-meta {
-        display: none;
+    .portada-hero-overlay {
+        background: linear-gradient(to top, rgba(0,0,0,.35) 0%, transparent 42%);
     }
     .portada-hero-footer {
-        grid-template-columns: minmax(0, 1fr);
-        gap: 0;
+        position: static;
+        grid-area: auto;
+        align-self: stretch;
         width: 100%;
         max-width: 100%;
         min-width: 0;
-        padding: 1.5rem .9rem 1rem;
+        padding: 1rem 1.15rem 1.15rem;
+        background: #111;
+        color: #fff;
     }
     .portada-hero-content {
         max-width: 100%;
         min-width: 0;
+        width: 100%;
         padding: 0;
     }
     .portada-hero-title {
-        width: 100%;
+        width: auto;
         max-width: 100%;
-        font-size: clamp(1.28rem, 5.4vw, 1.65rem);
-        line-height: 1.18;
-        letter-spacing: -0.015em;
+        font-size: clamp(1.28rem, 5.2vw, 1.6rem);
+        line-height: 1.22;
+        letter-spacing: 0;
         font-weight: 800;
     }
     .portada-hero-title a {
-        -webkit-line-clamp: 5;
-        overflow-wrap: anywhere;
-        word-break: break-word;
+        display: block;
+        -webkit-line-clamp: unset;
+        -webkit-box-orient: unset;
+        overflow: visible;
+        overflow-wrap: break-word;
+        word-break: normal;
         max-width: 100%;
+        padding: 0;
+        white-space: normal;
+    }
+    .portada-hero-lead,
+    .portada-hero-meta {
+        display: none;
     }
     .portada-hero .home-related-links--hero {
         display: none;
