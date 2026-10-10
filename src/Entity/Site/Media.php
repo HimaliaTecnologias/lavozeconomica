@@ -87,6 +87,13 @@ class Media
         return $this->storedFilename;
     }
 
+    public function setStoredFilename(string $storedFilename): self
+    {
+        $this->storedFilename = $storedFilename;
+
+        return $this;
+    }
+
     public function getOriginalFilename(): string
     {
         return $this->originalFilename;
@@ -95,6 +102,13 @@ class Media
     public function getMimeType(): string
     {
         return $this->mimeType;
+    }
+
+    public function setMimeType(string $mimeType): self
+    {
+        $this->mimeType = $mimeType;
+
+        return $this;
     }
 
     public function getSizeBytes(): int
