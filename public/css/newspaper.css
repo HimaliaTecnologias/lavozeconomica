@@ -4388,12 +4388,15 @@ a.cat-pill:hover {
         background: linear-gradient(to top, rgba(0,0,0,.35) 0%, transparent 42%);
     }
     .portada-hero-footer {
+        display: block;
         position: static;
         grid-area: auto;
+        grid-template-columns: none;
         align-self: stretch;
         width: 100%;
         max-width: 100%;
         min-width: 0;
+        box-sizing: border-box;
         padding: 1rem 1.15rem 1.15rem;
         background: #111;
         color: #fff;
