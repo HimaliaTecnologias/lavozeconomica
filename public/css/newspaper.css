@@ -890,7 +890,7 @@ img { max-width: 100%; height: auto; display: block; }
     z-index: 2;
     align-self: end;
     display: grid;
-    grid-template-columns: minmax(0, 1.4fr) minmax(15rem, 21rem);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 21rem);
     align-items: end;
     gap: 1rem 1.5rem;
     width: 100%;
@@ -937,18 +937,26 @@ img { max-width: 100%; height: auto; display: block; }
 }
 .portada-hero-title {
     margin: 0;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
     font-family: var(--serif);
     font-size: clamp(1.45rem, 2.5vw, 2.35rem);
     font-weight: 800;
     line-height: 1.15;
     letter-spacing: -0.02em;
     text-shadow: 0 2px 18px rgba(0,0,0,.55), 0 1px 2px rgba(0,0,0,.7);
-    display: -webkit-box;
-    -webkit-line-clamp: 4;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
 }
-.portada-hero-title a { color: #fff; }
+.portada-hero-title a {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 4;
+    overflow: hidden;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    max-width: 100%;
+    color: #fff;
+}
 .portada-hero-title a:hover { color: #fff; opacity: .94; }
 .portada-hero-lead {
     margin: .7rem 0 0;
@@ -4372,23 +4380,31 @@ a.cat-pill:hover {
         display: none;
     }
     .portada-hero-footer {
-        grid-template-columns: 1fr;
+        grid-template-columns: minmax(0, 1fr);
         gap: 0;
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
         padding: 1.5rem .9rem 1rem;
     }
     .portada-hero-content {
-        max-width: none;
+        max-width: 100%;
+        min-width: 0;
         padding: 0;
     }
     .portada-hero-title {
+        width: 100%;
+        max-width: 100%;
         font-size: clamp(1.28rem, 5.4vw, 1.65rem);
         line-height: 1.18;
-        display: -webkit-box;
-        -webkit-line-clamp: 4;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
         letter-spacing: -0.015em;
         font-weight: 800;
+    }
+    .portada-hero-title a {
+        -webkit-line-clamp: 5;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+        max-width: 100%;
     }
     .portada-hero .home-related-links--hero {
         display: none;

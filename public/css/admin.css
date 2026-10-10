@@ -1128,6 +1128,11 @@ html.admin-sidebar-pref-collapsed .admin-sidebar {
 .data-table .col-date time {
     color: inherit;
 }
+.data-table .col-numeric {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
 /* Icon buttons — after .btn in cascade via higher specificity (.btn.btn-icon) */
 .btn.btn-icon {
     display: inline-flex;
@@ -1954,11 +1959,20 @@ input.error, textarea.error, select.error { border-color: #ef4444; }
 .health-item--error strong::before { content: '● '; color: #ef4444; }
 
 .dash-list, .activity-feed { list-style: none; margin: 0; padding: 0; }
-.dash-list li, .activity-feed li {
+.dash-list li {
     display: flex;
     justify-content: space-between;
     align-items: baseline;
     gap: .75rem;
+    padding: .5rem 0;
+    border-bottom: 1px solid var(--admin-border);
+    font-size: .88rem;
+}
+.activity-feed li {
+    display: grid;
+    grid-template-columns: 5.25rem minmax(5.5rem, 8rem) minmax(9rem, 13rem) minmax(0, 1fr);
+    align-items: baseline;
+    column-gap: 1rem;
     padding: .5rem 0;
     border-bottom: 1px solid var(--admin-border);
     font-size: .88rem;
@@ -1986,8 +2000,9 @@ input.error, textarea.error, select.error { border-color: #ef4444; }
 }
 
 .activity-time { color: var(--admin-muted); font-size: .78rem; white-space: nowrap; }
-.activity-user { font-weight: 700; }
-.activity-entity { color: var(--admin-muted); }
+.activity-user { font-weight: 700; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.activity-action { min-width: 0; }
+.activity-entity { color: var(--admin-muted); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .admin-toast-root {
     position: fixed;

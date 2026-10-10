@@ -207,6 +207,8 @@
                     <th>Título</th>
                     <th>Categoría</th>
                     <th>Estado</th>
+                    <th>Autor</th>
+                    <th>Lecturas</th>
                     <th>Creado</th>
                     <th>Actualizado</th>
                     <th class="col-actions">Acciones</th>
@@ -246,6 +248,8 @@
                     <td data-label="Estado">
                         {% include 'admin/_article_status_badge.html.twig' with { status: article.status.value } %}
                     </td>
+                    <td data-label="Autor">{{ article.authorName ?: '—' }}</td>
+                    <td data-label="Lecturas" class="col-numeric">{{ article.viewCount }}</td>
                     <td data-label="Creado" class="col-date">
                         <time datetime="{{ article.createdAt|date('c') }}">{{ article.createdAt|date('d/m/Y H:i') }}</time>
                     </td>
